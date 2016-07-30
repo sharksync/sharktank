@@ -1,0 +1,9 @@
+{
+  "name": "shark-tank",
+  "version": "0.0.0",
+  "description": "SharkTank",
+  "main": "server.js",
+  "author": {
+    "name": "Neil"
+  }
+}
