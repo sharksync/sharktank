@@ -19,6 +19,10 @@ const syncController = {
             });
         }
 
+        tasks.push(function (callback) {
+            syncController.queryDevice(appId, request.payload.device_id, callback);
+        });
+
         async.parallel(tasks, function (err, results) {
 
             if (err) {
@@ -31,20 +35,24 @@ const syncController = {
             }
 
             for (var result of results) {
-                var groupResponse = {
-                    group: result.group,
-                    changes: []
-                }
 
-                for (var change of result.changes) {
-                    groupResponse.changes.push({
-                        path: change.path,
-                        value: change.value,
-                        action: "insert"
-                    });
-                }
+                if (result.group != undefined) {
 
-                response.groups.push(groupResponse);
+                    var groupResponse = {
+                        group: result.group,
+                        changes: []
+                    }
+
+                    for (var change of result.changes) {
+                        groupResponse.changes.push({
+                            path: change.path,
+                            value: change.value,
+                            timestamp: change.modified
+                        });
+                    }
+
+                    response.groups.push(groupResponse);
+                }
             }
 
             return reply(Calibrate.response(response));
@@ -75,8 +83,38 @@ const syncController = {
             callback(null, { group: group, changes: result.rows });
         });
 
-    }
+    },
 
+    queryDevice: function (appId, deviceId, callback) {
+
+        const client = Cassandra.getClient();
+
+        const query = 'SELECT * FROM device WHERE device_id = ?';
+        const params = [deviceId];
+
+        client.execute(query, params, { prepare: true }, function (err, result) {
+
+            if (err) {
+                return callback(err, null);
+            }
+
+            if (result.rows.count == 0) {
+                return callback(new Error("Device record missing"), null);
+            }
+
+            const updateStatement = 'UPDATE device SET last_seen = dateof(now()) WHERE device_id = ?';
+            const params = [deviceId];
+            const deviceRecord = result.rows[0];
+
+            client.execute(updateStatement, params, { prepare: true }, function (err, result) {
+
+                callback(null, { device: deviceRecord });
+
+            });
+
+        });
+
+    }
 };
 
 exports.register = function (server, options, next) {
