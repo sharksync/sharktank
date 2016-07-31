@@ -8,7 +8,7 @@ const server = new Hapi.Server();
 server.connection({ port: 3000 });
 
 server.register([
-    { register: require('./plugins/users') },
+    { register: require('./plugins/sync') },
     { register: Calibrate.decorate },
     {
         register: Good,

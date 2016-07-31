@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="common\cassandra.js" />
-    <Compile Include="plugins\users.js" />
+    <Compile Include="plugins\sync.js" />
     <Compile Include="server.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />
@@ -41,12 +41,14 @@
     <Folder Include="plugins\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
+    <Folder Include="typings\globals\async\" />
     <Folder Include="typings\globals\cassandra-driver\" />
     <Folder Include="typings\globals\hapi\" />
     <Folder Include="typings\globals\joi\" />
     <Folder Include="typings\globals\node\" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\cassandra-driver\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\hapi\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\joi\index.d.ts" />
