@@ -3,6 +3,7 @@
 const Calibrate = require('calibrate');
 const Joi = require('joi');
 const async = require('async');
+const Boom = require('boom');
 
 const Cassandra = require('../common/cassandra');
 
@@ -41,8 +42,8 @@ const syncController = {
                     return reject(err);
                 }
 
-                if (result.rows.count == 0) {
-                    return reject(new Error("App record missing with app id or access key"));
+                if (result.rows.length == 0) {
+                    return reject(Calibrate(Boom.unauthorized('app_id or app_api_access_key incorrect')));
                 }
                 
                 resolve(result.rows[0]);
@@ -102,8 +103,8 @@ const syncController = {
                     return reject(err);
                 }
 
-                if (result.rows.count == 0) {
-                    return reject(new Error("Device record missing"));
+                if (result.rows.length == 0) {
+                    return reject(Boom.notFound('device_id not found'));
                 }
 
                 const updateStatement = 'UPDATE device SET last_seen = dateof(now()) WHERE device_id = ?';
