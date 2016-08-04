@@ -30,7 +30,6 @@ const syncController = {
             }
 
             var response = {
-                device_key: "123",
                 groups: []
             }
 
@@ -52,6 +51,9 @@ const syncController = {
                     }
 
                     response.groups.push(groupResponse);
+                }
+                else if (result.device != undefined) {
+                    response.sync_id = result.device.sync_id
                 }
             }
 
