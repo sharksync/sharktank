@@ -46,6 +46,7 @@
     <Folder Include="typings\globals\cassandra-driver\" />
     <Folder Include="typings\globals\hapi\" />
     <Folder Include="typings\globals\joi\" />
+    <Folder Include="typings\globals\moment\" />
     <Folder Include="typings\globals\node\" />
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +55,7 @@
     <TypeScriptCompile Include="typings\globals\cassandra-driver\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\hapi\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\joi\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\moment\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\index.d.ts" />
   </ItemGroup>

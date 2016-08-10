@@ -5,25 +5,35 @@ const Joi = require('joi');
 const async = require('async');
 const Boom = require('boom');
 
+const moment = require('moment');
+
+const CassandraDriver = require('cassandra-driver');
 const Cassandra = require('../common/cassandra');
+const TimeUuid = CassandraDriver.types.TimeUuid;
 
 const syncController = {
 
     post: function (request, reply) {
 
-        const queries = syncController.getQueries(request);
+        request.payload.requestStartMoment = moment();
 
         // First check its a valid app id / app key
-        syncController.checkAccount(request)
+        syncController
+            .checkAccount(request)
+            .then(function () {
+                // Then process all the changes from the client
+                return syncController.processClientChanges(request);
+            })
             .then(function () {
                 // Then fire all the group queries and update the device table
-                return Promise.all(queries);
+                return Promise.all(syncController.getQueries(request));
             })
             .then(results => {
                 // If all that worked, format a return response
                 return reply(syncController.formatResponse(results));
             })
             .catch(err => {
+                // If any of them died, return an error for it
                 return reply(Calibrate.error(err));
             });
 
@@ -51,16 +61,57 @@ const syncController = {
 
         });
     },
-    
+
+    processClientChanges: function (request) {
+
+        const inserts = [];
+        const appId = request.payload.app_id;
+        const requestStartMoment = request.payload.requestStartMoment;
+
+        for (var group of request.payload.groups) {
+                
+            for (var change of group.changes) {
+                inserts.push(syncController.processClientChange(change, appId, requestStartMoment, group.group));
+            }
+        }
+
+        return Promise.all(inserts);
+    },
+
+    processClientChange: function (change, appId, requestStartMoment, groupName) {
+        return new Promise(function (resolve, reject) {
+            const client = Cassandra.getClient();
+
+            const recordId = change.path.substring(0, change.path.indexOf("/"));
+            const date = requestStartMoment.subtract(change.secondsAgo, 'seconds').toDate();
+            const timeuuid = TimeUuid.fromDate(date);
+
+            const insertStatement = 'INSERT INTO change (app_id, rec_id, path, group, modified, value) VALUES (?,?,?,?,?,?)';
+            const params = [appId, recordId, change.path, groupName, timeuuid, change.value];
+
+            client.execute(insertStatement, params, { prepare: true }, function (err, result) {
+
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve();
+
+            });
+        });
+    },
+
     getQueries: function (request) {
 
         const appId = request.payload.app_id;
         const queries = [];
 
-        for (var tidemark of request.payload.tidemarks) {
-            queries.push(syncController.queryChangesForGroup(appId, tidemark.group, tidemark.tidemark));
+        // Work out changes for each group
+        for (var group of request.payload.groups) {
+            queries.push(syncController.queryChangesForGroup(appId, group.group, group.tidemark));
         }
 
+        // Grab the device record and update the last seen
         queries.push(syncController.queryDevice(appId, request.payload.device_id));
 
         return queries;
@@ -173,18 +224,15 @@ exports.register = function (server, options, next) {
                     app_id: Joi.string().guid().required(),
                     app_api_access_key: Joi.string().guid().required(),
                     device_id: Joi.string().guid().required(),
-                    client_time: Joi.number().required(),
-                    changes: Joi.array().items(Joi.object({
-                        path: Joi.string().required(),
-                        value: Joi.string().required(),
-                        timestamp: Joi.date().required(),
-                        action: Joi.string().required(),
+                    groups: Joi.array().items(Joi.object({
                         group: Joi.string().required(),
-                    })),
-                    tidemarks: Joi.array().items(Joi.object({
-                        group: Joi.string().required(),
-                        tidemark: [Joi.string().guid(), Joi.string().empty('')]
-                    })),
+                        tidemark: [Joi.string().guid(), Joi.string().empty('')],
+                        changes: Joi.array().items(Joi.object({
+                            path: Joi.string().required(),
+                            value: Joi.string().required(),
+                            secondsAgo: Joi.number().required()
+                        }))
+                    }))
                 }
             }
         }
