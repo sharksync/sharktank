@@ -20,16 +20,16 @@ const syncController = {
         // First check its a valid app id / app key
         syncController
             .checkAccount(request)
-            .then(results => {
+            .then(application => {
                 // Then process all the changes from the client
                 return syncController.processClientChanges(request);
             })
-            .then(results => {
+            .then(timeUUIDs => {
                 // The results from the previous calls should be a list of timeUUIDs 
                 // for the records just inserted, don't want to send them back the client
 
                 // Then fire all the group queries and update the device table
-                return Promise.all(syncController.getQueries(request, results));
+                return Promise.all(syncController.getQueries(request, timeUUIDs));
             })
             .then(results => {
                 // If all that worked, format a return response
@@ -105,14 +105,14 @@ const syncController = {
         });
     },
 
-    getQueries: function (request, timeUUIDsInserted) {
+    getQueries: function (request, timeUUIDs) {
 
         const appId = request.payload.app_id;
         const queries = [];
 
         // Work out changes for each group
         for (var group of request.payload.groups) {
-            queries.push(syncController.queryChangesForGroup(appId, group.group, group.tidemark, timeUUIDsInserted));
+            queries.push(syncController.queryChangesForGroup(appId, group.group, group.tidemark, timeUUIDs));
         }
 
         // Grab the device record and update the last seen
@@ -121,7 +121,7 @@ const syncController = {
         return queries;
     },
 
-    queryChangesForGroup: function (appId, group, tidemark, timeUUIDsInserted) {
+    queryChangesForGroup: function (appId, group, tidemark, timeUUIDs) {
         return new Promise(function (resolve, reject) {
             const client = Cassandra.getClient();
 
@@ -143,9 +143,9 @@ const syncController = {
                 var filteredResults = [];
 
                 // Don't return any records that we just inserted
-                if (timeUUIDsInserted != undefined && timeUUIDsInserted.length > 0 && result.rows.length > 0) {
+                if (timeUUIDs != undefined && timeUUIDs.length > 0 && result.rows.length > 0) {
                     for (var row of result.rows) {
-                        if (timeUUIDsInserted.indexOf(row.modified.toString()) == -1)
+                        if (timeUUIDs.indexOf(row.modified.toString()) == -1)
                             filteredResults.push(row);
                     }
                 }
