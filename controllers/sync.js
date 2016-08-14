@@ -226,8 +226,9 @@ const syncController = {
 
         return Calibrate.response(response);
     }
-
 };
+
+exports.controller = syncController;
 
 exports.register = function (server, options, next) {
 
