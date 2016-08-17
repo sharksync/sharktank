@@ -113,42 +113,57 @@ const syncController = {
 
 
     processClientChanges: function (request) {
-
-        const inserts = [];
-        const appId = request.payload.app_id;
-        const requestStartMoment = request.payload.requestStartMoment;
-
-        for (var group of request.payload.groups) {
-
-            for (var change of group.changes) {
-                inserts.push(syncController.processClientChange(change, appId, requestStartMoment, group.group));
-            }
-        }
-
-        return Promise.all(inserts);
-    },
-
-    processClientChange: function (change, appId, requestStartMoment, groupName) {
         return new Promise(function (resolve, reject) {
             const client = Cassandra.getClient();
 
-            const recordId = change.path.substring(0, change.path.indexOf("/"));
-            const date = requestStartMoment.subtract(change.secondsAgo, 'seconds').toDate();
-            const timeuuid = TimeUuid.fromDate(date);
+            var inserts = [];
+            const timeUUIDs = [];
+            const appId = request.payload.app_id;
+            const requestStartMoment = request.payload.requestStartMoment;
 
-            const insertStatement = 'INSERT INTO change (app_id, rec_id, path, group, modified, value) VALUES (?,?,?,?,?,?)';
-            const params = [appId, recordId, change.path, groupName, timeuuid, change.value];
+            for (var group of request.payload.groups) {
 
-            client.execute(insertStatement, params, { prepare: true }, function (err, result) {
+                for (var change of group.changes) {
 
-                if (err) {
-                    return reject(err);
+                    const recordId = change.path.substring(0, change.path.indexOf("/"));
+                    const date = requestStartMoment.subtract(change.secondsAgo, 'seconds').toDate();
+                    const timeuuid = TimeUuid.fromDate(date);
+
+                    inserts.push({
+                        query: 'INSERT INTO change (app_id, rec_id, path, group, modified, value) VALUES (?,?,?,?,?,?)',
+                        params: [appId, recordId, change.path, group.group, timeuuid, change.value]
+                    });
+
+                    // Return the time GUID for this new record so we change use it to skip returning these same values
+                    timeUUIDs.push(timeuuid.toString());
+
+                    if (inserts.length > 20) {
+                        client.batch(inserts, { prepare: true }, function (err) {
+                            if (err) {
+                                return reject(err);
+                            }
+                        });
+
+                        // Reset the array for the next inserts
+                        inserts = [];
+                    }
+
                 }
 
-                // Return the time GUID for this new record so we change use it to skip returning these same values
-                resolve(timeuuid.toString());
+            }
 
-            });
+            if (inserts.length > 0) {
+                client.batch(inserts, { prepare: true }, function (err) {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return resolve(timeUUIDs);
+                });
+            }
+            else {
+                return resolve(timeUUIDS);
+            }
         });
     },
 
