@@ -11,13 +11,17 @@ const CassandraDriver = require('cassandra-driver');
 const Cassandra = require('../common/cassandra');
 const TimeUuid = CassandraDriver.types.TimeUuid;
 
+// The follow docs says use a single client object per app
+// https://docs.datastax.com/en/developer/nodejs-driver/2.0/nodejs-driver/reference/threeSimpleRules.html
+const client = Cassandra.getClient();
+
 const syncController = {
 
     post: function (request, reply) {
 
         // Context is a container for everything needed for this request to be processed
         var context = {
-            client: Cassandra.getClient(),
+            client: client,
             requestStartMoment: moment(),
             request: request,
             response: {
