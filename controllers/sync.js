@@ -17,10 +17,19 @@ const syncController = {
 
         request.payload.requestStartMoment = moment();
 
+        var response = {
+            groups: []
+        }
+
         // First check its a valid app id / app key
-        syncController
-            .checkAccount(request)
+        syncController.checkAccount(request)
             .then(application => {
+                // Grab the device record and update the last seen
+                return syncController.checkDevice(request)
+            })
+            .then(device => {
+                response.sync_id = device.device.sync_id
+
                 // Then process all the changes from the client
                 return syncController.processClientChanges(request);
             })
@@ -33,7 +42,7 @@ const syncController = {
             })
             .then(results => {
                 // If all that worked, format a return response
-                return reply(syncController.formatResponse(results));
+                return reply(syncController.formatResponse(results, response));
             })
             .catch(err => {
                 // If any of them died, return an error for it
@@ -48,7 +57,7 @@ const syncController = {
 
             const query = 'SELECT * FROM application WHERE app_id = ? AND app_api_access_key = ?';
             const params = [request.payload.app_id, request.payload.app_api_access_key];
-            
+
             client.execute(query, params, { prepare: true }, function (err, result) {
 
                 if (err) {
@@ -58,12 +67,50 @@ const syncController = {
                 if (result.rows.length == 0) {
                     return reject(Calibrate(Boom.unauthorized('app_id or app_api_access_key incorrect')));
                 }
-                
+
                 resolve(result.rows[0]);
             });
 
         });
     },
+
+    checkDevice: function (request) {
+        return new Promise(function (resolve, reject) {
+            const deviceId = request.payload.device_id;
+            const client = Cassandra.getClient();
+
+            const query = 'SELECT * FROM device WHERE device_id = ?';
+            const params = [deviceId];
+
+            client.execute(query, params, { prepare: true }, function (err, result) {
+
+                if (err) {
+                    return reject(err);
+                }
+
+                if (result.rows.length == 0) {
+                    return reject(Boom.notFound('device_id not found'));
+                }
+
+                const updateStatement = 'UPDATE device SET last_seen = dateof(now()) WHERE device_id = ?';
+                const params = [deviceId];
+                const deviceRecord = result.rows[0];
+
+                client.execute(updateStatement, params, { prepare: true }, function (err, result) {
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    resolve({ device: deviceRecord });
+
+                });
+
+            });
+
+        });
+    },
+
 
     processClientChanges: function (request) {
 
@@ -72,7 +119,7 @@ const syncController = {
         const requestStartMoment = request.payload.requestStartMoment;
 
         for (var group of request.payload.groups) {
-                
+
             for (var change of group.changes) {
                 inserts.push(syncController.processClientChange(change, appId, requestStartMoment, group.group));
             }
@@ -115,9 +162,6 @@ const syncController = {
             queries.push(syncController.queryChangesForGroup(appId, group.group, group.tidemark, timeUUIDs));
         }
 
-        // Grab the device record and update the last seen
-        queries.push(syncController.queryDevice(appId, request.payload.device_id));
-
         return queries;
     },
 
@@ -158,47 +202,7 @@ const syncController = {
         });
     },
 
-    queryDevice: function (appId, deviceId, callback) {
-        return new Promise(function (resolve, reject) {
-            const client = Cassandra.getClient();
-
-            const query = 'SELECT * FROM device WHERE device_id = ?';
-            const params = [deviceId];
-
-            client.execute(query, params, { prepare: true }, function (err, result) {
-
-                if (err) {
-                    return reject(err);
-                }
-
-                if (result.rows.length == 0) {
-                    return reject(Boom.notFound('device_id not found'));
-                }
-
-                const updateStatement = 'UPDATE device SET last_seen = dateof(now()) WHERE device_id = ?';
-                const params = [deviceId];
-                const deviceRecord = result.rows[0];
-
-                client.execute(updateStatement, params, { prepare: true }, function (err, result) {
-
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    resolve({ device: deviceRecord });
-
-                });
-
-            });
-
-        });
-    },
-    
-    formatResponse: function (results) {
-
-        var response = {
-            groups: []
-        }
+    formatResponse: function (results, response) {
 
         for (var result of results) {
 
@@ -218,9 +222,6 @@ const syncController = {
                 }
 
                 response.groups.push(groupResponse);
-            }
-            else if (result.device != undefined) {
-                response.sync_id = result.device.sync_id
             }
         }
 
