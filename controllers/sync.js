@@ -260,7 +260,7 @@ exports.register = function (server, options, next) {
                     device_id: Joi.string().guid().required(),
                     groups: Joi.array().items(Joi.object({
                         group: Joi.string().required(),
-                        tidemark: [Joi.string().guid(), Joi.string().empty('')],
+                        tidemark: [Joi.string().guid(), Joi.string().empty(''), Joi.allow(null)],
                         changes: Joi.array().items(Joi.object({
                             path: Joi.string().required(),
                             value: Joi.string().required(),
