@@ -46,7 +46,7 @@ const syncController = {
                 // for the records just inserted, don't want to send them back the client
 
                 // Then fire all the group queries and update the device table
-                return Promise.all(syncController.getQueries(context, timeUUIDs));
+                return Promise.all(syncController.getQueries(context));
             })
             .then(results => {
                 // If all that worked, format a return response
@@ -117,13 +117,13 @@ const syncController = {
         });
     },
 
-
     processClientChanges: function (context) {
         return new Promise(function (resolve, reject) {
 
             var inserts = [];
             const timeUUIDs = [];
             const appId = context.request.payload.app_id;
+            const deviceId = context.request.payload.device_id;
             const requestStartMoment = context.requestStartMoment;
 
             for (var group of context.request.payload.groups) {
@@ -135,8 +135,8 @@ const syncController = {
                     const timeuuid = TimeUuid.fromDate(date);
 
                     inserts.push({
-                        query: 'INSERT INTO change (app_id, rec_id, path, group, modified, value) VALUES (?,?,?,?,?,?)',
-                        params: [appId, recordId, change.path, group.group, timeuuid, change.value]
+                        query: 'INSERT INTO change (app_id, rec_id, path, group, modified, value, device_id) VALUES (?,?,?,?,?,?,?)',
+                        params: [appId, recordId, change.path, group.group, timeuuid, change.value, deviceId]
                     });
 
                     // Return the time GUID for this new record so we change use it to skip returning these same values
@@ -172,30 +172,35 @@ const syncController = {
         });
     },
 
-    getQueries: function (context, timeUUIDs) {
+    getQueries: function (context) {
 
         const appId = context.request.payload.app_id;
         const queries = [];
 
         // Work out changes for each group
         for (var group of context.request.payload.groups) {
-            queries.push(syncController.queryChangesForGroup(context.client, appId, group.group, group.tidemark, timeUUIDs));
+            queries.push(syncController.queryChangesForGroup(context.client, appId, group.group, group.tidemark));
         }
 
         return queries;
     },
 
-    queryChangesForGroup: function (client, appId, group, tidemark, timeUUIDs) {
+    queryChangesForGroup: function (client, appId, group, tidemark) {
         return new Promise(function (resolve, reject) {
 
-            var query = 'SELECT * FROM change WHERE app_id = ? AND group = ? LIMIT 20';
-            var params = [appId, group];
+            const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
+            const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
+
+            var query = "SELECT * FROM change WHERE app_id = ? AND group = ? AND modified < ?";
+            var params = [appId, group, eventualConsistancyBufferTimeUUID];
 
             if (tidemark != "" && tidemark != undefined) {
 
-                query = query + ' AND modified > ?';
+                query += " AND modified > ?";
                 params.push(tidemark);
             }
+
+            query += " LIMIT 20";
 
             client.execute(query, params, { prepare: true }, function (err, result) {
 
@@ -203,20 +208,20 @@ const syncController = {
                     return reject(err);
                 }
 
-                var filteredResults = [];
+                //var filteredResults = [];
 
-                // Don't return any records that we just inserted
-                if (timeUUIDs != undefined && timeUUIDs.length > 0 && result.rows.length > 0) {
-                    for (var row of result.rows) {
-                        if (timeUUIDs.indexOf(row.modified.toString()) == -1)
-                            filteredResults.push(row);
-                    }
-                }
-                else {
-                    filteredResults = result.rows;
-                }
+                //// Don't return any records that we just inserted
+                //if (timeUUIDs != undefined && timeUUIDs.length > 0 && result.rows.length > 0) {
+                //    for (var row of result.rows) {
+                //        if (timeUUIDs.indexOf(row.modified.toString()) == -1)
+                //            filteredResults.push(row);
+                //    }
+                //}
+                //else {
+                //    filteredResults = result.rows;
+                //}
 
-                resolve({ group: group, changes: filteredResults });
+                resolve({ group: group, changes: result.rows });
             });
         });
     },
@@ -253,8 +258,8 @@ exports.controller = syncController;
 exports.register = function (server, options, next) {
 
     server.route({
-        method: 'POST',
-        path: '/sync',
+        method: "POST",
+        path: "/sync",
         handler: syncController.post,
         config: {
             validate: {
