@@ -169,7 +169,7 @@ const syncController = {
         return new Promise(function (resolve, reject) {
             const client = Cassandra.getClient();
 
-            var query = 'SELECT * FROM change WHERE app_id = ? AND group = ?';
+            var query = 'SELECT * FROM change WHERE app_id = ? AND group = ? LIMIT 20';
             var params = [appId, group];
 
             if (tidemark != "" && tidemark != undefined) {
