@@ -41,10 +41,7 @@ const syncController = {
                 // Then process all the changes from the client
                 return syncController.processClientChanges(context);
             })
-            .then(timeUUIDs => {
-                // The results from the previous calls should be a list of timeUUIDs 
-                // for the records just inserted, don't want to send them back the client
-
+            .then(result => {
                 // Then fire all the group queries and update the device table
                 return Promise.all(syncController.getQueries(context));
             })
@@ -121,7 +118,6 @@ const syncController = {
         return new Promise(function (resolve, reject) {
 
             var inserts = [];
-            const timeUUIDs = [];
             const appId = context.request.payload.app_id;
             const deviceId = context.request.payload.device_id;
             const requestStartMoment = context.requestStartMoment;
@@ -130,18 +126,27 @@ const syncController = {
 
                 for (var change of group.changes) {
 
-                    const recordId = change.path.substring(0, change.path.indexOf("/"));
-                    const date = requestStartMoment.subtract(change.secondsAgo, 'seconds').toDate();
-                    const timeuuid = TimeUuid.fromDate(date);
+                    var recordId = "";
+                    var path = "";
 
+                    // Path should contain a / in format <guid>/property.name
+                    if (change.path.indexOf("/") > -1) {
+                        recordId = change.path.substring(0, change.path.indexOf("/"));
+                        path = change.path.substring(change.path.indexOf("/") + 1);
+                    }
+
+                    const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
+                    
                     inserts.push({
-                        query: 'INSERT INTO change (app_id, rec_id, path, group, modified, value, device_id) VALUES (?,?,?,?,?,?,?)',
-                        params: [appId, recordId, change.path, group.group, timeuuid, change.value, deviceId]
+                        query: 'INSERT INTO change (app_id, record_id, path, client_modified, group, value, device_id) VALUES (?,?,?,?,?,?,?)',
+                        params: [appId, recordId, path, date, group.group, change.value, deviceId]
                     });
 
-                    // Return the time GUID for this new record so we change use it to skip returning these same values
-                    timeUUIDs.push(timeuuid.toString());
-
+                    inserts.push({
+                        query: 'INSERT INTO sync (app_id, group, tidemark, record_id, operation, path) VALUES (?,?,now(),?,?,?)',
+                        params: [appId, group.group, recordId, change.operation, path]
+                    });
+                    
                     if (inserts.length > 20) {
                         context.client.batch(inserts, { prepare: true }, function (err) {
                             if (err) {
@@ -163,11 +168,11 @@ const syncController = {
                         return reject(err);
                     }
 
-                    return resolve(timeUUIDs);
+                    return resolve();
                 });
             }
             else {
-                return resolve(timeUUIDS);
+                return resolve();
             }
         });
     },
@@ -179,49 +184,84 @@ const syncController = {
 
         // Work out changes for each group
         for (var group of context.request.payload.groups) {
-            queries.push(syncController.queryChangesForGroup(context.client, appId, group.group, group.tidemark));
+            queries.push(syncController.queryChangesForGroup(context, appId, group.group, group.tidemark));
         }
 
         return queries;
     },
 
-    queryChangesForGroup: function (client, appId, group, tidemark) {
+    queryChangesForGroup: function (context, appId, group, tidemark) {
         return new Promise(function (resolve, reject) {
 
             const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
             const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
 
-            var query = "SELECT * FROM change WHERE app_id = ? AND group = ? AND modified < ?";
+            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ? AND tidemark < ?";
             var params = [appId, group, eventualConsistancyBufferTimeUUID];
 
             if (tidemark != "" && tidemark != undefined) {
 
-                query += " AND modified > ?";
+                query += " AND tidemark > ?";
                 params.push(tidemark);
             }
 
-            query += " LIMIT 20";
+            query += " LIMIT 50";
 
-            client.execute(query, params, { prepare: true }, function (err, result) {
+            context.client.execute(query, params, { prepare: true }, function (err, result) {
 
                 if (err) {
                     return reject(err);
                 }
 
-                //var filteredResults = [];
+                var latestTidemark = "";
+                var groupedSyncRecords = {};
 
-                //// Don't return any records that we just inserted
-                //if (timeUUIDs != undefined && timeUUIDs.length > 0 && result.rows.length > 0) {
-                //    for (var row of result.rows) {
-                //        if (timeUUIDs.indexOf(row.modified.toString()) == -1)
-                //            filteredResults.push(row);
-                //    }
-                //}
-                //else {
-                //    filteredResults = result.rows;
-                //}
+                // Dedup all the sync records using a dictionary
+                for (var syncRecord of result.rows) {
+                    var recordIdAndPath = syncRecord.record_id + '/' + syncRecord.path;
 
-                resolve({ group: group, changes: result.rows });
+                    groupedSyncRecords[recordIdAndPath] = syncRecord;
+
+                    latestTidemark = syncRecord.tidemark;
+                }
+
+                // TODO: sync dud app_id,group,tidemark
+
+                syncController.queryChangeRecordsForSyncRecords(context, appId, group, groupedSyncRecords).then(results => {
+                    return resolve({ group: group, changes: results, tidemark: latestTidemark });
+                })
+                .catch(err => {
+                    return reject(err);
+                });
+
+            });
+        });
+    },
+
+    queryChangeRecordsForSyncRecords: function (context, appId, group, syncRecordsDictionary) {
+        
+        const queries = [];
+        
+        for (var key in syncRecordsDictionary) {
+            queries.push(syncController.queryChangeRecordsForSyncRecord(context, appId, group, syncRecordsDictionary[key]));
+        }
+
+        return Promise.all(queries);
+    },
+
+    queryChangeRecordsForSyncRecord: function (context, appId, group, syncRecord) {
+        return new Promise(function (resolve, reject) {
+            
+            var query = "SELECT * FROM change WHERE app_id = ? AND group = ? AND record_id = ? AND path = ? LIMIT 1";
+            var params = [appId, group, syncRecord.record_id, syncRecord.path];
+            
+            context.client.execute(query, params, { prepare: true }, function (err, result) {
+
+                if (err) {
+                    return reject(err);
+                }
+
+                resolve({ change: result.rows[0], sync: syncRecord });
             });
         });
     },
@@ -234,15 +274,19 @@ const syncController = {
 
                 var groupResponse = {
                     group: result.group,
+                    tidemark: result.tidemark,
                     changes: []
                 }
 
-                for (var change of result.changes) {
-                    groupResponse.changes.push({
-                        path: change.path,
-                        value: change.value,
-                        timestamp: change.modified
-                    });
+                for (var item of result.changes) {
+                    if (item != undefined && item.change != undefined && item.sync != undefined) {
+                        groupResponse.changes.push({
+                            path: item.change.record_id + '/' + item.change.path,
+                            value: item.change.value,
+                            client_modified: item.change.client_modified,
+                            operation: item.sync.operation
+                        });
+                    }
                 }
 
                 context.response.groups.push(groupResponse);
@@ -273,7 +317,8 @@ exports.register = function (server, options, next) {
                         changes: Joi.array().items(Joi.object({
                             path: Joi.string().required(),
                             value: Joi.string().required(),
-                            secondsAgo: Joi.number().required()
+                            secondsAgo: Joi.number().required(),
+                            operation: Joi.number().required()
                         }))
                     }))
                 }
