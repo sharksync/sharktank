@@ -121,43 +121,39 @@ const syncController = {
             const appId = context.request.payload.app_id;
             const deviceId = context.request.payload.device_id;
             const requestStartMoment = context.requestStartMoment;
+            
+            for (var change of context.request.payload.changes) {
 
-            for (var group of context.request.payload.groups) {
+                var recordId = "";
+                var path = "";
 
-                for (var change of group.changes) {
+                // Path should contain a / in format <guid>/property.name
+                if (change.path.indexOf("/") > -1) {
+                    recordId = change.path.substring(0, change.path.indexOf("/"));
+                    path = change.path.substring(change.path.indexOf("/") + 1);
+                }
 
-                    var recordId = "";
-                    var path = "";
-
-                    // Path should contain a / in format <guid>/property.name
-                    if (change.path.indexOf("/") > -1) {
-                        recordId = change.path.substring(0, change.path.indexOf("/"));
-                        path = change.path.substring(change.path.indexOf("/") + 1);
-                    }
-
-                    const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
+                const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
                     
-                    inserts.push({
-                        query: 'INSERT INTO change (app_id, record_id, path, client_modified, group, value, device_id) VALUES (?,?,?,?,?,?,?)',
-                        params: [appId, recordId, path, date, group.group, change.value, deviceId]
+                inserts.push({
+                    query: 'INSERT INTO change (app_id, record_id, path, client_modified, group, value, device_id) VALUES (?,?,?,?,?,?,?)',
+                    params: [appId, recordId, path, date, change.group, change.value, deviceId]
+                });
+
+                inserts.push({
+                    query: 'INSERT INTO sync (app_id, group, tidemark, record_id, operation, path) VALUES (?,?,now(),?,?,?)',
+                    params: [appId, change.group, recordId, change.operation, path]
+                });
+                    
+                if (inserts.length > 20) {
+                    context.client.batch(inserts, { prepare: true }, function (err) {
+                        if (err) {
+                            return reject(err);
+                        }
                     });
 
-                    inserts.push({
-                        query: 'INSERT INTO sync (app_id, group, tidemark, record_id, operation, path) VALUES (?,?,now(),?,?,?)',
-                        params: [appId, group.group, recordId, change.operation, path]
-                    });
-                    
-                    if (inserts.length > 20) {
-                        context.client.batch(inserts, { prepare: true }, function (err) {
-                            if (err) {
-                                return reject(err);
-                            }
-                        });
-
-                        // Reset the array for the next inserts
-                        inserts = [];
-                    }
-
+                    // Reset the array for the next inserts
+                    inserts = [];
                 }
 
             }
@@ -196,17 +192,17 @@ const syncController = {
             //const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
             //const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
 
-            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ? AND tidemark > ?";
+            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ?";
             //var params = [appId, group, eventualConsistancyBufferTimeUUID];
-            var params = [appId, group, tidemark];
+            var params = [appId, group];
 
-            //if (tidemark != "" && tidemark != undefined) {
+            if (tidemark != "" && tidemark != undefined) {
 
-            //    query += " AND tidemark > ?";
-            //    params.push(tidemark);
-            //}
+                query += " AND tidemark > ?";
+                params.push(tidemark);
+            }
 
-            query += " LIMIT 50";
+            query += " LIMIT 20";
 
             context.client.execute(query, params, { prepare: true }, function (err, result) {
 
@@ -312,15 +308,16 @@ exports.register = function (server, options, next) {
                     app_id: Joi.string().guid().required(),
                     app_api_access_key: Joi.string().guid().required(),
                     device_id: Joi.string().guid().required(),
+                    changes: Joi.array().items(Joi.object({
+                        path: Joi.string().required(),
+                        value: Joi.string().required(),
+                        secondsAgo: Joi.number().required(),
+                        operation: Joi.number().required(),
+                        group: Joi.string().required()
+                    })),
                     groups: Joi.array().items(Joi.object({
                         group: Joi.string().required(),
-                        tidemark: [Joi.string().guid(), Joi.string().empty(''), Joi.allow(null)],
-                        changes: Joi.array().items(Joi.object({
-                            path: Joi.string().required(),
-                            value: Joi.string().required(),
-                            secondsAgo: Joi.number().required(),
-                            operation: Joi.number().required()
-                        }))
+                        tidemark: [Joi.string().guid(), Joi.string().empty(''), Joi.allow(null)]
                     }))
                 }
             }
