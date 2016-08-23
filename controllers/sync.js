@@ -193,17 +193,18 @@ const syncController = {
     queryChangesForGroup: function (context, appId, group, tidemark) {
         return new Promise(function (resolve, reject) {
 
-            const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
-            const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
+            //const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
+            //const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
 
-            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ? AND tidemark < ?";
-            var params = [appId, group, eventualConsistancyBufferTimeUUID];
+            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ? AND tidemark > ?";
+            //var params = [appId, group, eventualConsistancyBufferTimeUUID];
+            var params = [appId, group, tidemark];
 
-            if (tidemark != "" && tidemark != undefined) {
+            //if (tidemark != "" && tidemark != undefined) {
 
-                query += " AND tidemark > ?";
-                params.push(tidemark);
-            }
+            //    query += " AND tidemark > ?";
+            //    params.push(tidemark);
+            //}
 
             query += " LIMIT 50";
 
