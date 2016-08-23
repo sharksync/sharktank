@@ -39,7 +39,7 @@ const syncController = {
                 context.response.sync_id = device.device.sync_id
 
                 // Then process all the changes from the client
-                // return syncController.processClientChanges(context);
+                return syncController.processClientChanges(context);
             })
             .then(result => {
                 // Then fire all the group queries and update the device table
@@ -205,7 +205,7 @@ const syncController = {
                 params.push(tidemark);
             }
 
-            query += " LIMIT 50";
+            query += " LIMIT 1";
 
             context.client.execute(query, params, { prepare: true }, function (err, result) {
 
