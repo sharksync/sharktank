@@ -189,12 +189,11 @@ const syncController = {
     queryChangesForGroup: function (context, appId, group, tidemark) {
         return new Promise(function (resolve, reject) {
 
-            //const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
-            //const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
+            const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
+            const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
 
-            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ?";
-            //var params = [appId, group, eventualConsistancyBufferTimeUUID];
-            var params = [appId, group];
+            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ? AND tidemark < ?";
+            var params = [appId, group, eventualConsistancyBufferTimeUUID];
 
             if (tidemark != "" && tidemark != undefined) {
 
