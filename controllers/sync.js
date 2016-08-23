@@ -205,7 +205,7 @@ const syncController = {
                 params.push(tidemark);
             }
 
-            query += " LIMIT 1";
+            query += " LIMIT 50";
 
             context.client.execute(query, params, { prepare: true }, function (err, result) {
 
