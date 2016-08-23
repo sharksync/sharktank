@@ -4,6 +4,7 @@ const Calibrate = require('calibrate');
 const Joi = require('joi');
 const async = require('async');
 const Boom = require('boom');
+const Q = require("q");
 
 const moment = require('moment');
 
@@ -29,6 +30,8 @@ const syncController = {
             }
         };
 
+        var queryResults = [];
+
         // First check its a valid app id / app key
         syncController.checkAccount(context)
             .then(application => {
@@ -42,12 +45,17 @@ const syncController = {
                 return syncController.processClientChanges(context);
             })
             .then(result => {
-                // Then fire all the group queries and update the device table
-                return Promise.all(syncController.getQueries(context));
+
+                // Then fire the group queries one at a time
+                return syncController.getQueries(context, queryResults);
             })
-            .then(results => {
+            .then(lastResult => {
+
+                // As the queries is run one at a time, scoop up the last result
+                queryResults.push(lastResult);
+
                 // If all that worked, format a return response
-                return reply(syncController.formatResponse(context, results));
+                return reply(syncController.formatResponse(context, queryResults));
             })
             .catch(err => {
                 // If any of them died, return an error for it
@@ -173,17 +181,20 @@ const syncController = {
         });
     },
 
-    getQueries: function (context) {
+    getQueries: function (context, results) {
 
         const appId = context.request.payload.app_id;
-        const queries = [];
 
-        // Work out changes for each group
-        for (var group of context.request.payload.groups) {
-            queries.push(syncController.queryChangesForGroup(context, appId, group.group, group.tidemark));
-        }
+        // Work out changes for each group in serial to not hit the DB too hard
+        var lastPromise = context.request.payload.groups.reduce(function (promise, group) {
+            return promise.then(function (result) {
+                if (result != undefined)
+                    results.push(result);
+                return syncController.queryChangesForGroup(context, appId, group.group, group.tidemark);
+            });
+        }, Q.resolve())
 
-        return queries;
+        return lastPromise;
     },
 
     queryChangesForGroup: function (context, appId, group, tidemark) {

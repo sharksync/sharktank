@@ -57,6 +57,7 @@
     <Folder Include="typings\globals\moment\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\proxyquire\" />
+    <Folder Include="typings\globals\q\" />
     <Folder Include="typings\globals\sinon\" />
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +72,7 @@
     <TypeScriptCompile Include="typings\globals\moment\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\proxyquire\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\q\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\sinon\index.d.ts" />
     <TypeScriptCompile Include="typings\index.d.ts" />
   </ItemGroup>
