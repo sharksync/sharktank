@@ -8,15 +8,34 @@ const Q = require("q");
 
 const moment = require('moment');
 
-const CassandraDriver = require('cassandra-driver');
-const Cassandra = require('../common/cassandra');
-const TimeUuid = CassandraDriver.types.TimeUuid;
-
-// The follow docs says use a single client object per app
-// https://docs.datastax.com/en/developer/nodejs-driver/2.0/nodejs-driver/reference/threeSimpleRules.html
-const client = Cassandra.getClient();
+const Scale = require('../common/scale');
 
 const syncController = {
+
+    test: function (request, reply) {
+
+        Scale.createKeyspace('test1', 1)
+            .then(function () {
+                return Scale.createTable('test1', 'testtable', 'pk')
+            })
+            .then(function () {
+                return Scale.addColumn('test1', 'testtable', 'poop', 'TEXT');
+            })
+            .then(function () {
+                return Scale.upsert('test1', 'group1', 'testtable', { poop: '123' });
+            })
+            .then(function () {
+                return Scale.query('test1', 'group1', 'testtable', { poop: '123' });
+            })
+            .then(function (response) {
+                return reply(Calibrate.response(response));
+            })
+            .catch(err => {
+                // If any of them died, return an error for it
+                return reply(Calibrate.error(err));
+            });
+
+    },
 
     post: function (request, reply) {
 
@@ -61,7 +80,6 @@ const syncController = {
                 // If any of them died, return an error for it
                 return reply(Calibrate.error(err));
             });
-
     },
 
     checkAccount: function (context) {
@@ -129,7 +147,7 @@ const syncController = {
             const appId = context.request.payload.app_id;
             const deviceId = context.request.payload.device_id;
             const requestStartMoment = context.requestStartMoment;
-            
+
             for (var change of context.request.payload.changes) {
 
                 var recordId = "";
@@ -142,7 +160,7 @@ const syncController = {
                 }
 
                 const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
-                    
+
                 inserts.push({
                     query: 'INSERT INTO change (app_id, record_id, path, client_modified, group, value, device_id) VALUES (?,?,?,?,?,?,?)',
                     params: [appId, recordId, path, date, change.group, change.value, deviceId]
@@ -152,7 +170,7 @@ const syncController = {
                     query: 'INSERT INTO sync (app_id, group, tidemark, record_id, operation, path) VALUES (?,?,now(),?,?,?)',
                     params: [appId, change.group, recordId, change.operation, path]
                 });
-                    
+
                 if (inserts.length > 20) {
                     context.client.batch(inserts, { prepare: true }, function (err) {
                         if (err) {
@@ -237,18 +255,18 @@ const syncController = {
                 syncController.queryChangeRecordsForSyncRecords(context, appId, group, groupedSyncRecords).then(results => {
                     return resolve({ group: group, changes: results, tidemark: latestTidemark });
                 })
-                .catch(err => {
-                    return reject(err);
-                });
+                    .catch(err => {
+                        return reject(err);
+                    });
 
             });
         });
     },
 
     queryChangeRecordsForSyncRecords: function (context, appId, group, syncRecordsDictionary) {
-        
+
         const queries = [];
-        
+
         for (var key in syncRecordsDictionary) {
             queries.push(syncController.queryChangeRecordsForSyncRecord(context, appId, group, syncRecordsDictionary[key]));
         }
@@ -258,10 +276,10 @@ const syncController = {
 
     queryChangeRecordsForSyncRecord: function (context, appId, group, syncRecord) {
         return new Promise(function (resolve, reject) {
-            
+
             var query = "SELECT * FROM change WHERE app_id = ? AND group = ? AND record_id = ? AND path = ? LIMIT 1";
             var params = [appId, group, syncRecord.record_id, syncRecord.path];
-            
+
             context.client.execute(query, params, { prepare: true }, function (err, result) {
 
                 if (err) {
@@ -332,6 +350,12 @@ exports.register = function (server, options, next) {
                 }
             }
         }
+    });
+
+    server.route({
+        method: "GET",
+        path: "/sync",
+        handler: syncController.test
     });
 
     next();
