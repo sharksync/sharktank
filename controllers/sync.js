@@ -14,19 +14,7 @@ const syncController = {
 
     test: function (request, reply) {
 
-        Scale.createKeyspace('test1', 1)
-            .then(function () {
-                return Scale.createTable('test1', 'testtable', 'pk')
-            })
-            .then(function () {
-                return Scale.addColumn('test1', 'testtable', 'poop', 'TEXT');
-            })
-            .then(function () {
-                return Scale.upsert('test1', 'group1', 'testtable', { poop: '123' });
-            })
-            .then(function () {
-                return Scale.query('test1', 'group1', 'testtable', { poop: '123' });
-            })
+        Scale.query('dev', 'group1', 'SELECT * FROM change', null)
             .then(function (response) {
                 return reply(Calibrate.response(response));
             })

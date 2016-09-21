@@ -5,6 +5,7 @@ const net = require('net');
 module.exports = {
 
     server: "127.0.0.1",
+    //server: "192.168.42.102",
     port: 5000,
 
     send: function (payload) {
@@ -36,11 +37,12 @@ module.exports = {
                         responseBuffer = responseBuffer.slice(0, responseBuffer.length - 2);
 
                         // we are complete, lets rock
+                        var bufferString = responseBuffer.toString();
                         var response = JSON.parse(responseBuffer);
                         client.destroy();
 
                         if (response.error != undefined)
-                            return reject(result.error);
+                            return reject(response.error);
                         else
                             return resolve(response);
                     }
@@ -94,7 +96,7 @@ module.exports = {
         return module.exports.send(payload);
     },
 
-    query: function (keyspace, partition, query, params) {
+    query: function (keyspaceName, partition, query, params) {
         var payload = { type: 'client_read', payload: { keyspace: keyspaceName, partition: partition, query: query, params: params } };
         return module.exports.send(payload);
     }
