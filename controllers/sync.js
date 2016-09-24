@@ -32,7 +32,6 @@ const syncController = {
 
         // Context is a container for everything needed for this request to be processed
         var context = {
-            client: client,
             requestStartMoment: moment(),
             request: request,
             response: {
