@@ -44,11 +44,11 @@ module.exports = {
                     // lastCharacter is 0 on Windows
                     // lastCharacter is 10 on Linux
                     if (lastCharacter == 0 || lastCharacter == 10) {
-                        responseBuffer = responseBuffer.slice(0, responseBuffer.length - 2);
+                        responseBuffer = responseBuffer.slice(0, responseBuffer.length - 1);
 
                         var bufferString = responseBuffer.toString();
 
-                        console.log("Scale.send onData callback responded: " + bufferString);
+                        //console.log("Scale.send onData callback responded: " + bufferString);
 
                         var response = JSON.parse(responseBuffer);
                         client.destroy();
