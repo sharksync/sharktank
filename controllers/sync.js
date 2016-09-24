@@ -10,11 +10,13 @@ const moment = require('moment');
 
 const Scale = require('../common/scale');
 
+const environment = "dev";
+
 const syncController = {
 
     test: function (request, reply) {
 
-        Scale.query('dev', 'group1', 'SELECT * FROM change', null)
+        Scale.query(environment, environment, 'SELECT * FROM change', null)
             .then(function (response) {
                 return reply(Calibrate.response(response));
             })
@@ -76,6 +78,7 @@ const syncController = {
             const query = 'SELECT * FROM application WHERE app_id = ? AND app_api_access_key = ?';
             const params = [context.request.payload.app_id, context.request.payload.app_api_access_key];
 
+            Scale.query(environment, 'group1', 'SELECT * FROM change', null)
             context.client.execute(query, params, { prepare: true }, function (err, result) {
 
                 if (err) {

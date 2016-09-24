@@ -4,8 +4,9 @@ const net = require('net');
 
 module.exports = {
 
-    server: "127.0.0.1",
-    //server: "192.168.42.102",
+    //server: "127.0.0.1",
+    //server: "192.168.42.21",
+    server: "104.236.121.61",
     port: 5000,
 
     send: function (payload) {
@@ -50,7 +51,7 @@ module.exports = {
             });
 
             client.on('error', function (err) {
-                return reject('error connecting to server');
+                return reject('error connecting to server: ' + err);
             });
 
             client.connect(module.exports.port, module.exports.server, function () {
