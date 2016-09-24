@@ -39,8 +39,6 @@ const syncController = {
             }
         };
 
-        var queryResults = [];
-
         // First check its a valid app id / app key
         syncController.checkAccount(context)
             .then(application => {
@@ -56,15 +54,12 @@ const syncController = {
             .then(result => {
 
                 // Then fire the group queries one at a time
-                return syncController.getQueries(context, queryResults);
+                return syncController.getQueries(context);
             })
-            .then(lastResult => {
-
-                // As the queries is run one at a time, scoop up the last result
-                queryResults.push(lastResult);
+            .then(result => {
 
                 // If all that worked, format a return response
-                return reply(syncController.formatResponse(context, queryResults));
+                return reply(syncController.formatResponse(context, result));
             })
             .catch(err => {
                 // If any of them died, return an error for it
@@ -81,11 +76,14 @@ const syncController = {
             Scale.query(environment, systemPartition, query, params)
                 .then(function (data) {
 
+                    if (data.error != null)
+                        return reject("Querying application failed with: " + data.error);
+
                     if (data.results.length == 0) {
                         return reject(Calibrate(Boom.unauthorized('app_id or app_api_access_key incorrect')));
                     }
 
-                    resolve(data.results[0]);
+                    return resolve(data.results[0]);
                 })
                 .catch(err => {
                     return reject(err);
@@ -99,24 +97,28 @@ const syncController = {
 
             const query = 'SELECT * FROM device WHERE device_id = ?';
             const params = [deviceId];
+            var deviceRecord = null;
 
             Scale.query(environment, systemPartition, query, params)
                 .then(function (data) {
+
+                    if (data.error != null)
+                        return reject("Querying device failed with: " + data.error);
 
                     if (data.results.length == 0) {
                         return reject(Boom.notFound('device_id not found'));
                     }
 
-                    const deviceRecord = data.results[0];
+                    deviceRecord = data.results[0];
 
                     // Update the last seen column on the device table for this device
-                    Scale.upsert(environment, systemPartition, "device", { device_id: deviceId, last_seen: moment().toDate() })
-                        .then(function (data) {
-                            resolve({ device: deviceRecord });
-                        })
-                        .catch(err => {
-                            return reject(err);
-                        });
+                    return Scale.upsert(environment, systemPartition, "device", { device_id: deviceId, last_seen: "%clustertime%" });
+                })
+                .then(function (data) {
+                    if (data.error != null)
+                        return reject("Device update failed with: " + data.error);
+
+                    return resolve({ device: deviceRecord });
                 })
                 .catch(err => {
                     return reject(err);
@@ -125,88 +127,76 @@ const syncController = {
     },
 
     processClientChanges: function (context) {
+
+        var upserts = [];
+        const appId = context.request.payload.app_id;
+        const deviceId = context.request.payload.device_id;
+        const requestStartMoment = context.requestStartMoment;
+
+        for (var change of context.request.payload.changes) {
+            upserts.push(syncController.processClientChange(context, appId, deviceId, requestStartMoment, change));
+        }
+
+        return Promise.all(upserts);
+    },
+
+    processClientChange: function (context, appId, deviceId, requestStartMoment, change) {
         return new Promise(function (resolve, reject) {
 
-            var inserts = [];
-            const appId = context.request.payload.app_id;
-            const deviceId = context.request.payload.device_id;
-            const requestStartMoment = context.requestStartMoment;
+            var recordId = "";
+            var path = "";
 
-            for (var change of context.request.payload.changes) {
-
-                var recordId = "";
-                var path = "";
-
-                // Path should contain a / in format <guid>/property.name
-                if (change.path.indexOf("/") > -1) {
-                    recordId = change.path.substring(0, change.path.indexOf("/"));
-                    path = change.path.substring(change.path.indexOf("/") + 1);
-                }
-
-                const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
-
-                inserts.push({
-                    query: 'INSERT INTO change (app_id, record_id, path, client_modified, group, value, device_id) VALUES (?,?,?,?,?,?,?)',
-                    params: [appId, recordId, path, date, change.group, change.value, deviceId]
-                });
-
-                inserts.push({
-                    query: 'INSERT INTO sync (app_id, group, tidemark, record_id, operation, path) VALUES (?,?,now(),?,?,?)',
-                    params: [appId, change.group, recordId, change.operation, path]
-                });
-
-                if (inserts.length > 20) {
-                    context.client.batch(inserts, { prepare: true }, function (err) {
-                        if (err) {
-                            return reject(err);
-                        }
-                    });
-
-                    // Reset the array for the next inserts
-                    inserts = [];
-                }
-
+            // Path should contain a / in format <guid>/property.name
+            if (change.path.indexOf("/") > -1) {
+                recordId = change.path.substring(0, change.path.indexOf("/"));
+                path = change.path.substring(change.path.indexOf("/") + 1);
             }
 
-            if (inserts.length > 0) {
-                context.client.batch(inserts, { prepare: true }, function (err) {
-                    if (err) {
-                        return reject(err);
-                    }
+            const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
+
+            Scale.upsert(environment, change.group, "change", {
+                change_id: "%uuid%",
+                app_id: appId,
+                rec_id: recordId,
+                path: path,
+                grp: change.group,
+                device_id: deviceId,
+                modified: date,
+                tidemark: "%clustertime%",
+                value: change.value
+            })
+                .then(function (data) {
+                    if (data.error != null)
+                        return reject("Change upsert failed with: " + data.error);
 
                     return resolve();
+                })
+                .catch(err => {
+                    return reject(err);
                 });
-            }
-            else {
-                return resolve();
-            }
         });
     },
 
-    getQueries: function (context, results) {
+    getQueries: function (context) {
 
         const appId = context.request.payload.app_id;
 
-        // Work out changes for each group in serial to not hit the DB too hard
-        var lastPromise = context.request.payload.groups.reduce(function (promise, group) {
-            return promise.then(function (data) {
-                if (data != undefined)
-                    results.push(data);
-                return syncController.queryChangesForGroup(context, appId, group.group, group.tidemark);
-            });
-        }, Q.resolve())
+        var queries = [];
 
-        return lastPromise;
+        for (var group of context.request.payload.groups) {
+            queries.push(syncController.queryChangesForGroup(context, appId, group.group, group.tidemark));
+        }
+
+        return Promise.all(queries);
     },
 
     queryChangesForGroup: function (context, appId, group, tidemark) {
         return new Promise(function (resolve, reject) {
 
-            const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
-            const eventualConsistancyBufferTimeUUID = TimeUuid.fromDate(eventualConsistancyBufferDate);
+            //const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
 
-            var query = "SELECT * FROM sync WHERE app_id = ? AND group = ? AND tidemark < ?";
-            var params = [appId, group, eventualConsistancyBufferTimeUUID];
+            var query = "SELECT * FROM change WHERE app_id = ? AND grp = ?";
+            var params = [appId, group];
 
             if (tidemark != "" && tidemark != undefined) {
 
@@ -216,62 +206,17 @@ const syncController = {
 
             query += " LIMIT 20";
 
-            context.client.execute(query, params, { prepare: true }, function (err, data) {
+            Scale.query(environment, group, query, params)
+                .then(function (data) {
 
-                if (err) {
-                    return reject(err);
-                }
+                    if (data.error != null)
+                        return reject("Querying cahnge table failed with: " + data.error);
 
-                var latestTidemark = "";
-                var groupedSyncRecords = {};
-
-                // Dedup all the sync records using a dictionary
-                for (var syncRecord of data.results) {
-                    var recordIdAndPath = syncRecord.record_id + '/' + syncRecord.path;
-
-                    groupedSyncRecords[recordIdAndPath] = syncRecord;
-
-                    latestTidemark = syncRecord.tidemark;
-                }
-
-                // TODO: sync dud app_id,group,tidemark
-
-                syncController.queryChangeRecordsForSyncRecords(context, appId, group, groupedSyncRecords).then(results => {
-                    return resolve({ group: group, changes: results, tidemark: latestTidemark });
+                    resolve({ group: group, changes: data.results });
                 })
-                    .catch(err => {
-                        return reject(err);
-                    });
-
-            });
-        });
-    },
-
-    queryChangeRecordsForSyncRecords: function (context, appId, group, syncRecordsDictionary) {
-
-        const queries = [];
-
-        for (var key in syncRecordsDictionary) {
-            queries.push(syncController.queryChangeRecordsForSyncRecord(context, appId, group, syncRecordsDictionary[key]));
-        }
-
-        return Promise.all(queries);
-    },
-
-    queryChangeRecordsForSyncRecord: function (context, appId, group, syncRecord) {
-        return new Promise(function (resolve, reject) {
-
-            var query = "SELECT * FROM change WHERE app_id = ? AND group = ? AND record_id = ? AND path = ? LIMIT 1";
-            var params = [appId, group, syncRecord.record_id, syncRecord.path];
-
-            context.client.execute(query, params, { prepare: true }, function (err, data) {
-
-                if (err) {
+                .catch(err => {
                     return reject(err);
-                }
-
-                resolve({ change: data.results[0], sync: syncRecord });
-            });
+                });
         });
     },
 
@@ -283,18 +228,18 @@ const syncController = {
 
                 var groupResponse = {
                     group: result.group,
-                    tidemark: result.tidemark,
+                    tidemark: null,
                     changes: []
                 }
 
-                for (var item of result.changes) {
-                    if (item != undefined && item.change != undefined && item.sync != undefined) {
+                for (var change of result.changes) {
+                    if (change != undefined) {
                         groupResponse.changes.push({
-                            path: item.change.record_id + '/' + item.change.path,
-                            value: item.change.value,
-                            client_modified: item.change.client_modified,
-                            operation: item.sync.operation
+                            path: change.rec_id + '/' + change.path,
+                            value: change.value,
+                            modified: change.modified,
                         });
+                        groupResponse.tidemark = change.tidemark;
                     }
                 }
 

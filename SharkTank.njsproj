@@ -30,7 +30,6 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="common\cassandra.js" />
     <Compile Include="common\scale.js" />
     <Compile Include="controllers\sync.js" />
     <Compile Include="server.js" />
