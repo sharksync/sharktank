@@ -16,6 +16,8 @@ module.exports = {
             var client = new net.Socket();
             var responseBuffer = null;
 
+            console.log("Starting Scale.send with payload: " + payload);
+
             // settings for the client
             client.setTimeout(30000, function () {
                 client.destroy();
@@ -25,6 +27,9 @@ module.exports = {
             client.setNoDelay(true);
 
             client.on('data', function (data) {
+
+                console.log("Scale.send onData callback started");
+
                 // newmove the c++ \0 termination, if it arrived in time
                 var buffer = new Buffer(data);
                 if (responseBuffer == null) {
@@ -42,19 +47,26 @@ module.exports = {
                         var response = JSON.parse(responseBuffer);
                         client.destroy();
 
+                        console.log("Scale.send onData callback responded");
+
                         if (response.error != undefined)
                             return reject(response.error);
                         else
                             return resolve(response);
                     }
                 }
+
+                console.log("Scale.send onData callback completed");
+
             });
 
             client.on('error', function (err) {
-                return reject('error connecting to server: ' + err);
+                return reject('error from server: ' + err);
             });
 
             client.connect(module.exports.port, module.exports.server, function () {
+
+                console.log("Scale.send connect callback started");
 
                 var stringPayload = JSON.stringify(payload);
                 var buffer = new Buffer(stringPayload);
@@ -62,6 +74,7 @@ module.exports = {
 
                 client.write(Buffer.concat([buffer, nullTerminator]));
 
+                console.log("Scale.send connect callback completed");
             });
 
         })

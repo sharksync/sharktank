@@ -11,6 +11,7 @@ const moment = require('moment');
 const Scale = require('../common/scale');
 
 const environment = "dev";
+const systemPartition = "shark";
 
 const syncController = {
 
@@ -78,20 +79,18 @@ const syncController = {
             const query = 'SELECT * FROM application WHERE app_id = ? AND app_api_access_key = ?';
             const params = [context.request.payload.app_id, context.request.payload.app_api_access_key];
 
-            Scale.query(environment, 'group1', 'SELECT * FROM change', null)
-            context.client.execute(query, params, { prepare: true }, function (err, result) {
+            Scale.query(environment, systemPartition, query, params)
+                .then(function (result) {
 
-                if (err) {
+                    if (result.rows.length == 0) {
+                        return reject(Calibrate(Boom.unauthorized('app_id or app_api_access_key incorrect')));
+                    }
+
+                    resolve(result.rows[0]);
+                })
+                .catch(err => {
                     return reject(err);
-                }
-
-                if (result.rows.length == 0) {
-                    return reject(Calibrate(Boom.unauthorized('app_id or app_api_access_key incorrect')));
-                }
-
-                resolve(result.rows[0]);
-            });
-
+                });
         });
     },
 
