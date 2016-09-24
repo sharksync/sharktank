@@ -41,6 +41,7 @@ module.exports = {
                 if (responseBuffer != null && responseBuffer.length > 0) {
 
                     console.log("last character: " + responseBuffer[responseBuffer.length - 1]);
+                    console.log("Payload: " + responseBuffer.toString());
 
                     if (responseBuffer[responseBuffer.length - 1] == 0) {
                         responseBuffer = responseBuffer.slice(0, responseBuffer.length - 2);
