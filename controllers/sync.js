@@ -79,13 +79,13 @@ const syncController = {
             const params = [context.request.payload.app_id, context.request.payload.app_api_access_key];
 
             Scale.query(environment, systemPartition, query, params)
-                .then(function (result) {
+                .then(function (data) {
 
-                    if (result.rows.length == 0) {
+                    if (data.results.length == 0) {
                         return reject(Calibrate(Boom.unauthorized('app_id or app_api_access_key incorrect')));
                     }
 
-                    resolve(result.rows[0]);
+                    resolve(data.results[0]);
                 })
                 .catch(err => {
                     return reject(err);
@@ -101,17 +101,17 @@ const syncController = {
             const params = [deviceId];
 
             Scale.query(environment, systemPartition, query, params)
-                .then(function (result) {
+                .then(function (data) {
 
-                    if (result.rows.length == 0) {
+                    if (data.results.length == 0) {
                         return reject(Boom.notFound('device_id not found'));
                     }
 
-                    const deviceRecord = result.rows[0];
+                    const deviceRecord = data.results[0];
 
                     // Update the last seen column on the device table for this device
                     Scale.upsert(environment, systemPartition, "device", { device_id: deviceId, last_seen: moment().toDate() })
-                        .then(function (result) {
+                        .then(function (data) {
                             resolve({ device: deviceRecord });
                         })
                         .catch(err => {
@@ -189,9 +189,9 @@ const syncController = {
 
         // Work out changes for each group in serial to not hit the DB too hard
         var lastPromise = context.request.payload.groups.reduce(function (promise, group) {
-            return promise.then(function (result) {
-                if (result != undefined)
-                    results.push(result);
+            return promise.then(function (data) {
+                if (data != undefined)
+                    results.push(data);
                 return syncController.queryChangesForGroup(context, appId, group.group, group.tidemark);
             });
         }, Q.resolve())
@@ -216,7 +216,7 @@ const syncController = {
 
             query += " LIMIT 20";
 
-            context.client.execute(query, params, { prepare: true }, function (err, result) {
+            context.client.execute(query, params, { prepare: true }, function (err, data) {
 
                 if (err) {
                     return reject(err);
@@ -226,7 +226,7 @@ const syncController = {
                 var groupedSyncRecords = {};
 
                 // Dedup all the sync records using a dictionary
-                for (var syncRecord of result.rows) {
+                for (var syncRecord of data.results) {
                     var recordIdAndPath = syncRecord.record_id + '/' + syncRecord.path;
 
                     groupedSyncRecords[recordIdAndPath] = syncRecord;
@@ -264,13 +264,13 @@ const syncController = {
             var query = "SELECT * FROM change WHERE app_id = ? AND group = ? AND record_id = ? AND path = ? LIMIT 1";
             var params = [appId, group, syncRecord.record_id, syncRecord.path];
 
-            context.client.execute(query, params, { prepare: true }, function (err, result) {
+            context.client.execute(query, params, { prepare: true }, function (err, data) {
 
                 if (err) {
                     return reject(err);
                 }
 
-                resolve({ change: result.rows[0], sync: syncRecord });
+                resolve({ change: data.results[0], sync: syncRecord });
             });
         });
     },
