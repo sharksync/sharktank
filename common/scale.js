@@ -40,10 +40,10 @@ module.exports = {
 
                 if (responseBuffer != null && responseBuffer.length > 0) {
 
-                    console.log("last character: " + responseBuffer[responseBuffer.length - 1]);
-                    console.log("Payload: " + responseBuffer.toString());
-
-                    if (responseBuffer[responseBuffer.length - 1] == 0) {
+                    var lastCharacter = responseBuffer[responseBuffer.length - 1];
+                    // lastCharacter is 0 on Windows
+                    // lastCharacter is 10 on Linux
+                    if (lastCharacter == 0 || lastCharacter == 10) {
                         responseBuffer = responseBuffer.slice(0, responseBuffer.length - 2);
 
                         // we are complete, lets rock
