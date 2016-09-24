@@ -11,7 +11,7 @@ const moment = require('moment');
 const Scale = require('../common/scale');
 
 const environment = "dev";
-const systemPartition = "shark";
+const systemPartition = "shark_sync";
 
 const syncController = {
 
