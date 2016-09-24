@@ -46,12 +46,14 @@ module.exports = {
                     if (lastCharacter == 0 || lastCharacter == 10) {
                         responseBuffer = responseBuffer.slice(0, responseBuffer.length - 2);
 
-                        // we are complete, lets rock
                         var bufferString = responseBuffer.toString();
+
+                        console.log("Scale.send onData callback responded: " + bufferString);
+
                         var response = JSON.parse(responseBuffer);
                         client.destroy();
 
-                        console.log("Scale.send onData callback responded");
+                        console.log("Scale.send onData callback json parsed");
 
                         if (response.error != undefined)
                             return reject(response.error);
