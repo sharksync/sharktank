@@ -101,32 +101,27 @@ const syncController = {
             const query = 'SELECT * FROM device WHERE device_id = ?';
             const params = [deviceId];
 
-            context.client.execute(query, params, { prepare: true }, function (err, result) {
+            Scale.query(environment, systemPartition, query, params)
+                .then(function (result) {
 
-                if (err) {
-                    return reject(err);
-                }
-
-                if (result.rows.length == 0) {
-                    return reject(Boom.notFound('device_id not found'));
-                }
-
-                const updateStatement = 'UPDATE device SET last_seen = dateof(now()) WHERE device_id = ?';
-                const params = [deviceId];
-                const deviceRecord = result.rows[0];
-
-                context.client.execute(updateStatement, params, { prepare: true }, function (err, result) {
-
-                    if (err) {
-                        return reject(err);
+                    if (result.rows.length == 0) {
+                        return reject(Boom.notFound('device_id not found'));
                     }
 
-                    resolve({ device: deviceRecord });
+                    const deviceRecord = result.rows[0];
 
+                    // Update the last seen column on the device table for this device
+                    Scale.upsert(environment, systemPartition, "device", { device_id: deviceId, last_seen: moment().toDate() })
+                        .then(function (result) {
+                            resolve({ device: deviceRecord });
+                        })
+                        .catch(err => {
+                            return reject(err);
+                        });
+                })
+                .catch(err => {
+                    return reject(err);
                 });
-
-            });
-
         });
     },
 
