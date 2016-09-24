@@ -15,19 +15,6 @@ const systemPartition = "shark_sync";
 
 const syncController = {
 
-    test: function (request, reply) {
-
-        Scale.query(environment, environment, 'SELECT * FROM change', null)
-            .then(function (response) {
-                return reply(Calibrate.response(response));
-            })
-            .catch(err => {
-                // If any of them died, return an error for it
-                return reply(Calibrate.error(err));
-            });
-
-    },
-
     post: function (request, reply) {
 
         // Context is a container for everything needed for this request to be processed
@@ -53,7 +40,7 @@ const syncController = {
             })
             .then(result => {
 
-                // Then fire the group queries one at a time
+                // Then do all the group queries
                 return syncController.getQueries(context);
             })
             .then(result => {
@@ -152,16 +139,14 @@ const syncController = {
                 path = change.path.substring(change.path.indexOf("/") + 1);
             }
 
-            const date = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').toDate();
+            const modifiedEpoch = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').unix();
 
-            Scale.upsert(environment, change.group, "change", {
+            Scale.upsert(environment, appId + change.group, "change", {
                 change_id: "%uuid%",
-                app_id: appId,
                 rec_id: recordId,
                 path: path,
-                grp: change.group,
                 device_id: deviceId,
-                modified: date,
+                modified: modifiedEpoch,
                 tidemark: "%clustertime%",
                 value: change.value
             })
@@ -193,24 +178,22 @@ const syncController = {
     queryChangesForGroup: function (context, appId, group, tidemark) {
         return new Promise(function (resolve, reject) {
 
-            //const eventualConsistancyBufferDate = moment().subtract(1, "seconds").toDate();
-
-            var query = "SELECT * FROM change WHERE app_id = ? AND grp = ?";
-            var params = [appId, group];
+            var query = "SELECT * FROM change";
+            var params = [];
 
             if (tidemark != "" && tidemark != undefined) {
 
-                query += " AND tidemark > ?";
+                query += " WHERE tidemark > ?";
                 params.push(tidemark);
             }
 
-            query += " LIMIT 20";
+            query += " ORDER BY tidemark LIMIT 20";
 
-            Scale.query(environment, group, query, params)
+            Scale.query(environment, appId + group, query, params)
                 .then(function (data) {
 
                     if (data.error != null)
-                        return reject("Querying cahnge table failed with: " + data.error);
+                        return reject("Querying change table failed with: " + data.error);
 
                     resolve({ group: group, changes: data.results });
                 })
@@ -279,12 +262,6 @@ exports.register = function (server, options, next) {
                 }
             }
         }
-    });
-
-    server.route({
-        method: "GET",
-        path: "/sync",
-        handler: syncController.test
     });
 
     next();

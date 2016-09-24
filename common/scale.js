@@ -16,7 +16,7 @@ module.exports = {
             var client = new net.Socket();
             var responseBuffer = null;
 
-            //console.log("Starting Scale.send with payload: " + payload);
+            console.log("Starting Scale.send with payload: " + payload);
 
             // settings for the client
             client.setTimeout(30000, function () {
@@ -28,7 +28,7 @@ module.exports = {
 
             client.on('data', function (data) {
 
-                //console.log("Scale.send onData callback started");
+                console.log("Scale.send onData callback started");
 
                 // newmove the c++ \0 termination, if it arrived in time
                 var buffer = new Buffer(data, 'utf8');
@@ -48,12 +48,12 @@ module.exports = {
 
                         var bufferString = responseBuffer.toString();
 
-                        //console.log("Scale.send onData callback responded: " + bufferString);
+                        console.log("Scale.send onData callback responded: " + bufferString);
 
                         var response = JSON.parse(responseBuffer);
                         client.destroy();
 
-                        //console.log("Scale.send onData callback json parsed");
+                        console.log("Scale.send onData callback json parsed");
 
                         if (response.error != undefined)
                             return reject(response.error);
@@ -62,7 +62,7 @@ module.exports = {
                     }
                 }
 
-                //console.log("Scale.send onData callback completed");
+                console.log("Scale.send onData callback completed");
 
             });
 
@@ -72,7 +72,7 @@ module.exports = {
 
             client.connect(module.exports.port, module.exports.server, function () {
 
-                //console.log("Scale.send connect callback started");
+                console.log("Scale.send connect callback started");
 
                 var stringPayload = JSON.stringify(payload);
                 var buffer = new Buffer(stringPayload);
@@ -80,7 +80,7 @@ module.exports = {
 
                 client.write(Buffer.concat([buffer, nullTerminator]));
 
-                //console.log("Scale.send connect callback completed");
+                console.log("Scale.send connect callback completed");
             });
 
         })
@@ -112,13 +112,30 @@ module.exports = {
 
     upsert: function (keyspaceName, partition, table, values) {
         // you must always provide the PK value in the values dictionary, then an INSERT OR REPLACE INTO is called.
-        var payload = { type: 'client_write', payload: { keyspace: keyspaceName, partition: partition, table: table, values: values } };
-        return module.exports.send(payload);
+        //var payload = { type: 'client_write', payload: { keyspace: keyspaceName, partition: partition, table: table, values: values } };
+        //return module.exports.send(payload);
+        // performance testing
+        return new Promise(function (resolve, reject) {
+            resolve({});
+        });
     },
 
     query: function (keyspaceName, partition, query, params) {
-        var payload = { type: 'client_read', payload: { keyspace: keyspaceName, partition: partition, query: query, params: params } };
-        return module.exports.send(payload);
+        //var payload = { type: 'client_read', payload: { keyspace: keyspaceName, partition: partition, query: query, params: params } };
+        //return module.exports.send(payload);
+        // performance testing
+        return new Promise(function (resolve, reject) {
+            resolve({
+                results: [
+                    {
+                        rec_id: "",
+                        path: "",
+                        value: "",
+                        modified: "",
+                        tidemark: ""
+                    }]
+            });
+        });
     }
 
 }
