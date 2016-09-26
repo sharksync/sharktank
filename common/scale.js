@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-const net = require('net');
+const http = require('http');
 
 module.exports = {
 
@@ -13,76 +13,62 @@ module.exports = {
 
         return new Promise(function (resolve, reject) {
 
-            var client = new net.Socket();
-            var responseBuffer = null;
+            var requestBody = JSON.stringify(payload);
+
+            var options = {
+                host: module.exports.server,
+                port: module.exports.port,
+                path: '/api',
+                method: 'POST',
+                headers: {
+                    'Content-length': requestBody.length,
+                    'Content-type': 'application/json'
+                }
+            };
+
+            // Fiddler debugging configuration
+            //var options = {
+            //    host: "localhost",
+            //    port: "8888",
+            //    path: 'http://192.168.42.21:5000/api',
+            //    method: 'POST',
+            //    headers: {
+            //        'Content-length': requestBody.length,
+            //        'Content-type': 'application/json',
+            //        Host: "192.168.42.21:5000"
+            //    }
+            //};
 
             console.log("Starting Scale.send with payload: " + payload);
 
-            // settings for the client
-            client.setTimeout(30000, function () {
-                client.destroy();
-                return reject('error connecting to server');
-            });
+            var callback = function (response) {
+                var responseString = ''
+                response.on('data', function (chunk) {
+                    responseString += chunk;
+                });
 
-            client.setNoDelay(true);
+                response.on('end', function () {
+                    //console.log("Scale.send onData callback responded: " + responseString);
 
-            client.on('data', function (data) {
+                    var response = JSON.parse(responseString);
 
-                console.log("Scale.send onData callback started");
+                    //console.log("Scale.send onData callback json parsed");
 
-                // newmove the c++ \0 termination, if it arrived in time
-                var buffer = new Buffer(data, 'utf8');
-                if (responseBuffer == null) {
-                    responseBuffer = buffer;
-                } else {
-                    responseBuffer = Buffer.concat([responseBuffer, buffer]);
-                }
+                    if (response.error != undefined)
+                        return reject(response.error);
+                    else
+                        return resolve(response);
+                });
 
-                if (responseBuffer != null && responseBuffer.length > 0) {
+                response.on('error', function (err) {
+                    return reject('error from server: ' + err);
+                });
+            }
 
-                    var lastCharacter = responseBuffer[responseBuffer.length - 1];
-                    // lastCharacter is 0 on Windows
-                    // lastCharacter is 10 on Linux
-                    if (lastCharacter == 0 || lastCharacter == 10) {
-                        responseBuffer = responseBuffer.slice(0, responseBuffer.length - 1);
+            var req = http.request(options, callback);
 
-                        var bufferString = responseBuffer.toString();
-
-                        console.log("Scale.send onData callback responded: " + bufferString);
-
-                        var response = JSON.parse(responseBuffer);
-                        client.destroy();
-
-                        console.log("Scale.send onData callback json parsed");
-
-                        if (response.error != undefined)
-                            return reject(response.error);
-                        else
-                            return resolve(response);
-                    }
-                }
-
-                console.log("Scale.send onData callback completed");
-
-            });
-
-            client.on('error', function (err) {
-                return reject('error from server: ' + err);
-            });
-
-            client.connect(module.exports.port, module.exports.server, function () {
-
-                console.log("Scale.send connect callback started");
-
-                var stringPayload = JSON.stringify(payload);
-                var buffer = new Buffer(stringPayload);
-                var nullTerminator = new Buffer([0x00, 0x00, 0x00]);
-
-                client.write(Buffer.concat([buffer, nullTerminator]));
-
-                console.log("Scale.send connect callback completed");
-            });
-
+            req.write(requestBody);
+            req.end();
         })
 
     },
@@ -112,30 +98,30 @@ module.exports = {
 
     upsert: function (keyspaceName, partition, table, values) {
         // you must always provide the PK value in the values dictionary, then an INSERT OR REPLACE INTO is called.
-        //var payload = { type: 'client_write', payload: { keyspace: keyspaceName, partition: partition, table: table, values: values } };
-        //return module.exports.send(payload);
+        var payload = { type: 'client_write', payload: { keyspace: keyspaceName, partition: partition, table: table, values: values } };
+        return module.exports.send(payload);
         // performance testing
-        return new Promise(function (resolve, reject) {
-            resolve({});
-        });
+        //return new Promise(function (resolve, reject) {
+        //    resolve({});
+        //});
     },
 
     query: function (keyspaceName, partition, query, params) {
-        //var payload = { type: 'client_read', payload: { keyspace: keyspaceName, partition: partition, query: query, params: params } };
-        //return module.exports.send(payload);
+        var payload = { type: 'client_read', payload: { keyspace: keyspaceName, partition: partition, query: query, params: params } };
+        return module.exports.send(payload);
         // performance testing
-        return new Promise(function (resolve, reject) {
-            resolve({
-                results: [
-                    {
-                        rec_id: "",
-                        path: "",
-                        value: "",
-                        modified: "",
-                        tidemark: ""
-                    }]
-            });
-        });
+        //return new Promise(function (resolve, reject) {
+        //    resolve({
+        //        results: [
+        //            {
+        //                rec_id: "",
+        //                path: "",
+        //                value: "",
+        //                modified: "",
+        //                tidemark: ""
+        //            }]
+        //    });
+        //});
     }
 
 }
