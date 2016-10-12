@@ -4,9 +4,9 @@ const http = require('http');
 
 module.exports = {
 
-    //server: "127.0.0.1",
+    server: "127.0.0.1",
     //server: "192.168.42.21",
-    server: "104.236.121.61",
+    //server: "104.236.121.61",
     port: 5000,
 
     send: function (payload) {
