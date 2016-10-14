@@ -5,7 +5,7 @@ const Good = require('good');
 const Calibrate = require('calibrate');
 
 const server = new Hapi.Server();
-server.connection({ port: 80 });
+server.connection({ port: 8080 });
 
 server.register([
     { register: require('./controllers/sync') },
