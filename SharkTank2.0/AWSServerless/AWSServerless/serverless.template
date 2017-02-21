@@ -1,0 +1,60 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Transform" : "AWS::Serverless-2016-10-31",
+  "Description" : "An AWS Serverless Application that uses the ASP.NET Core framework running in Amazon Lambda.",
+
+  "Parameters" : {
+  },
+
+  "Conditions" : {
+  },
+
+  "Resources" : {
+
+    "Lambda" : {
+      "Type" : "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "AWSServerless::AWSServerless.LambdaEntryPoint::FunctionHandlerAsync",
+        "Runtime": "dotnetcore1.0",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": null,
+        "Policies": [ "AWSLambdaFullAccess" ],
+        "Environment" : {
+          "Variables" : {
+          }
+        },
+        "Events": {
+          "PutResource": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/{proxy+}",
+              "Method": "ANY"
+            }
+          }
+        }
+      }
+    },
+	
+    "DynamoDBApplication" : {
+        "Type" : "AWS::DynamoDB::Table",
+        "Properties" : {
+            "TableName" : "Application",
+            "AttributeDefinitions" : [
+              {"AttributeName" : "Id", "AttributeType" : "S"}
+            ],
+            "KeySchema"            : [
+              {"AttributeName" : "Id", "KeyType" : "HASH"}
+            ],
+            "ProvisionedThroughput" : {
+                "ReadCapacityUnits" : 1,
+                "WriteCapacityUnits" : 1
+            }
+        }
+    }
+  },
+
+  "Outputs" : {
+  }
+}

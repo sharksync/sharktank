@@ -1,0 +1,1 @@
+{  "profiles": {    "AWSServerless": {      "commandName": "Project",      "environmentVariables": {        "ASPNETCORE_ENVIRONMENT": "Development"      }    }  }}
