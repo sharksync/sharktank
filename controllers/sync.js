@@ -138,7 +138,7 @@ const syncController = {
                 recordId = change.path.substring(0, change.path.indexOf("/"));
                 path = change.path.substring(change.path.indexOf("/") + 1);
             }
-
+            
             const modifiedEpoch = moment(requestStartMoment).subtract(change.secondsAgo, 'seconds').unix();
 
             Scale.upsert(environment, appId + change.group, "change", {
