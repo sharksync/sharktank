@@ -11,6 +11,8 @@ using AWSServerless.DynamoDB.Tables;
 using Amazon.DynamoDBv2;
 using Amazon;
 using Amazon.DynamoDBv2.DocumentModel;
+using System.Diagnostics;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AWSServerless.Controllers
 {
@@ -19,16 +21,17 @@ namespace AWSServerless.Controllers
     {
         ILogger Logger { get; set; }
 
-        DynamoDBContext DynamoDB { get; set; }
+        IDynamoDBContext DynamoDB { get; set; }
+
+        DynamoDbCache Cache { get; set; }
 
         DateTime requestStartTimeUTC { get; set; }
 
-        public SyncController(ILogger<SyncController> logger)
+        public SyncController(ILogger<SyncController> logger, IDynamoDBContext dynamoDB, DynamoDbCache cache)
         {
             Logger = logger;
-
-            var config = new DynamoDBContextConfig { Conversion = DynamoDBEntryConversion.V2 };
-            DynamoDB = new DynamoDBContext(new AmazonDynamoDBClient(RegionEndpoint.EUWest1), config);
+            DynamoDB = dynamoDB;
+            Cache = cache;
         }
 
         [HttpPost]
@@ -70,15 +73,12 @@ namespace AWSServerless.Controllers
                 ModelState.AddModelError("app_id", "app_id missing or invalid request");
             else
             {
-                Logger.LogInformation($"Getting app for id: {request.AppId}");
-                var app = await DynamoDB.LoadAsync<Application>(request.AppId);
+                var app = await Cache.GetFromCacheOrDynamoDb<Application>(request.AppId);
 
                 if (app == null)
                     ModelState.AddModelError("app_id", "No application found for app_id");
                 else
                 {
-                    Logger.LogInformation($"Found app: {JsonConvert.SerializeObject(app)}");
-
                     if (app.ApiAccessKey != request.AppApiAccessKey)
                         ModelState.AddModelError("app_api_access_key", "app_api_access_key incorrect for app_id");
                 }
@@ -91,15 +91,12 @@ namespace AWSServerless.Controllers
 
         private async Task<Device> ValidateDevice(SyncRequestViewModel request)
         {
-            Logger.LogInformation($"Getting device for id: {request.DeviceId}");
-            var device = await DynamoDB.LoadAsync<Device>(request.DeviceId);
-
+            var device = await Cache.GetFromCacheOrDynamoDb<Device>(request.DeviceId);
+            
             if (device == null)
                 ModelState.AddModelError("device_id", "No device found for device_id");
             else
             {
-                Logger.LogInformation($"Found device: {JsonConvert.SerializeObject(device)}");
-
                 device.LastSeen = DateTime.UtcNow;
                 await DynamoDB.SaveAsync(device);
             }
@@ -113,6 +110,9 @@ namespace AWSServerless.Controllers
 
             if (request.Changes != null && request.Changes.Any())
             {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+
                 // Dynamo batches are limited to 20 odd records at time
                 foreach (var batch in request.Changes.Batch(20))
                 {
@@ -147,15 +147,19 @@ namespace AWSServerless.Controllers
 
                         if (!batchWrites.TryGetValue(tableName, out batchWrite))
                         {
-                            batchWrite = DynamoDB.CreateBatchWrite<Change>(new DynamoDBOperationConfig { OverrideTableName = tableName });
+                            batchWrite = ((DynamoDBContext)DynamoDB).CreateBatchWrite<Change>(new DynamoDBOperationConfig { OverrideTableName = tableName });
                             batchWrites.Add(tableName, batchWrite);
                         }
 
                         batchWrite.AddPutItem(dbChange);
                     }
 
+                    sw.Restart();
                     await DynamoDB.ExecuteBatchWriteAsync(batchWrites.Values.ToArray());
+                    Logger.LogInformation($"Saved changes to DynamoDB in {sw.ElapsedMilliseconds}ms count: {batchWrites.Values.Count}");
                 }
+
+                sw.Stop();
             }
         }
 
@@ -163,10 +167,14 @@ namespace AWSServerless.Controllers
         {
             var response = new SyncResponseViewModel() { Groups = new List<SyncResponseViewModel.GroupViewModel>() };
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            
             foreach (var group in request.Groups)
             {
                 List<Change> results;
 
+                sw.Restart();
                 if (group.Tidemark == null || group.Tidemark <= 0)
                 {
                     Logger.LogInformation($"Getting all changes for group: {group.Group}");
@@ -176,9 +184,10 @@ namespace AWSServerless.Controllers
                 else
                 {
                     Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
-                    var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new [] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change" });
+                    var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new[] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change" });
                     results = await query.GetNextSetAsync();
                 }
+                Logger.LogInformation($"Retrieved changes from DynamoDB in {sw.ElapsedMilliseconds}ms count: {results.Count}");
 
                 if (results != null && results.Any())
                 {
@@ -195,6 +204,8 @@ namespace AWSServerless.Controllers
                     });
                 }
             }
+
+            sw.Stop();
 
             return response;
         }

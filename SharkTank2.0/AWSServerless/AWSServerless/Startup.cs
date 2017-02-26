@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 
 namespace AWSServerless
 {
@@ -28,14 +30,26 @@ namespace AWSServerless
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            services.AddMemoryCache();
+
             services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
-            services.AddAWSService<Amazon.DynamoDBv2.IAmazonDynamoDB>();
+            services.AddAWSService<IAmazonDynamoDB>();
+
+            services.AddTransient(typeof(IDynamoDBContext), (IServiceProvider provider) =>
+            {
+                var dynamoDB = provider.GetService<IAmazonDynamoDB>();
+                return new DynamoDBContext(dynamoDB);
+            });
+
+            services.AddTransient(typeof(DynamoDbCache));
         }
         
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddLambdaLogger(Configuration.GetLambdaLoggerOptions());
             app.UseMvc();
+
+            loggerFactory.AddLambdaLogger(Configuration.GetLambdaLoggerOptions());
         }
     }
 }

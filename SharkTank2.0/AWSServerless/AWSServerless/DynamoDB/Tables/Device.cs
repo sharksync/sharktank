@@ -9,7 +9,6 @@ namespace AWSServerless.DynamoDB.Tables
     {
         public Guid Id { get; set; }
         public Guid AppId { get; set; }
-        public Guid SyncId { get; set; }
         public DateTime LastSeen { get; set; }
     }
 }
