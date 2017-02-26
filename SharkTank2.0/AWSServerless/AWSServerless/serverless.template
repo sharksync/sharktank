@@ -17,8 +17,8 @@
         "Handler": "AWSServerless::AWSServerless.LambdaEntryPoint::FunctionHandlerAsync",
         "Runtime": "dotnetcore1.0",
         "CodeUri": "",
-        "MemorySize": 256,
-        "Timeout": 30,
+        "MemorySize": 128,
+        "Timeout": 60,
         "Role": null,
         "Policies": [ "AWSLambdaFullAccess" ],
         "Environment" : {
