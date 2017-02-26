@@ -52,6 +52,23 @@
                 "WriteCapacityUnits" : 1
             }
         }
+    },
+	
+    "DynamoDBDevice" : {
+        "Type" : "AWS::DynamoDB::Table",
+        "Properties" : {
+            "TableName" : "Device",
+            "AttributeDefinitions" : [
+              {"AttributeName" : "Id", "AttributeType" : "S"}
+            ],
+            "KeySchema"            : [
+              {"AttributeName" : "Id", "KeyType" : "HASH"}
+            ],
+            "ProvisionedThroughput" : {
+                "ReadCapacityUnits" : 1,
+                "WriteCapacityUnits" : 1
+            }
+        }
     }
   },
 
