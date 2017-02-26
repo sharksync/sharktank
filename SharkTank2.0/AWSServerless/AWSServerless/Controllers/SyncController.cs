@@ -10,6 +10,7 @@ using Amazon.DynamoDBv2.DataModel;
 using AWSServerless.DynamoDB.Tables;
 using Amazon.DynamoDBv2;
 using Amazon;
+using Amazon.DynamoDBv2.DocumentModel;
 
 namespace AWSServerless.Controllers
 {
@@ -44,13 +45,15 @@ namespace AWSServerless.Controllers
 
                 if (!ModelState.IsValid)
                     return JsonResultWithValidationErrors(response);
-                
+
                 var device = await ValidateDevice(request);
 
                 if (!ModelState.IsValid)
                     return JsonResultWithValidationErrors(response);
 
                 await ProcessChanges(app, device, request);
+
+                response = await GetChanges(app, device, request);
             }
             catch (Exception ex)
             {
@@ -130,15 +133,15 @@ namespace AWSServerless.Controllers
 
                         var dbChange = new Change()
                         {
-                            Tidemark = DateTime.UtcNow,
+                            Group = change.Group,
+                            Tidemark = HiResDateTime.UtcNowTicks,
                             DeviceId = device.Id,
                             RecordId = recordId,
                             Path = path,
-                            Group = change.Group,
                             Modified = modifiedUTC,
                             Value = change.Value
                         };
-                        
+
                         string tableName = $"{app.Id}-Change";
                         BatchWrite<Change> batchWrite = null;
 
@@ -156,48 +159,46 @@ namespace AWSServerless.Controllers
             }
         }
 
-        private async Task<Device> GetChanges(Application app, Device device, SyncRequestViewModel request)
+        private async Task<SyncResponseViewModel> GetChanges(Application app, Device device, SyncRequestViewModel request)
         {
-            //Logger.LogInformation($"Getting device for id: {request.DeviceId}");
-            //var device = await DynamoDB.LoadAsync<Change>(request.DeviceId, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}" });
+            var response = new SyncResponseViewModel() { Groups = new List<SyncResponseViewModel.GroupViewModel>() };
 
-            //if (device == null)
-            //    ModelState.AddModelError("device_id", "No device found for device_id");
-            //else
-            //{
-            //    Logger.LogInformation($"Found device: {JsonConvert.SerializeObject(device)}");
+            foreach (var group in request.Groups)
+            {
+                List<Change> results;
 
-            //    device.LastSeen = DateTime.UtcNow;
-            //    await DynamoDB.SaveAsync(device);
-            //}
+                if (group.Tidemark == null || group.Tidemark <= 0)
+                {
+                    Logger.LogInformation($"Getting all changes for group: {group.Group}");
+                    var query = DynamoDB.QueryAsync<Change>(group.Group, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change" });
+                    results = await query.GetNextSetAsync();
+                }
+                else
+                {
+                    Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
+                    var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new [] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change" });
+                    results = await query.GetNextSetAsync();
+                }
 
-            //return device;
+                if (results != null && results.Any())
+                {
+                    response.Groups.Add(new SyncResponseViewModel.GroupViewModel()
+                    {
+                        Group = group.Group,
+                        Tidemark = results.Last().Tidemark,
+                        Changes = results.Select(r => new SyncResponseViewModel.ChangeViewModel()
+                        {
+                            Modified = r.Modified,
+                            Value = r.Value,
+                            Path = $"{r.RecordId}/{r.Path}"
+                        }).ToList()
+                    });
+                }
+            }
+
+            return response;
         }
-
-
-        //var query = "SELECT * FROM change";
-        //var params = [];
-
-        //if (tidemark != "" && tidemark != undefined) {
-
-        //    query += " WHERE tidemark > ?";
-        //    params.push(tidemark);
-        //}
-
-        //query += " ORDER BY tidemark LIMIT 20";
-
-        //Scale.query(environment, appId + group, query, params)
-        //    .then(function (data) {
-
-        //        if (data.error != null)
-        //            return reject("Querying change table failed with: " + data.error);
-
-        //        resolve({ group: group, changes: data.results });
-        //    })
-        //    .catch(err => {
-        //        return reject(err);
-        //    });
-
+        
         private JsonResult JsonResultWithValidationErrors(BaseValidationViewModel response)
         {
             if (response == null)

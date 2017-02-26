@@ -30,7 +30,7 @@ namespace AWSServerless.ViewModels
             public string Group { get; set; }
 
             [JsonProperty("tidemark")]
-            public string Tidemark { get; set; }
+            public long? Tidemark { get; set; }
         }
 
         public class ChangeViewModel
