@@ -42,19 +42,32 @@ namespace AWSServerless.Controllers
 
             try
             {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 var app = await ValidateApplication(request);
+                Logger.LogInformation($"ValidateApplication in {sw.ElapsedMilliseconds}ms");
 
                 if (!ModelState.IsValid)
                     return JsonResultWithValidationErrors(response);
 
+                sw.Restart();
                 var device = await ValidateDevice(request);
+                Logger.LogInformation($"ValidateDevice in {sw.ElapsedMilliseconds}ms");
 
                 if (!ModelState.IsValid)
                     return JsonResultWithValidationErrors(response);
 
+                sw.Restart();
                 await ProcessChanges(app, device, request);
+                Logger.LogInformation($"ProcessChanges in {sw.ElapsedMilliseconds}ms");
 
+                sw.Restart();
                 response = await GetChanges(app, device, request);
+                Logger.LogInformation($"GetChanges in {sw.ElapsedMilliseconds}ms");
+
+                UpdateDeviceLastSeen(device);
+
+                sw.Stop();
             }
             catch (Exception ex)
             {
@@ -63,6 +76,22 @@ namespace AWSServerless.Controllers
             }
 
             return JsonResultWithValidationErrors(response);
+        }
+
+        private void UpdateDeviceLastSeen(Device device)
+        {
+            // Doesn't need to be done before returning to the client so run it later
+            Task.Run(() =>
+            {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+
+                device.LastSeen = DateTime.UtcNow;
+                DynamoDB.SaveAsync(device);
+
+                Logger.LogInformation($"UpdateDeviceLastSeen in {sw.ElapsedMilliseconds}ms");
+                sw.Stop();
+            });
         }
 
         private async Task<Application> ValidateApplication(SyncRequestViewModel request)
@@ -93,11 +122,6 @@ namespace AWSServerless.Controllers
             
             if (device == null)
                 ModelState.AddModelError("device_id", "No device found for device_id");
-            else
-            {
-                device.LastSeen = DateTime.UtcNow;
-                await DynamoDB.SaveAsync(device);
-            }
 
             return device;
         }
