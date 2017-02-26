@@ -42,8 +42,6 @@ namespace AWSServerless.Controllers
 
             try
             {
-                Logger.LogInformation($"Sync POST request: {JsonConvert.SerializeObject(request)}");
-
                 var app = await ValidateApplication(request);
 
                 if (!ModelState.IsValid)
@@ -124,9 +122,8 @@ namespace AWSServerless.Controllers
                         // Path should contain a / in format <guid>/property.name
                         if (change.Path.IndexOf("/") > -1)
                         {
-                            var parts = change.Path.Split('/');
-                            recordId = Guid.Parse(parts[0]);
-                            path = parts[1];
+                            recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
+                            path = change.Path.Substring(change.Path.IndexOf("/") + 1);
                         }
 
                         DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
@@ -136,8 +133,7 @@ namespace AWSServerless.Controllers
                             Group = change.Group,
                             Tidemark = HiResDateTime.UtcNowTicks,
                             DeviceId = device.Id,
-                            RecordId = recordId,
-                            Path = path,
+                            Path = change.Path,
                             Modified = modifiedUTC,
                             Value = change.Value
                         };
@@ -178,13 +174,13 @@ namespace AWSServerless.Controllers
                 if (group.Tidemark == null || group.Tidemark <= 0)
                 {
                     Logger.LogInformation($"Getting all changes for group: {group.Group}");
-                    var query = DynamoDB.QueryAsync<Change>(group.Group, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change" });
+                    var query = DynamoDB.QueryAsync<Change>(group.Group, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change", IndexName = "Group-Tidemark-index" });
                     results = await query.GetNextSetAsync();
                 }
                 else
                 {
                     Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
-                    var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new[] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change" });
+                    var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new[] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change", IndexName = "Group-Tidemark-index" });
                     results = await query.GetNextSetAsync();
                 }
                 Logger.LogInformation($"Retrieved changes from DynamoDB in {sw.ElapsedMilliseconds}ms count: {results.Count}");
@@ -199,7 +195,7 @@ namespace AWSServerless.Controllers
                         {
                             Modified = r.Modified,
                             Value = r.Value,
-                            Path = $"{r.RecordId}/{r.Path}"
+                            Path = r.Path
                         }).ToList()
                     });
                 }

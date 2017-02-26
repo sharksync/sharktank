@@ -9,7 +9,6 @@ namespace AWSServerless.DynamoDB.Tables
     {
         public string Group { get; set; }
         public long Tidemark { get; set; }
-        public Guid RecordId { get; set; }
         public string Path { get; set; }
         public string Value { get; set; }
         public Guid DeviceId { get; set; }
