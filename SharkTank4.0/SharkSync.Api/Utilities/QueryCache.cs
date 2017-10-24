@@ -11,7 +11,7 @@ namespace SharkSync.Api
 {
     public interface IQueryCache
     {
-        Task<T> GetByPrimaryKeyFromCacheOrQuery<T>(string partition, string table, string primaryKey, Guid whereClauseValues) where T : class;
+        Task<T> GetByPrimaryKeyFromCacheOrQuery<T>(string partition, string table, string primaryKey, Guid whereClauseValues, TimeSpan cacheFor) where T : class;
     }
 
     public class QueryCache : IQueryCache
@@ -29,7 +29,7 @@ namespace SharkSync.Api
             ScaleContext = scaleContext;
         }
 
-        public async Task<T> GetByPrimaryKeyFromCacheOrQuery<T>(string partition, string table, string primaryKey, Guid id) where T : class
+        public async Task<T> GetByPrimaryKeyFromCacheOrQuery<T>(string partition, string table, string primaryKey, Guid id, TimeSpan cacheFor) where T : class
         {
             string typeName = typeof(T).Name;
 
@@ -48,7 +48,7 @@ namespace SharkSync.Api
                 Logger.LogInformation($"Retrieved {typeName} from database in {sw.ElapsedMilliseconds}ms");
 
                 if (item != null)
-                    Cache.Set(key, item);
+                    Cache.Set(key, item, cacheFor);
             }
 
             Logger.LogInformation($"Retrieved {typeName} in {sw.ElapsedMilliseconds}ms");

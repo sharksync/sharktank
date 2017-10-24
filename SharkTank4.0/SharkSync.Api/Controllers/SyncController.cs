@@ -16,6 +16,7 @@ namespace SharkSync.Api.Controllers
     public class SyncController : Controller
     {
         public static readonly string SystemPartition = "shark_sync";
+        public static readonly TimeSpan defaultCacheDuration = new TimeSpan(hours: 0, minutes: 10, seconds: 0);
 
         ILogger Logger { get; set; }
 
@@ -84,7 +85,7 @@ namespace SharkSync.Api.Controllers
                 ModelState.AddModelError("app_id", "app_id missing or invalid request");
             else
             {
-                var app = await Cache.GetByPrimaryKeyFromCacheOrQuery<Application>(SystemPartition, "application", "app_id", request.AppId);
+                var app = await Cache.GetByPrimaryKeyFromCacheOrQuery<Application>(SystemPartition, "application", "app_id", request.AppId, defaultCacheDuration);
 
                 if (app == null)
                     ModelState.AddModelError("app_id", "No application found for app_id");
@@ -99,7 +100,7 @@ namespace SharkSync.Api.Controllers
 
         private async Task<Device> ValidateDevice(SyncRequestViewModel request)
         {
-            var device = await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(SystemPartition, "device", "device_id", request.DeviceId);
+            var device = await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(SystemPartition, "device", "device_id", request.DeviceId, defaultCacheDuration);
 
             if (device == null)
                 ModelState.AddModelError("device_id", "No device found for device_id");

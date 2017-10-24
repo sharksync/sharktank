@@ -24,6 +24,7 @@ namespace SharkSync.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            services.AddMemoryCache();
 
             services.AddTransient(typeof(IQueryCache), typeof(QueryCache));
             services.AddTransient(typeof(IScaleContext), typeof(ScaleContext));
