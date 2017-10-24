@@ -22,8 +22,8 @@ namespace SharkSync.Api.Scale
 
     public class ScaleContext : IScaleContext
     {
-        private static readonly string serverUrl = "http://db.sharksync.com:5555";
-        //private static readonly string serverUrl = "http://10.0.65.181:8080";
+        //private static readonly string serverUrl = "http://db.sharksync.com:5555";
+        private static readonly string serverUrl = "http://localhost:5555";
         private static readonly string keyspace = "dev";
 
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
