@@ -36,7 +36,7 @@ namespace AWSServerless
             services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
             services.AddAWSService<IAmazonDynamoDB>();
 
-            services.AddTransient(typeof(IDynamoDBContext), (IServiceProvider provider) =>
+            services.AddTransient(typeof(IDynamoDBContextWithBatch), (IServiceProvider provider) =>
             {
                 var dynamoDB = provider.GetService<IAmazonDynamoDB>();
                 return new DynamoDBContext(dynamoDB);

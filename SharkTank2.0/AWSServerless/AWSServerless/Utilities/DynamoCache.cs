@@ -14,11 +14,11 @@ namespace AWSServerless
     {
         ILogger Logger { get; set; }
 
-        IDynamoDBContext DynamoDB { get; set; }
+        IDynamoDBContextWithBatch DynamoDB { get; set; }
 
         IMemoryCache Cache { get; set; }
 
-        public DynamoDbCache(ILogger<DynamoDbCache> logger, IDynamoDBContext dynamoDB, IMemoryCache cache)
+        public DynamoDbCache(ILogger<DynamoDbCache> logger, IDynamoDBContextWithBatch dynamoDB, IMemoryCache cache)
         {
             Logger = logger;
             DynamoDB = dynamoDB;
@@ -40,8 +40,9 @@ namespace AWSServerless
             {
                 item = await DynamoDB.LoadAsync<T>(id);
                 Logger.LogInformation($"Retrieved {typeName} from DynamoDB in {sw.ElapsedMilliseconds}ms");
-
-                Cache.Set(key, item);
+                
+                var cacheItem = Cache.CreateEntry(key);
+                cacheItem.Value = item;
             }
 
             Logger.LogInformation($"Retrieved {typeName} in {sw.ElapsedMilliseconds}ms");

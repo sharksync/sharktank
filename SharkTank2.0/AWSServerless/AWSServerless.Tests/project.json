@@ -9,11 +9,11 @@
       "version": "1.0.0"
     },
     "Microsoft.Extensions.Configuration.Json": "1.0.0",
-    "AWSSDK.Extensions.NETCore.Setup": "3.3.0.2",
+    "AWSSDK.Extensions.NETCore.Setup": "3.3.0.3",
     "Amazon.Lambda.Core": "1.0.0*",
     "Amazon.Lambda.APIGatewayEvents": "1.0.2",
     "Amazon.Lambda.TestUtilities": "1.0.0*",
-    "AWSSDK.DynamoDBv2": "3.3.2.1",
+    "AWSSDK.DynamoDBv2": "3.3.3",
     "AWSServerless": "1.0.0",
     "xunit": "2.1.0-*",
     "dotnet-test-xunit": "2.2.0-*",

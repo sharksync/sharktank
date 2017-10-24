@@ -21,13 +21,13 @@ namespace AWSServerless.Controllers
     {
         ILogger Logger { get; set; }
 
-        IDynamoDBContext DynamoDB { get; set; }
+        IDynamoDBContextWithBatch DynamoDB { get; set; }
 
         DynamoDbCache Cache { get; set; }
 
         DateTime requestStartTimeUTC { get; set; }
 
-        public SyncController(ILogger<SyncController> logger, IDynamoDBContext dynamoDB, DynamoDbCache cache)
+        public SyncController(ILogger<SyncController> logger, IDynamoDBContextWithBatch dynamoDB, DynamoDbCache cache)
         {
             Logger = logger;
             DynamoDB = dynamoDB;
@@ -128,56 +128,54 @@ namespace AWSServerless.Controllers
 
         private async Task ProcessChanges(Application app, Device device, SyncRequestViewModel request)
         {
-            var batchWrites = new Dictionary<string, BatchWrite<Change>>();
-
             if (request.Changes != null && request.Changes.Any())
             {
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
+                string tableName = $"{app.Id}-Change";
+                List<BatchWrite<Change>> batchChanges = new List<BatchWrite<Change>>();
 
                 // Dynamo batches are limited to 20 odd records at time
                 foreach (var batch in request.Changes.Batch(20))
                 {
+                    var batchWrite = DynamoDB.CreateBatchWrite<Change>(new DynamoDBOperationConfig { OverrideTableName = tableName });
+
                     foreach (var change in batch)
                     {
-                        Guid recordId = Guid.Empty;
-                        string path = null;
-
-                        // Path should contain a / in format <guid>/property.name
-                        if (change.Path.IndexOf("/") > -1)
+                        // Path and Group are required
+                        if (!string.IsNullOrWhiteSpace(change.Path) && !string.IsNullOrWhiteSpace(change.Group))
                         {
-                            recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
-                            path = change.Path.Substring(change.Path.IndexOf("/") + 1);
+                            Guid recordId = Guid.Empty;
+                            string path = null;
+
+                            // Path should contain a / in format <guid>/property.name
+                            if (change.Path.IndexOf("/") > -1)
+                            {
+                                recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
+                                path = change.Path.Substring(change.Path.IndexOf("/") + 1);
+                            }
+
+                            DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
+
+                            var dbChange = new Change()
+                            {
+                                Group = change.Group,
+                                Tidemark = HiResDateTime.UtcNowTicks,
+                                DeviceId = device.Id,
+                                Path = change.Path,
+                                Modified = modifiedUTC,
+                                Value = change.Value
+                            };
+                            
+                            batchWrite.AddPutItem(dbChange);
                         }
-
-                        DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
-
-                        var dbChange = new Change()
-                        {
-                            Group = change.Group,
-                            Tidemark = HiResDateTime.UtcNowTicks,
-                            DeviceId = device.Id,
-                            Path = change.Path,
-                            Modified = modifiedUTC,
-                            Value = change.Value
-                        };
-
-                        string tableName = $"{app.Id}-Change";
-                        BatchWrite<Change> batchWrite = null;
-
-                        if (!batchWrites.TryGetValue(tableName, out batchWrite))
-                        {
-                            batchWrite = ((DynamoDBContext)DynamoDB).CreateBatchWrite<Change>(new DynamoDBOperationConfig { OverrideTableName = tableName });
-                            batchWrites.Add(tableName, batchWrite);
-                        }
-
-                        batchWrite.AddPutItem(dbChange);
                     }
-
-                    sw.Restart();
-                    await DynamoDB.ExecuteBatchWriteAsync(batchWrites.Values.ToArray());
-                    Logger.LogInformation($"Saved changes to DynamoDB in {sw.ElapsedMilliseconds}ms count: {batchWrites.Values.Count}");
+                    
                 }
+
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+
+                await DynamoDB.ExecuteBatchWriteAsync(batchChanges.ToArray());
+                Logger.LogInformation($"Saved changes to DynamoDB in {sw.ElapsedMilliseconds}ms count: {batchChanges.Count}");
 
                 sw.Stop();
             }
@@ -189,39 +187,42 @@ namespace AWSServerless.Controllers
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            
-            foreach (var group in request.Groups)
+
+            if (request.Groups != null && request.Groups.Any())
             {
-                List<Change> results;
+                foreach (var group in request.Groups)
+                {
+                    List<Change> results;
 
-                sw.Restart();
-                if (group.Tidemark == null || group.Tidemark <= 0)
-                {
-                    Logger.LogInformation($"Getting all changes for group: {group.Group}");
-                    var query = DynamoDB.QueryAsync<Change>(group.Group, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change", IndexName = "Group-Tidemark-index" });
-                    results = await query.GetNextSetAsync();
-                }
-                else
-                {
-                    Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
-                    var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new[] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change", IndexName = "Group-Tidemark-index" });
-                    results = await query.GetNextSetAsync();
-                }
-                Logger.LogInformation($"Retrieved changes from DynamoDB in {sw.ElapsedMilliseconds}ms count: {results.Count}");
-
-                if (results != null && results.Any())
-                {
-                    response.Groups.Add(new SyncResponseViewModel.GroupViewModel()
+                    sw.Restart();
+                    if (group.Tidemark == null || group.Tidemark <= 0)
                     {
-                        Group = group.Group,
-                        Tidemark = results.Last().Tidemark,
-                        Changes = results.Select(r => new SyncResponseViewModel.ChangeViewModel()
+                        Logger.LogInformation($"Getting all changes for group: {group.Group}");
+                        var query = DynamoDB.QueryAsync<Change>(group.Group, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change", IndexName = "Group-Tidemark-index" });
+                        results = await query.GetNextSetAsync();
+                    }
+                    else
+                    {
+                        Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
+                        var query = DynamoDB.QueryAsync<Change>(group.Group, QueryOperator.GreaterThan, new[] { (object)group.Tidemark.Value }, new DynamoDBOperationConfig { OverrideTableName = $"{app.Id}-Change", IndexName = "Group-Tidemark-index" });
+                        results = await query.GetNextSetAsync();
+                    }
+                    Logger.LogInformation($"Retrieved changes from DynamoDB in {sw.ElapsedMilliseconds}ms count: {results.Count}");
+
+                    if (results != null && results.Any())
+                    {
+                        response.Groups.Add(new SyncResponseViewModel.GroupViewModel()
                         {
-                            Modified = r.Modified,
-                            Value = r.Value,
-                            Path = r.Path
-                        }).ToList()
-                    });
+                            Group = group.Group,
+                            Tidemark = results.Last().Tidemark,
+                            Changes = results.Select(r => new SyncResponseViewModel.ChangeViewModel()
+                            {
+                                Modified = r.Modified,
+                                Value = r.Value,
+                                Path = r.Path
+                            }).ToList()
+                        });
+                    }
                 }
             }
 
