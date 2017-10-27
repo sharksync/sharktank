@@ -121,32 +121,35 @@ namespace SharkSync.Api.Controllers
 
                     foreach (var change in batch)
                     {
-                        Guid recordId = Guid.Empty;
-                        string path = null;
-
-                        // Path should contain a / in format <guid>/property.name
-                        if (change.Path.IndexOf("/") > -1)
+                        if (change != null)
                         {
-                            recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
-                            path = change.Path.Substring(change.Path.IndexOf("/") + 1);
+                            Guid recordId = Guid.Empty;
+                            string path = null;
+
+                            // Path should contain a / in format <guid>/property.name
+                            if (!string.IsNullOrWhiteSpace(change.Path) && change.Path.IndexOf("/") > -1)
+                            {
+                                recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
+                                path = change.Path.Substring(change.Path.IndexOf("/") + 1);
+                            }
+
+                            DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
+
+                            var dbChange = new Change()
+                            {
+                                Id = Guid.NewGuid(),
+                                RecordId = recordId,
+                                Path = change.Path,
+                                DeviceId = device.Id,
+                                Modified = modifiedUTC,
+                                Tidemark = "%clustertime%",
+                                Value = change.Value
+                            };
+
+                            string partition = $"{app.Id}-{change.Group}";
+
+                            changes.Add(ScaleContext.MakeUpsertModel(partition, "change", dbChange));
                         }
-
-                        DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
-
-                        var dbChange = new Change()
-                        {
-                            Id = Guid.NewGuid(),
-                            RecordId = recordId,
-                            Path = change.Path,
-                            DeviceId = device.Id,
-                            Modified = modifiedUTC,
-                            Tidemark = "%clustertime%",
-                            Value = change.Value
-                        };
-
-                        string partition = $"{app.Id}-{change.Group}";
-
-                        changes.Add(ScaleContext.MakeUpsertModel(partition, "change", dbChange));
                     }
 
                     Logger.LogInformation($"Generated changes in {sw.ElapsedMilliseconds}ms count: {changes.Count}");
@@ -168,40 +171,43 @@ namespace SharkSync.Api.Controllers
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            foreach (var group in request.Groups)
+            if (request.Groups != null)
             {
-                sw.Restart();
-
-                string partition = $"{app.Id}-{group.Group}";
-                var queryParams = new List<object>();
-                string whereClause = null;
-
-                if (!string.IsNullOrWhiteSpace(group.Tidemark))
+                foreach (var group in request.Groups)
                 {
-                    Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
-                    queryParams.Add(group.Tidemark);
-                    whereClause = "tidemark > ?";
-                }
-                else
-                    Logger.LogInformation($"Getting all changes for group: {group.Group}");
+                    sw.Restart();
 
-                List<Change> results = await ScaleContext.Query<Change>(partition, "change", whereClause, queryParams, orderBy: "tidemark", limit: 50);
+                    string partition = $"{app.Id}-{group.Group}";
+                    var queryParams = new List<object>();
+                    string whereClause = null;
 
-                Logger.LogInformation($"Retrieved changes from database in {sw.ElapsedMilliseconds}ms count: {results.Count}");
-
-                if (results != null && results.Any())
-                {
-                    response.Groups.Add(new SyncResponseViewModel.GroupViewModel()
+                    if (!string.IsNullOrWhiteSpace(group.Tidemark))
                     {
-                        Group = group.Group,
-                        Tidemark = results.Last().Tidemark,
-                        Changes = results.Select(r => new SyncResponseViewModel.ChangeViewModel()
+                        Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
+                        queryParams.Add(group.Tidemark);
+                        whereClause = "tidemark > ?";
+                    }
+                    else
+                        Logger.LogInformation($"Getting all changes for group: {group.Group}");
+
+                    List<Change> results = await ScaleContext.Query<Change>(partition, "change", whereClause, queryParams, orderBy: "tidemark", limit: 50);
+
+                    Logger.LogInformation($"Retrieved changes from database in {sw.ElapsedMilliseconds}ms count: {results.Count}");
+
+                    if (results != null && results.Any())
+                    {
+                        response.Groups.Add(new SyncResponseViewModel.GroupViewModel()
                         {
-                            Modified = r.Modified,
-                            Value = r.Value,
-                            Path = r.Path
-                        }).ToList()
-                    });
+                            Group = group.Group,
+                            Tidemark = results.Last().Tidemark,
+                            Changes = results.Select(r => new SyncResponseViewModel.ChangeViewModel()
+                            {
+                                Modified = r.Modified,
+                                Value = r.Value,
+                                Path = r.Path
+                            }).ToList()
+                        });
+                    }
                 }
             }
 
