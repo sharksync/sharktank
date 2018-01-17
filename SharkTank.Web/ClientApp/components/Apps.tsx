@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
+import { LoadingButton } from './LoadingButton';
 
 interface AppsState {
     apps: App[];
@@ -19,7 +20,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
     }
 
     public render() {
-        let contents = this.state.loading ? <p><em>Loading...</em></p> : Apps.renderTable(this.state.apps);
+        let contents = this.state.loading ? <p><em>Loading...</em></p> : this.renderTable(this.state.apps);
 
         return <div>
             <h1>Your Apps</h1>
@@ -29,7 +30,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         </div>;
     }
 
-    private static renderTable(apps: App[]) {
+    private renderTable(apps: App[]) {
         return <div className="table-responsive">
             <table className="table table-striped">
                 <thead>
@@ -41,10 +42,10 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 </thead>
                 <tbody>
                     {apps.map(app =>
-                        <tr>
+                        <tr key={app.appId}>
                             <td>{app.appId}</td>
                             <td>{app.accessKey}</td>
-                            <td><button className="btn btn-danger" onClick={() => { Apps.deleteApp(app.appId) }}>Delete</button></td>
+                            <td><LoadingButton>Delete</LoadingButton></td>
                         </tr>
                     )}
                 </tbody>
@@ -52,8 +53,16 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         </div>;
     }
 
-    static deleteApp(appId: string) {
+    deleteApp(appId: string) {
 
+        const formData = new FormData();
+
+        formData.append('id', appId);
+
+        fetch('api/apps', { method: 'DELETE', body: formData })
+            .then(data => {
+                //this.setState({ apps: data, loading: false });
+            });
     }
 }
 

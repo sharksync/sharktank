@@ -40,6 +40,12 @@ namespace SharkTank.Web.Controllers
             };
         }
 
+        [HttpDelete()]
+        public async Task DeleteAsync(Guid id)
+        {
+            await Task.FromResult(1);
+        }
+
         public class AppViewModel
         {
             public Guid AppId { get; set; }

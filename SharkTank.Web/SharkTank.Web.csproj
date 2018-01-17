@@ -21,7 +21,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\components\LoadingButton.tsx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SharkTank.Scale\SharkTank.Scale.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\components\LoadingButton.tsx" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">
