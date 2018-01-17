@@ -8,10 +8,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SharkSync.Api.Scale
+namespace SharkSync.Scale
 {
     public interface IScaleContext
     {
+        string SystemPartition { get; }
         Task<List<T>> Query<T>(string partition, string table, string whereClause = null, List<object> whereClauseValues = null, string orderBy = null, int? limit = null, int? offset = null) where T : class;
 
         SendContextModel<UpsetModel<T>> MakeUpsertModel<T>(string partition, string table, T value) where T : class;
@@ -22,15 +23,17 @@ namespace SharkSync.Api.Scale
 
     public class ScaleContext : IScaleContext
     {
-        //private static readonly string serverUrl = "http://db.sharksync.com:5555";
-        private static readonly string serverUrl = "http://localhost:5555";
+        private static readonly string serverUrl = "http://db.sharksync.io:5555";
+        //private static readonly string serverUrl = "http://localhost:5555";
         private static readonly string keyspace = "dev";
 
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
 
         ILogger Logger { get; set; }
 
-        public ScaleContext(ILogger<QueryCache> logger)
+        public string SystemPartition { get; } = "shark_sync";
+
+        public ScaleContext(ILogger<ScaleContext> logger)
         {
             Logger = logger;
         }

@@ -1,5 +1,4 @@
 using SharkSync.Api.Controllers;
-using SharkSync.Api.Scale.Tables;
 using SharkSync.Api.ViewModels;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using SharkSync.Api.Scale;
+using SharkSync.Scale;
+using SharkSync.Scale.Tables;
 
 namespace SharkSync.Api.Tests.Controllers
 {

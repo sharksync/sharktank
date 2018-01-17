@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SpaServices.Webpack;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharkSync.Scale;
 
 namespace SharkTank.Web
 {
@@ -23,6 +24,8 @@ namespace SharkTank.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            services.AddTransient(typeof(IScaleContext), typeof(ScaleContext));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

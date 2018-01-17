@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkSync.Api.Scale
+namespace SharkSync.Scale
 {
     public class SendContextModel<T> where T : BasePayloadModel
     {

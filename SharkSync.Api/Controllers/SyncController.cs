@@ -7,15 +7,14 @@ using SharkSync.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using SharkSync.Api.Scale;
-using SharkSync.Api.Scale.Tables;
+using SharkSync.Scale;
+using SharkSync.Scale.Tables;
 
 namespace SharkSync.Api.Controllers
 {
     [Route("sync")]
     public class SyncController : Controller
     {
-        public static readonly string SystemPartition = "shark_sync";
         public static readonly TimeSpan defaultCacheDuration = new TimeSpan(hours: 0, minutes: 10, seconds: 0);
 
         ILogger Logger { get; set; }
@@ -64,10 +63,6 @@ namespace SharkSync.Api.Controllers
                 response = await GetChanges(app, device, request);
                 Logger.LogInformation($"GetChanges in {sw.ElapsedMilliseconds}ms");
 
-                //sw.Restart();
-                //UpdateDeviceLastSeen(device);
-                //Logger.LogInformation($"UpdateDeviceLastSeen in {sw.ElapsedMilliseconds}ms");
-
                 sw.Stop();
             }
             catch (Exception ex)
@@ -85,7 +80,7 @@ namespace SharkSync.Api.Controllers
                 ModelState.AddModelError("app_id", "app_id missing or invalid request");
             else
             {
-                var app = await Cache.GetByPrimaryKeyFromCacheOrQuery<Application>(SystemPartition, "application", "app_id", request.AppId, defaultCacheDuration);
+                var app = await Cache.GetByPrimaryKeyFromCacheOrQuery<Application>(ScaleContext.SystemPartition, "application", "app_id", request.AppId, defaultCacheDuration);
 
                 if (app == null)
                     ModelState.AddModelError("app_id", "No application found for app_id");
@@ -100,7 +95,7 @@ namespace SharkSync.Api.Controllers
 
         private async Task<Device> ValidateDevice(SyncRequestViewModel request)
         {
-            var device = await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(SystemPartition, "device", "device_id", request.DeviceId, defaultCacheDuration);
+            var device = await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(ScaleContext.SystemPartition, "device", "device_id", request.DeviceId, defaultCacheDuration);
 
             if (device == null)
                 ModelState.AddModelError("device_id", "No device found for device_id");
@@ -215,22 +210,6 @@ namespace SharkSync.Api.Controllers
 
             return response;
         }
-
-        //private void UpdateDeviceLastSeen(Device device)
-        //{
-        //    // Doesn't need to be done before returning to the client so run it later
-        //    Task.Run(() =>
-        //    {
-        //        Stopwatch sw = new Stopwatch();
-        //        sw.Start();
-
-        //        device.LastSeen = DateTime.UtcNow;
-        //        DynamoDB.SaveAsync(device);
-
-        //        Logger.LogInformation($"UpdateDeviceLastSeen in {sw.ElapsedMilliseconds}ms");
-        //        sw.Stop();
-        //    });
-        //}
 
         private JsonResult JsonResultWithValidationErrors(BaseValidationViewModel response)
         {

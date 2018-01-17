@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkSync.Api.Scale.Tables
+namespace SharkSync.Scale.Tables
 {
     public class Device
     {
