@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="ClientApp\components\LoadingButton.tsx" />
+    <None Remove="ClientApp\components\DeleteButton.tsx" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <TypeScriptCompile Include="ClientApp\components\LoadingButton.tsx" />
+    <TypeScriptCompile Include="ClientApp\components\DeleteButton.tsx" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">

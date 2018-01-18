@@ -43,6 +43,7 @@ namespace SharkTank.Web.Controllers
         [HttpDelete()]
         public async Task DeleteAsync(Guid id)
         {
+            throw new Exception("Bob");
             await Task.FromResult(1);
         }
 

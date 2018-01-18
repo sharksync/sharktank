@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
-import { LoadingButton } from './LoadingButton';
+import { DeleteButton } from './DeleteButton';
 
 interface AppsState {
     apps: App[];
@@ -45,7 +45,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                         <tr key={app.appId}>
                             <td>{app.appId}</td>
                             <td>{app.accessKey}</td>
-                            <td><LoadingButton>Delete</LoadingButton></td>
+                            <td><DeleteButton deleteHandler={(completedCallback: () => any) => this.deleteApp(app.appId, completedCallback)} /></td>
                         </tr>
                     )}
                 </tbody>
@@ -53,7 +53,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         </div>;
     }
 
-    deleteApp(appId: string) {
+    deleteApp(appId: string, completedCallback: () => any) {
 
         const formData = new FormData();
 
@@ -61,7 +61,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
         fetch('api/apps', { method: 'DELETE', body: formData })
             .then(data => {
-                //this.setState({ apps: data, loading: false });
+                completedCallback();
             });
     }
 }
