@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { DeleteButton } from './DeleteButton';
+import { ApiHandlers } from '../handlers';
+import swal from 'sweetalert2';
 
 interface AppsState {
     apps: App[];
@@ -60,8 +62,19 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         formData.append('id', appId);
 
         fetch('api/apps', { method: 'DELETE', body: formData })
-            .then(data => {
+            .then(ApiHandlers.handleErrors)
+            .then(function (response) {
                 completedCallback();
+
+                // Remove row
+            }).catch(function (error) {
+                completedCallback();
+                console.log(error);
+                swal(
+                    'Failed action',
+                    'Failed to complete action, please try again.',
+                    'error'
+                )
             });
     }
 }

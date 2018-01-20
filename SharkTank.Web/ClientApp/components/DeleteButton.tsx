@@ -1,6 +1,7 @@
 ﻿import * as React from 'react';
 import * as FontAwesome from 'react-fontawesome';
-require('font-awesome/css/font-awesome.css');
+import swal from 'sweetalert2';
+import 'font-awesome/css/font-awesome.css';
 
 interface DeleteButtonState {
     loading: boolean;
@@ -24,10 +25,22 @@ export class DeleteButton extends React.Component<DeleteButtonProps, DeleteButto
 
     handleClick() {
         if (!this.state.loading) {
-            this.setState({ loading: true });
+            swal({
+                title: 'Confirm delete',
+                text: 'Are you sure you want to delete this item?',
+                type: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                confirmButtonColor: '#d9534f'
+            }).then((result) => {
+                if (result.value) {
 
-            if (this.state.deleteHandler)
-                this.state.deleteHandler(this.disableLoading);
+                    this.setState({ loading: true });
+
+                    if (this.state.deleteHandler)
+                        this.state.deleteHandler(this.disableLoading);
+                }
+            })
         }
     }
 
@@ -37,8 +50,11 @@ export class DeleteButton extends React.Component<DeleteButtonProps, DeleteButto
 
     render() {
         let isLoading = this.state.loading;
-        return <button className="btn btn-danger" disabled={isLoading} onClick={this.handleClick}>
-            {isLoading ? <span><FontAwesome name="spinner" spin /> Delete</span> : 'Delete'}
-        </button>;
+
+        return <div>
+            <button className="btn btn-danger" disabled={isLoading} onClick={this.handleClick}>
+                {isLoading ? <span><FontAwesome name="spinner" spin /> Delete</span> : 'Delete'}
+            </button>
+        </div>;
     }
 }
