@@ -28,7 +28,7 @@ export class DeleteButton extends React.Component<DeleteButtonProps, DeleteButto
             swal({
                 title: 'Confirm delete',
                 text: 'Are you sure you want to delete this item?',
-                type: 'question',
+                type: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, delete it!',
                 confirmButtonColor: '#d9534f'

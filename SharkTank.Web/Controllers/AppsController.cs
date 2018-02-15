@@ -32,7 +32,6 @@ namespace SharkTank.Web.Controllers
             //    AppId = a.Id,
             //    AccessKey = a.AccessKey
             //});
-
             return new List<AppViewModel>
             {
                 new AppViewModel() { AppId = Guid.NewGuid(), AccessKey = Guid.NewGuid() },
@@ -43,7 +42,6 @@ namespace SharkTank.Web.Controllers
         [HttpDelete()]
         public async Task DeleteAsync(Guid id)
         {
-            throw new Exception("Bob");
             await Task.FromResult(1);
         }
 

@@ -15,6 +15,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         this.state = { apps: [], loading: true };
 
         fetch('api/apps')
+            .then(ApiHandlers.handleErrors)
             .then(response => response.json() as Promise<App[]>)
             .then(data => {
                 this.setState({ apps: data, loading: false });
@@ -63,18 +64,21 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
         fetch('api/apps', { method: 'DELETE', body: formData })
             .then(ApiHandlers.handleErrors)
-            .then(function (response) {
-                completedCallback();
+            .then(response => {
 
-                // Remove row
-            }).catch(function (error) {
+                var index = -1;
+                for (var i = 0; i < this.state.apps.length; i++) {
+                    if (this.state.apps[i].appId === appId) {
+                        index = i;
+                        break;
+                    }
+                }
+                this.state.apps.splice(index, 1);
+                this.setState({ apps: this.state.apps });
+
                 completedCallback();
-                console.log(error);
-                swal(
-                    'Failed action',
-                    'Failed to complete action, please try again.',
-                    'error'
-                )
+            }).catch(error => {
+                completedCallback();
             });
     }
 }
