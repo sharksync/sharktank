@@ -8,13 +8,15 @@ interface AppsState {
     apps: App[];
     loading: boolean;
     showNewAppRow: boolean;
+    newAppName: string;
+    showNewAppValidationError: boolean;
 }
 
 export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
     constructor() {
         super();
-        this.state = { apps: [], loading: true, showNewAppRow: false };
+        this.state = { apps: [], loading: true, showNewAppRow: false, newAppName: '', showNewAppValidationError: false };
 
         fetch('api/apps')
             .then(ApiHandlers.handleErrors)
@@ -41,18 +43,18 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>App Id</th>
-                        <th>Access Key</th>
-                        <th></th>
+                        <th className="guidColumn">App Id</th>
+                        <th className="guidColumn">Access Key</th>
+                        <th className="actionColumn"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {apps.map(app =>
                         <tr key={app.appId}>
-                            <td>My App</td>
-                            <td>{app.appId}</td>
-                            <td>{app.accessKey}</td>
-                            <td><DeleteButton deleteHandler={(completedCallback: () => any) => this.deleteApp(app.appId, completedCallback)} /></td>
+                            <td>{app.name}</td>
+                            <td className="guidColumn">{app.appId}</td>
+                            <td className="guidColumn">{app.accessKey}</td>
+                            <td className="actionColumn"><DeleteButton deleteHandler={(completedCallback: () => any) => this.deleteApp(app.appId, completedCallback)} /></td>
                         </tr>
                     )}
 
@@ -60,7 +62,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 </tbody>
             </table>
 
-            <button className="btn btn-primary" onClick={() => this.setState({ showNewAppRow: true })}>Add New App</button>
+            <button className="btn btn-primary" onClick={() => this.setState({ showNewAppRow: true, newAppName: '', showNewAppValidationError: false })}>Add New App</button>
         </div >;
     }
 
@@ -69,8 +71,8 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
             <tr>
                 <td>
                     <div className="form-group">
-                        <span className="validation-error-tooltip">Tooltip text</span>
-                        <input type="text" id="newAppName" placeholder="New app name" ref="appName" className="form-control is-invalid" />
+                        <span className={"validation-error-tooltip " + (this.state.showNewAppValidationError ? "validation-error-tooltip-shown" : "")}>App name is required</span>
+                        <input type="text" id="newAppName" placeholder="New app name" ref="appName" className={"form-control app-name-input " + (this.state.showNewAppValidationError ? "is-invalid" : "")} onChange={(event) => this.newAppNameChanged(event)} />
                     </div>
                 </td>
                 <td colSpan={3}>
@@ -83,10 +85,38 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         )
     }
 
+    private newAppNameChanged(event: React.ChangeEvent<HTMLInputElement>) {
+        this.setState({ newAppName: event.target.value });
+        if (event.target.value) {
+            this.setState({ showNewAppValidationError: false });
+        }
+        else {
+            this.setState({ showNewAppValidationError: true });
+        }
+    }
+
     private addApp() {
 
+        if (this.state.newAppName) {
+            this.setState({ showNewAppValidationError: false });
 
+            const formData = new FormData();
 
+            formData.append('appName', this.state.newAppName);
+
+            fetch('api/apps', { method: 'POST', body: formData })
+                .then(ApiHandlers.handleErrors)
+                .then(response => response.json() as Promise<App>)
+                .then(data => {
+                    this.state.apps.push(data);
+                    this.setState({ showNewAppRow: false });
+                }).catch(error => {
+                    this.setState({ showNewAppRow: false });
+                });
+        }
+        else {
+            this.setState({ showNewAppValidationError: true });
+        }
     }
 
     private deleteApp(appId: string, completedCallback: () => any) {
@@ -108,8 +138,6 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 }
                 this.state.apps.splice(index, 1);
                 this.setState({ apps: this.state.apps });
-
-                completedCallback();
             }).catch(error => {
                 completedCallback();
             });
@@ -117,6 +145,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 }
 
 interface App {
+    name: string;
     appId: string;
     accessKey: string;
 }

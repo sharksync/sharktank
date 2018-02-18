@@ -85,6 +85,7 @@ html {
 .validation-error-tooltip {
     background-color: #b00;
     color: #fff;
+    display: none;
     text-align: center;
     padding: 5px 10px;
     border-radius: 6px;
@@ -93,18 +94,34 @@ html {
     z-index: 1;
 }
 
-    .validation-error-tooltip::after {
-        content: " ";
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #b00 transparent transparent transparent;
-    }
+.validation-error-tooltip-shown {
+    display: block !important;
+}
+
+.validation-error-tooltip::after {
+    content: " ";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #b00 transparent transparent transparent;
+}
 
 .is-invalid {
     border-color: #b00;
     color: #b00;
+}
+
+.guidColumn {
+    width: 300px;
+}
+
+.actionColumn {
+    width: 100px;
+}
+
+.app-name-input {
+    min-width: 120px;
 }

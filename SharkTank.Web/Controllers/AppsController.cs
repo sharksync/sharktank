@@ -34,9 +34,17 @@ namespace SharkTank.Web.Controllers
             //});
             return new List<AppViewModel>
             {
-                new AppViewModel() { AppId = Guid.NewGuid(), AccessKey = Guid.NewGuid() },
-                new AppViewModel() { AppId = Guid.NewGuid(), AccessKey = Guid.NewGuid() },
+                new AppViewModel() { AppId = Guid.NewGuid(), AccessKey = Guid.NewGuid(), Name = "App 1" },
+                new AppViewModel() { AppId = Guid.NewGuid(), AccessKey = Guid.NewGuid(), Name = "App 2" },
             };
+        }
+
+        [HttpPost()]
+        public async Task<AppViewModel> PostAsync(string appName)
+        {
+            //List<Application> apps = await ScaleContext.Query<Application>(ScaleContext.SystemPartition, "application", limit: 50);
+
+            return new AppViewModel() { AppId = Guid.NewGuid(), AccessKey = Guid.NewGuid(), Name = appName };
         }
 
         [HttpDelete()]
@@ -49,6 +57,7 @@ namespace SharkTank.Web.Controllers
         {
             public Guid AppId { get; set; }
             public Guid AccessKey { get; set; }
+            public string Name { get; set; }
         }
     }
 }
