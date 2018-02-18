@@ -126,24 +126,28 @@ namespace SharkSync.Api.Controllers
                             {
                                 recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
                                 path = change.Path.Substring(change.Path.IndexOf("/") + 1);
+
+                                DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
+
+                                var dbChange = new Change()
+                                {
+                                    Id = Guid.NewGuid(),
+                                    RecordId = recordId,
+                                    Path = path,
+                                    DeviceId = device.Id,
+                                    Modified = modifiedUTC,
+                                    Tidemark = "%clustertime%",
+                                    Value = change.Value
+                                };
+
+                                string partition = $"{app.Id}-{change.Group}";
+
+                                changes.Add(ScaleContext.MakeUpsertModel(partition, "change", dbChange));
                             }
-
-                            DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
-
-                            var dbChange = new Change()
+                            else
                             {
-                                Id = Guid.NewGuid(),
-                                RecordId = recordId,
-                                Path = change.Path,
-                                DeviceId = device.Id,
-                                Modified = modifiedUTC,
-                                Tidemark = "%clustertime%",
-                                Value = change.Value
-                            };
-
-                            string partition = $"{app.Id}-{change.Group}";
-
-                            changes.Add(ScaleContext.MakeUpsertModel(partition, "change", dbChange));
+                                ModelState.AddModelError("Path", "Path is incorrectly formatted, should be formatted <guid>/property.name");
+                            }
                         }
                     }
 
@@ -161,7 +165,6 @@ namespace SharkSync.Api.Controllers
         private async Task<SyncResponseViewModel> GetChanges(Application app, Device device, SyncRequestViewModel request)
         {
             var response = new SyncResponseViewModel() { Groups = new List<SyncResponseViewModel.GroupViewModel>() };
-
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -187,7 +190,7 @@ namespace SharkSync.Api.Controllers
 
                     List<Change> results = await ScaleContext.Query<Change>(partition, "change", whereClause, queryParams, orderBy: "tidemark", limit: 50);
 
-                    Logger.LogInformation($"Retrieved changes from database in {sw.ElapsedMilliseconds}ms count: {results.Count}");
+                    Logger.LogInformation($"Retrieved changes from database in {sw.ElapsedMilliseconds}ms count: {results?.Count}");
 
                     if (results != null && results.Any())
                     {
