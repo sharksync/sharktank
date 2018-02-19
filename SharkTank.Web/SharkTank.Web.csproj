@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SharkTank.Repositories\SharkTank.Repositories.csproj" />
     <ProjectReference Include="..\SharkTank.Scale\SharkTank.Scale.csproj" />
   </ItemGroup>
 

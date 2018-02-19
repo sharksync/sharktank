@@ -9,8 +9,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using SharkSync.Scale;
-using SharkSync.Scale.Tables;
+using SharkTank.Repositories.Entities;
+using SharkTank.Scale.ScaleApi;
+using SharkTank.Repositories;
 
 namespace SharkSync.Api.Tests.Controllers
 {
@@ -21,8 +22,10 @@ namespace SharkSync.Api.Tests.Controllers
         Device device;
         List<Change> changes;
 
-        Mock<IScaleContext> scaleContext;
-        Mock<IQueryCache> queryCache;
+        Mock<IApplicationRepository> applicationRepository;
+        Mock<IDeviceRepository> deviceRepository;
+        Mock<IChangeRepository> changeRepository;
+
         Mock<ILogger<SyncController>> logger;
 
         [SetUp]
@@ -32,12 +35,14 @@ namespace SharkSync.Api.Tests.Controllers
             device = new Device { Id = Guid.NewGuid(), AppId = app.Id, LastSeen = DateTime.UtcNow.ToString() };
             changes = new List<Change>();
 
-            scaleContext = new Mock<IScaleContext>();
-            scaleContext.Setup(x => x.Query<Change>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<object>>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>())).ReturnsAsync(changes);
+            applicationRepository = new Mock<IApplicationRepository>();
+            applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(app);
 
-            queryCache = new Mock<IQueryCache>();
-            queryCache.Setup(x => x.GetByPrimaryKeyFromCacheOrQuery<Application>(It.IsAny<string>(), "application", It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>())).ReturnsAsync(app);
-            queryCache.Setup(x => x.GetByPrimaryKeyFromCacheOrQuery<Device>(It.IsAny<string>(), "device", It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>())).ReturnsAsync(device);
+            deviceRepository = new Mock<IDeviceRepository>();
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(device);
+
+            changeRepository = new Mock<IChangeRepository>();
+            changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(changes);
 
             logger = new Mock<ILogger<SyncController>>();
         }
@@ -45,7 +50,7 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Empty_Request()
         {
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(null);
 
             var syncResponse = response.Value as SyncResponseViewModel;
@@ -60,7 +65,7 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Missing_AppId()
         {
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
             });
@@ -77,9 +82,9 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Incorrect_AppId()
         {
-            queryCache.Setup(x => x.GetByPrimaryKeyFromCacheOrQuery<Application>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>())).ReturnsAsync((Application)null);
+            applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Application)null);
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = Guid.NewGuid()
@@ -97,7 +102,7 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Missing_AppApiAccessKey()
         {
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id
@@ -115,7 +120,7 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Invalid_AppApiAccessKey()
         {
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,
@@ -134,9 +139,9 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Missing_DeviceId()
         {
-            queryCache.Setup(x => x.GetByPrimaryKeyFromCacheOrQuery<Device>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>())).ReturnsAsync((Device)null);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Device)null);
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,
@@ -155,9 +160,9 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Invalid_DeviceId()
         {
-            queryCache.Setup(x => x.GetByPrimaryKeyFromCacheOrQuery<Device>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>())).ReturnsAsync((Device)null);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Device)null);
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,
@@ -177,7 +182,7 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Success_Basic_NoChanges_NoGroups()
         {
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,
@@ -209,7 +214,7 @@ namespace SharkSync.Api.Tests.Controllers
                     }
                 }
             };
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(request);
 
             var syncResponse = response.Value as SyncResponseViewModel;
@@ -223,33 +228,19 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Success_Single_Change()
         {
-            string partition = null;
-            string table = null;
-            Change changeValue = null;
             string propertyName = "name";
             string group = "group";
             Guid recordId = Guid.NewGuid();
             int modifiedSecondsAgo = 10;
             string value = "Neil";
-            List<SendContextModel<UpsetModel<Change>>> changes = null;
-            var model = new SendContextModel<UpsetModel<Change>>();
+            List<ChangeWithGroup> changes = null;
 
-            scaleContext
-                .Setup(x => x.MakeUpsertModel(It.IsAny<string>(), "change", It.IsAny<Change>()))
-                .Returns(model)
-                .Callback<string, string, Change>((p, t, v) =>
-                {
-                    partition = p;
-                    table = t;
-                    changeValue = v;
-                });
-
-            scaleContext
-                .Setup(x => x.UpsertBulk(It.IsAny<List<SendContextModel<UpsetModel<Change>>>>()))
+            changeRepository
+                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<ChangeWithGroup>>()))
                 .Returns(() => Task.FromResult((string)null))
-                .Callback<List<SendContextModel<UpsetModel<Change>>>>((l) =>
+                .Callback<Guid, IEnumerable<ChangeWithGroup>>((a, l) =>
                 {
-                    changes = l;
+                    changes = l.ToList();
                 });
 
             var request = new SyncRequestViewModel()
@@ -269,38 +260,27 @@ namespace SharkSync.Api.Tests.Controllers
                 }
             };
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(request);
             var syncResponse = response.Value as SyncResponseViewModel;
 
             Assert.NotNull(syncResponse);
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
-            Assert.AreEqual($"{app.Id}-{group}", partition);
-            Assert.AreEqual($"change", table);
-            Assert.NotNull(changeValue);
-            Assert.AreEqual(recordId, changeValue.RecordId);
-            Assert.AreEqual(propertyName, changeValue.Path);
-            Assert.AreEqual(device.Id, changeValue.DeviceId);
-            Assert.AreEqual(DateTime.Now.AddSeconds(-modifiedSecondsAgo).ToLongTimeString(), changeValue.Modified.ToLongTimeString());
-            Assert.AreEqual("%clustertime%", changeValue.Tidemark);
-            Assert.AreEqual(value, changeValue.Value);
 
             Assert.NotNull(changes);
             Assert.AreEqual(1, changes.Count);
-            Assert.AreEqual(model, changes[0]);
+            Assert.AreEqual(group, changes[0].Group);
+            Assert.AreEqual(propertyName, changes[0].Path);
+            Assert.AreEqual(recordId, changes[0].RecordId);
+            Assert.AreEqual(value, changes[0].Value);
 
-            scaleContext.Verify(t => t.MakeUpsertModel(It.IsAny<string>(), "change", It.IsAny<Change>()), Times.Once);
-            scaleContext.Verify(t => t.UpsertBulk(It.IsAny<List<SendContextModel<UpsetModel<Change>>>>()), Times.Once);
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Id, It.IsAny<IEnumerable<ChangeWithGroup>>()), Times.Once);
         }
 
         [Test]
         public async Task SyncController_Post_Success_Two_Changes()
         {
-            string partition = null;
-            string table = null;
-            Change changeValue = null;
-            Change changeValue2 = null;
             string propertyName = "name";
             string propertyName2 = "age";
             string group = "group";
@@ -308,29 +288,14 @@ namespace SharkSync.Api.Tests.Controllers
             int modifiedSecondsAgo = 10;
             string value = "Neil";
             string value2 = "10";
+            List<ChangeWithGroup> changes = null;
 
-            List<SendContextModel<UpsetModel<Change>>> changes = null;
-            var model = new SendContextModel<UpsetModel<Change>>();
-
-            scaleContext
-                .Setup(x => x.MakeUpsertModel(It.IsAny<string>(), "change", It.IsAny<Change>()))
-                .Returns(model)
-                .Callback<string, string, Change>((p, t, v) =>
-                {
-                    partition = p;
-                    table = t;
-                    if (changeValue == null)
-                        changeValue = v;
-                    else
-                        changeValue2 = v;
-                });
-
-            scaleContext
-                .Setup(x => x.UpsertBulk(It.IsAny<List<SendContextModel<UpsetModel<Change>>>>()))
+            changeRepository
+                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<ChangeWithGroup>>()))
                 .Returns(() => Task.FromResult((string)null))
-                .Callback<List<SendContextModel<UpsetModel<Change>>>>((l) =>
+                .Callback<Guid, IEnumerable<ChangeWithGroup>>((a, l) =>
                 {
-                    changes = l;
+                    changes = l.ToList();
                 });
 
             var request = new SyncRequestViewModel()
@@ -357,67 +322,46 @@ namespace SharkSync.Api.Tests.Controllers
                 }
             };
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(request);
             var syncResponse = response.Value as SyncResponseViewModel;
 
             Assert.NotNull(syncResponse);
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
-            Assert.AreEqual($"{app.Id}-{group}", partition);
-            Assert.AreEqual($"change", table);
-
-            Assert.NotNull(changeValue);
-            Assert.AreEqual(recordId, changeValue.RecordId);
-            Assert.AreEqual(propertyName, changeValue.Path);
-            Assert.AreEqual(device.Id, changeValue.DeviceId);
-            Assert.AreEqual(DateTime.Now.AddSeconds(-modifiedSecondsAgo).ToLongTimeString(), changeValue.Modified.ToLongTimeString());
-            Assert.AreEqual("%clustertime%", changeValue.Tidemark);
-            Assert.AreEqual(value, changeValue.Value);
-
-            Assert.NotNull(changeValue2);
-            Assert.AreEqual(recordId, changeValue2.RecordId);
-            Assert.AreEqual(propertyName2, changeValue2.Path);
-            Assert.AreEqual(device.Id, changeValue2.DeviceId);
-            Assert.AreEqual(DateTime.Now.AddSeconds(-modifiedSecondsAgo).ToLongTimeString(), changeValue2.Modified.ToLongTimeString());
-            Assert.AreEqual("%clustertime%", changeValue2.Tidemark);
-            Assert.AreEqual(value2, changeValue2.Value);
 
             Assert.NotNull(changes);
             Assert.AreEqual(2, changes.Count);
-            Assert.AreEqual(model, changes[0]);
+            Assert.AreEqual(group, changes[0].Group);
+            Assert.AreEqual(propertyName, changes[0].Path);
+            Assert.AreEqual(recordId, changes[0].RecordId);
+            Assert.AreEqual(value, changes[0].Value);
+            Assert.AreEqual(group, changes[1].Group);
+            Assert.AreEqual(propertyName2, changes[1].Path);
+            Assert.AreEqual(recordId, changes[1].RecordId);
+            Assert.AreEqual(value2, changes[1].Value);
 
-            scaleContext.Verify(t => t.MakeUpsertModel(It.IsAny<string>(), "change", It.IsAny<Change>()), Times.Exactly(2));
-            scaleContext.Verify(t => t.UpsertBulk(It.IsAny<List<SendContextModel<UpsetModel<Change>>>>()), Times.Once);
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Id, It.IsAny<IEnumerable<ChangeWithGroup>>()), Times.Once);
         }
 
         [Test]
         public async Task SyncController_Post_Success_Null_Tidemark_With_No_Changes()
         {
-            string group = "group";
-            string partition = null;
-            string table = null;
-            string whereClause = null;
-            List<object> whereClauseValues = null;
-            string orderBy = null;
-            int? limit = null;
-            int? offset = null;
+            Guid appId;
+            string group = null;
+            string tidemark = null;
 
-            scaleContext
-                .Setup(x => x.Query<Change>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<object>>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()))
+            changeRepository
+                .Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(changes)
-                .Callback<string, string, string, List<object>, string, int?, int?>((p, t, w, v, o, l, of) =>
+                .Callback<Guid, string, string>((a, g, t) =>
                 {
-                    partition = p;
-                    table = t;
-                    whereClause = w;
-                    whereClauseValues = v;
-                    orderBy = o;
-                    limit = l;
-                    offset = of;
+                    appId = a;
+                    group = g;
+                    tidemark = t;
                 });
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,
@@ -427,7 +371,7 @@ namespace SharkSync.Api.Tests.Controllers
                 {
                     new SyncRequestViewModel.GroupViewModel
                     {
-                        Group = group,
+                        Group = "group",
                         Tidemark = null
                     }
                 }
@@ -439,15 +383,9 @@ namespace SharkSync.Api.Tests.Controllers
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
 
-            Assert.AreEqual($"{app.Id}-{group}", partition);
-            Assert.AreEqual($"change", table);
-            Assert.AreEqual(null, whereClause);
-
-            Assert.NotNull(whereClauseValues);
-            Assert.AreEqual(0, whereClauseValues.Count);
-            Assert.AreEqual("tidemark", orderBy);
-            Assert.AreEqual(50, limit);
-            Assert.AreEqual(null, offset);
+            Assert.AreEqual(app.Id, appId);
+            Assert.AreEqual("group", group);
+            Assert.AreEqual(null, tidemark);
         }
 
         [Test]
@@ -459,7 +397,7 @@ namespace SharkSync.Api.Tests.Controllers
 
             changes.Add(change);
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,
@@ -505,7 +443,7 @@ namespace SharkSync.Api.Tests.Controllers
             changes.Add(change);
             changes.Add(change2);
 
-            var controller = new SyncController(logger.Object, queryCache.Object, scaleContext.Object);
+            var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Id,

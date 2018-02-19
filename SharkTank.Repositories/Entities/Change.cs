@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkSync.Scale.Tables
+namespace SharkTank.Repositories.Entities
 {
     public class Change
     {
@@ -22,5 +22,11 @@ namespace SharkSync.Scale.Tables
         public DateTime Modified { get; set; }
         [JsonProperty("value")]
         public string Value { get; set; }
+    }
+
+    // ChangeWithGroup is used when storing changes to know which group it belongs to
+    public class ChangeWithGroup : Change
+    {
+        public string Group { get; set; }
     }
 }

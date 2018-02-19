@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkSync.Scale.Tables
+namespace SharkTank.Repositories.Entities
 {
     public class Device
     {

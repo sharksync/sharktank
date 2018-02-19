@@ -8,20 +8,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SharkSync.Scale
+namespace SharkTank.Scale.ScaleApi
 {
-    public interface IScaleContext
-    {
-        string SystemPartition { get; }
-        Task<List<T>> Query<T>(string partition, string table, string whereClause = null, List<object> whereClauseValues = null, string orderBy = null, int? limit = null, int? offset = null) where T : class;
-
-        SendContextModel<UpsetModel<T>> MakeUpsertModel<T>(string partition, string table, T value) where T : class;
-
-        Task Upsert<T>(string partition, string table, T value) where T : class;
-        Task UpsertBulk<T>(List<SendContextModel<UpsetModel<T>>> items) where T : class;
-    }
-
-    public class ScaleContext : IScaleContext
+    public class ScaleContext
     {
         private static readonly string serverUrl = "http://db.sharksync.io:5555";
         //private static readonly string serverUrl = "http://localhost:5555";

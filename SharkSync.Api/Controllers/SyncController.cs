@@ -7,29 +7,30 @@ using SharkSync.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using SharkSync.Scale;
-using SharkSync.Scale.Tables;
+using SharkTank.Repositories.Entities;
+using SharkTank.Repositories;
 
 namespace SharkSync.Api.Controllers
 {
     [Route("sync")]
     public class SyncController : Controller
     {
-        public static readonly TimeSpan defaultCacheDuration = new TimeSpan(hours: 0, minutes: 10, seconds: 0);
-
         ILogger Logger { get; set; }
 
-        IQueryCache Cache { get; set; }
+        IApplicationRepository ApplicationRepository { get; set; }
 
-        IScaleContext ScaleContext { get; set; }
+        IDeviceRepository DeviceRepository { get; set; }
+
+        IChangeRepository ChangeRepository { get; set; }
 
         DateTime requestStartTimeUTC { get; set; }
 
-        public SyncController(ILogger<SyncController> logger, IQueryCache cache, IScaleContext scaleContext)
+        public SyncController(ILogger<SyncController> logger, IApplicationRepository appRepository, IDeviceRepository deviceRepository, IChangeRepository changeRepository)
         {
             Logger = logger;
-            Cache = cache;
-            ScaleContext = scaleContext;
+            ApplicationRepository = appRepository;
+            DeviceRepository = deviceRepository;
+            ChangeRepository = changeRepository;
         }
 
         [HttpPost]
@@ -80,7 +81,7 @@ namespace SharkSync.Api.Controllers
                 ModelState.AddModelError("app_id", "app_id missing or invalid request");
             else
             {
-                var app = await Cache.GetByPrimaryKeyFromCacheOrQuery<Application>(ScaleContext.SystemPartition, "application", "app_id", request.AppId, defaultCacheDuration);
+                var app = await ApplicationRepository.GetByIdAsync(request.AppId);
 
                 if (app == null)
                     ModelState.AddModelError("app_id", "No application found for app_id");
@@ -95,7 +96,7 @@ namespace SharkSync.Api.Controllers
 
         private async Task<Device> ValidateDevice(SyncRequestViewModel request)
         {
-            var device = await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(ScaleContext.SystemPartition, "device", "device_id", request.DeviceId, defaultCacheDuration);
+            var device = await DeviceRepository.GetByIdAsync(request.DeviceId);
 
             if (device == null)
                 ModelState.AddModelError("device_id", "No device found for device_id");
@@ -112,7 +113,7 @@ namespace SharkSync.Api.Controllers
 
                 foreach (var batch in request.Changes.Batch(50))
                 {
-                    var changes = new List<SendContextModel<UpsetModel<Change>>>();
+                    var changes = new List<ChangeWithGroup>();
 
                     foreach (var change in batch)
                     {
@@ -129,7 +130,7 @@ namespace SharkSync.Api.Controllers
 
                                 DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
 
-                                var dbChange = new Change()
+                                var dbChange = new ChangeWithGroup()
                                 {
                                     Id = Guid.NewGuid(),
                                     RecordId = recordId,
@@ -137,12 +138,11 @@ namespace SharkSync.Api.Controllers
                                     DeviceId = device.Id,
                                     Modified = modifiedUTC,
                                     Tidemark = "%clustertime%",
-                                    Value = change.Value
+                                    Value = change.Value,
+                                    Group = change.Group
                                 };
 
-                                string partition = $"{app.Id}-{change.Group}";
-
-                                changes.Add(ScaleContext.MakeUpsertModel(partition, "change", dbChange));
+                                changes.Add(dbChange);
                             }
                             else
                             {
@@ -153,9 +153,14 @@ namespace SharkSync.Api.Controllers
 
                     Logger.LogInformation($"Generated changes in {sw.ElapsedMilliseconds}ms count: {changes.Count}");
 
-                    sw.Restart();
-                    await ScaleContext.UpsertBulk(changes);
-                    Logger.LogInformation($"Saved changes to database in {sw.ElapsedMilliseconds}ms count: {changes.Count}");
+                    if (changes.Any())
+                    {
+                        sw.Restart();
+
+                        await ChangeRepository.UpsertChangesAsync(app.Id, changes);
+
+                        Logger.LogInformation($"Saved changes to database in {sw.ElapsedMilliseconds}ms count: {changes.Count}");
+                    }
                 }
 
                 sw.Stop();
@@ -166,31 +171,11 @@ namespace SharkSync.Api.Controllers
         {
             var response = new SyncResponseViewModel() { Groups = new List<SyncResponseViewModel.GroupViewModel>() };
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
             if (request.Groups != null)
             {
                 foreach (var group in request.Groups)
                 {
-                    sw.Restart();
-
-                    string partition = $"{app.Id}-{group.Group}";
-                    var queryParams = new List<object>();
-                    string whereClause = null;
-
-                    if (!string.IsNullOrWhiteSpace(group.Tidemark))
-                    {
-                        Logger.LogInformation($"Getting changes for group: {group.Group} after tidemark: {group.Tidemark}");
-                        queryParams.Add(group.Tidemark);
-                        whereClause = "tidemark > ?";
-                    }
-                    else
-                        Logger.LogInformation($"Getting all changes for group: {group.Group}");
-
-                    List<Change> results = await ScaleContext.Query<Change>(partition, "change", whereClause, queryParams, orderBy: "tidemark", limit: 50);
-
-                    Logger.LogInformation($"Retrieved changes from database in {sw.ElapsedMilliseconds}ms count: {results?.Count}");
+                    List<Change> results = await ChangeRepository.ListChangesAsync(app.Id, group.Group, group.Tidemark);
 
                     if (results != null && results.Any())
                     {
@@ -208,8 +193,6 @@ namespace SharkSync.Api.Controllers
                     }
                 }
             }
-
-            sw.Stop();
 
             return response;
         }

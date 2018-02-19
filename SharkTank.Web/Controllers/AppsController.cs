@@ -4,8 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SharkSync.Scale;
-using SharkSync.Scale.Tables;
 
 namespace SharkTank.Web.Controllers
 {
@@ -14,12 +12,9 @@ namespace SharkTank.Web.Controllers
     {
         ILogger Logger { get; set; }
 
-        IScaleContext ScaleContext { get; set; }
-
-        public AppsController(ILogger<AppsController> logger, IScaleContext scaleContext)
+        public AppsController(ILogger<AppsController> logger)
         {
             Logger = logger;
-            ScaleContext = scaleContext;
         }
 
         [HttpGet()]

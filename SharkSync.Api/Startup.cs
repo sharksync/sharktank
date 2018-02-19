@@ -8,7 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SharkSync.Scale;
+using SharkTank.Repositories;
+using SharkTank.Scale.Repositories;
+using SharkTank.Scale.ScaleApi;
 
 namespace SharkSync.Api
 {
@@ -26,8 +28,12 @@ namespace SharkSync.Api
             services.AddMvc();
             services.AddMemoryCache();
 
-            services.AddTransient(typeof(IQueryCache), typeof(QueryCache));
-            services.AddTransient(typeof(IScaleContext), typeof(ScaleContext));
+            services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
+            services.AddTransient(typeof(IDeviceRepository), typeof(DeviceRepository));
+            services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
+
+            services.AddTransient(typeof(ScaleContext), typeof(ScaleContext));
+            services.AddTransient(typeof(QueryCache), typeof(QueryCache));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
