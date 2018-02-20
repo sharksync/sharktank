@@ -9,18 +9,17 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using SharkTank.Repositories.Entities;
-using SharkTank.Scale.ScaleApi;
-using SharkTank.Repositories;
+using SharkTank.Interfaces.Repositories;
+using SharkTank.Interfaces.Entities;
 
 namespace SharkSync.Api.Tests.Controllers
 {
     [TestFixture]
     public class SyncControllerTests
     {
-        Application app;
-        Device device;
-        List<Change> changes;
+        Mock<IApplication> app;
+        Mock<IDevice> device;
+        List<IChange> changes;
 
         Mock<IApplicationRepository> applicationRepository;
         Mock<IDeviceRepository> deviceRepository;
@@ -31,17 +30,24 @@ namespace SharkSync.Api.Tests.Controllers
         [SetUp]
         public void SetUp()
         {
-            app = new Application { Id = Guid.NewGuid(), AccessKey = Guid.NewGuid() };
-            device = new Device { Id = Guid.NewGuid(), AppId = app.Id, LastSeen = DateTime.UtcNow.ToString() };
-            changes = new List<Change>();
+            app = new Mock<IApplication>();
+            app.Setup(a => a.Id).Returns(Guid.NewGuid());
+            app.Setup(a => a.AccessKey).Returns(Guid.NewGuid());
+
+            device = new Mock<IDevice>();
+            device.Setup(a => a.Id).Returns(Guid.NewGuid());
+
+            changes = new List<IChange>();
 
             applicationRepository = new Mock<IApplicationRepository>();
-            applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(app);
+            applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(app.Object);
 
             deviceRepository = new Mock<IDeviceRepository>();
-            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(device);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(device.Object);
 
             changeRepository = new Mock<IChangeRepository>();
+            changeRepository.Setup(x => x.CreateChange(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<string>()))
+                .Returns(new Mock<IChange>().Object);
             changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(changes);
 
             logger = new Mock<ILogger<SyncController>>();
@@ -82,7 +88,7 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Incorrect_AppId()
         {
-            applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Application)null);
+            applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((IApplication)null);
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
@@ -105,7 +111,7 @@ namespace SharkSync.Api.Tests.Controllers
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id
+                AppId = app.Object.Id
             });
 
             var syncResponse = response.Value as SyncResponseViewModel;
@@ -123,7 +129,7 @@ namespace SharkSync.Api.Tests.Controllers
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
+                AppId = app.Object.Id,
                 AppApiAccessKey = Guid.NewGuid()
             });
 
@@ -139,13 +145,13 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Missing_DeviceId()
         {
-            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Device)null);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((IDevice)null);
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey
             });
 
             var syncResponse = response.Value as SyncResponseViewModel;
@@ -160,13 +166,13 @@ namespace SharkSync.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Invalid_DeviceId()
         {
-            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Device)null);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((IDevice)null);
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
                 DeviceId = Guid.NewGuid()
             });
 
@@ -185,9 +191,9 @@ namespace SharkSync.Api.Tests.Controllers
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id
             });
 
             var syncResponse = response.Value as SyncResponseViewModel;
@@ -202,9 +208,9 @@ namespace SharkSync.Api.Tests.Controllers
         {
             var request = new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id,
                 Changes = new List<SyncRequestViewModel.ChangeViewModel>
                 {
                     new SyncRequestViewModel.ChangeViewModel
@@ -233,21 +239,21 @@ namespace SharkSync.Api.Tests.Controllers
             Guid recordId = Guid.NewGuid();
             int modifiedSecondsAgo = 10;
             string value = "Neil";
-            List<ChangeWithGroup> changes = null;
+            List<IChange> changes = null;
 
             changeRepository
-                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<ChangeWithGroup>>()))
+                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<IChange>>()))
                 .Returns(() => Task.FromResult((string)null))
-                .Callback<Guid, IEnumerable<ChangeWithGroup>>((a, l) =>
+                .Callback<Guid, IEnumerable<IChange>>((a, l) =>
                 {
                     changes = l.ToList();
                 });
 
             var request = new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id,
                 Changes = new List<SyncRequestViewModel.ChangeViewModel>
                 {
                     new SyncRequestViewModel.ChangeViewModel
@@ -275,7 +281,7 @@ namespace SharkSync.Api.Tests.Controllers
             Assert.AreEqual(recordId, changes[0].RecordId);
             Assert.AreEqual(value, changes[0].Value);
 
-            changeRepository.Verify(t => t.UpsertChangesAsync(app.Id, It.IsAny<IEnumerable<ChangeWithGroup>>()), Times.Once);
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
         }
 
         [Test]
@@ -288,21 +294,21 @@ namespace SharkSync.Api.Tests.Controllers
             int modifiedSecondsAgo = 10;
             string value = "Neil";
             string value2 = "10";
-            List<ChangeWithGroup> changes = null;
+            List<IChange> changes = null;
 
             changeRepository
-                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<ChangeWithGroup>>()))
+                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<IChange>>()))
                 .Returns(() => Task.FromResult((string)null))
-                .Callback<Guid, IEnumerable<ChangeWithGroup>>((a, l) =>
+                .Callback<Guid, IEnumerable<IChange>>((a, l) =>
                 {
                     changes = l.ToList();
                 });
 
             var request = new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id,
                 Changes = new List<SyncRequestViewModel.ChangeViewModel>
                 {
                     new SyncRequestViewModel.ChangeViewModel
@@ -341,7 +347,7 @@ namespace SharkSync.Api.Tests.Controllers
             Assert.AreEqual(recordId, changes[1].RecordId);
             Assert.AreEqual(value2, changes[1].Value);
 
-            changeRepository.Verify(t => t.UpsertChangesAsync(app.Id, It.IsAny<IEnumerable<ChangeWithGroup>>()), Times.Once);
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
         }
 
         [Test]
@@ -364,9 +370,9 @@ namespace SharkSync.Api.Tests.Controllers
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id,
                 Groups = new List<SyncRequestViewModel.GroupViewModel>
                 {
                     new SyncRequestViewModel.GroupViewModel
@@ -383,7 +389,7 @@ namespace SharkSync.Api.Tests.Controllers
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
 
-            Assert.AreEqual(app.Id, appId);
+            Assert.AreEqual(app.Object.Id, appId);
             Assert.AreEqual("group", group);
             Assert.AreEqual(null, tidemark);
         }
@@ -393,16 +399,16 @@ namespace SharkSync.Api.Tests.Controllers
         {
             string group = "group";
             string tidemark = "tidemark";
-            Change change = new Change() { Id = Guid.NewGuid(), Tidemark = tidemark, Modified = DateTime.Now, Path = "name", DeviceId = device.Id, RecordId = Guid.NewGuid(), Value = "Neil" };
+            IChange change = new Mock<IChange>().Object;
 
             changes.Add(change);
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id,
                 Groups = new List<SyncRequestViewModel.GroupViewModel>
                 {
                     new SyncRequestViewModel.GroupViewModel
@@ -437,8 +443,8 @@ namespace SharkSync.Api.Tests.Controllers
         {
             string group = "group";
             string tidemark = "tidemark";
-            Change change = new Change() { Id = Guid.NewGuid(), Tidemark = tidemark, Modified = DateTime.Now, Path = "name", DeviceId = device.Id, RecordId = Guid.NewGuid(), Value = "Neil" };
-            Change change2 = new Change() { Id = Guid.NewGuid(), Tidemark = tidemark, Modified = DateTime.Now, Path = "age", DeviceId = device.Id, RecordId = Guid.NewGuid(), Value = "35" };
+            IChange change = new Mock<IChange>().Object;
+            IChange change2 = new Mock<IChange>().Object;
 
             changes.Add(change);
             changes.Add(change2);
@@ -446,9 +452,9 @@ namespace SharkSync.Api.Tests.Controllers
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-                AppId = app.Id,
-                AppApiAccessKey = app.AccessKey,
-                DeviceId = device.Id,
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                DeviceId = device.Object.Id,
                 Groups = new List<SyncRequestViewModel.GroupViewModel>
                 {
                     new SyncRequestViewModel.GroupViewModel

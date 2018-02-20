@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
+using SharkTank.Interfaces.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkTank.Repositories.Entities
+namespace SharkTank.Scale.Entities
 {
-    public class Device
+    public class Device : IDevice
     {
         [JsonProperty("device_id")]
         public Guid Id { get; set; }

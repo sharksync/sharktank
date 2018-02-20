@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using SharkTank.Repositories;
-using SharkTank.Repositories.Entities;
+using SharkTank.Interfaces;
+using SharkTank.Interfaces.Entities;
+using SharkTank.Interfaces.Repositories;
+using SharkTank.Scale.Entities;
 using SharkTank.Scale.ScaleApi;
 using System;
 using System.Collections.Generic;
@@ -24,7 +26,7 @@ namespace SharkTank.Scale.Repositories
             Cache = queryCache;
         }
 
-        public async Task<Device> GetByIdAsync(Guid id)
+        public async Task<IDevice> GetByIdAsync(Guid id)
         {
             return await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(ScaleContext.SystemPartition, "device", "device_id", id);
         }

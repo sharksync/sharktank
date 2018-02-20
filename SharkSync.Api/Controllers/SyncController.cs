@@ -7,8 +7,8 @@ using SharkSync.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using SharkTank.Repositories.Entities;
-using SharkTank.Repositories;
+using SharkTank.Interfaces.Repositories;
+using SharkTank.Interfaces.Entities;
 
 namespace SharkSync.Api.Controllers
 {
@@ -75,7 +75,7 @@ namespace SharkSync.Api.Controllers
             return JsonResultWithValidationErrors(response);
         }
 
-        private async Task<Application> ValidateApplication(SyncRequestViewModel request)
+        private async Task<IApplication> ValidateApplication(SyncRequestViewModel request)
         {
             if (request == null || request.AppId == Guid.Empty)
                 ModelState.AddModelError("app_id", "app_id missing or invalid request");
@@ -94,7 +94,7 @@ namespace SharkSync.Api.Controllers
             return null;
         }
 
-        private async Task<Device> ValidateDevice(SyncRequestViewModel request)
+        private async Task<IDevice> ValidateDevice(SyncRequestViewModel request)
         {
             var device = await DeviceRepository.GetByIdAsync(request.DeviceId);
 
@@ -104,70 +104,52 @@ namespace SharkSync.Api.Controllers
             return device;
         }
 
-        private async Task ProcessChanges(Application app, Device device, SyncRequestViewModel request)
+        private async Task ProcessChanges(IApplication app, IDevice device, SyncRequestViewModel request)
         {
             if (request.Changes != null && request.Changes.Any())
             {
+                var dbChanges = new List<IChange>();
+
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                foreach (var batch in request.Changes.Batch(50))
+                foreach (var change in request.Changes)
                 {
-                    var changes = new List<ChangeWithGroup>();
-
-                    foreach (var change in batch)
+                    if (change != null)
                     {
-                        if (change != null)
+                        // Path should contain a / in format <guid>/property.name
+                        if (!string.IsNullOrWhiteSpace(change.Path) && change.Path.IndexOf("/") > -1)
                         {
-                            Guid recordId = Guid.Empty;
-                            string path = null;
+                            Guid recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
+                            string path = change.Path.Substring(change.Path.IndexOf("/") + 1);
+                            DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
 
-                            // Path should contain a / in format <guid>/property.name
-                            if (!string.IsNullOrWhiteSpace(change.Path) && change.Path.IndexOf("/") > -1)
-                            {
-                                recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
-                                path = change.Path.Substring(change.Path.IndexOf("/") + 1);
-
-                                DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
-
-                                var dbChange = new ChangeWithGroup()
-                                {
-                                    Id = Guid.NewGuid(),
-                                    RecordId = recordId,
-                                    Path = path,
-                                    DeviceId = device.Id,
-                                    Modified = modifiedUTC,
-                                    Tidemark = "%clustertime%",
-                                    Value = change.Value,
-                                    Group = change.Group
-                                };
-
-                                changes.Add(dbChange);
-                            }
-                            else
-                            {
-                                ModelState.AddModelError("Path", "Path is incorrectly formatted, should be formatted <guid>/property.name");
-                            }
+                            var dbChange = ChangeRepository.CreateChange(recordId, change.Group, path, device.Id, modifiedUTC, change.Value);
+                            dbChanges.Add(dbChange);
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("Path", "Path is incorrectly formatted, should be formatted <guid>/property.name");
                         }
                     }
+                }
 
-                    Logger.LogInformation($"Generated changes in {sw.ElapsedMilliseconds}ms count: {changes.Count}");
+                Logger.LogInformation($"Generated changes in {sw.ElapsedMilliseconds}ms count: {dbChanges.Count}");
 
-                    if (changes.Any())
-                    {
-                        sw.Restart();
+                if (dbChanges.Any())
+                {
+                    sw.Restart();
 
-                        await ChangeRepository.UpsertChangesAsync(app.Id, changes);
+                    await ChangeRepository.UpsertChangesAsync(app.Id, dbChanges);
 
-                        Logger.LogInformation($"Saved changes to database in {sw.ElapsedMilliseconds}ms count: {changes.Count}");
-                    }
+                    Logger.LogInformation($"Saved changes to database in {sw.ElapsedMilliseconds}ms count: {dbChanges.Count}");
                 }
 
                 sw.Stop();
             }
         }
 
-        private async Task<SyncResponseViewModel> GetChanges(Application app, Device device, SyncRequestViewModel request)
+        private async Task<SyncResponseViewModel> GetChanges(IApplication app, IDevice device, SyncRequestViewModel request)
         {
             var response = new SyncResponseViewModel() { Groups = new List<SyncResponseViewModel.GroupViewModel>() };
 
@@ -175,7 +157,7 @@ namespace SharkSync.Api.Controllers
             {
                 foreach (var group in request.Groups)
                 {
-                    List<Change> results = await ChangeRepository.ListChangesAsync(app.Id, group.Group, group.Tidemark);
+                    List<IChange> results = await ChangeRepository.ListChangesAsync(app.Id, group.Group, group.Tidemark);
 
                     if (results != null && results.Any())
                     {

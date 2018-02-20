@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using SharkTank.Repositories;
-using SharkTank.Repositories.Entities;
+using SharkTank.Interfaces.Entities;
+using SharkTank.Interfaces.Repositories;
+using SharkTank.Scale.Entities;
 using SharkTank.Scale.ScaleApi;
 using System;
 using System.Collections.Generic;
@@ -26,13 +27,30 @@ namespace SharkTank.Scale.Repositories
             Cache = queryCache;
         }
 
-        public async Task UpsertChangesAsync(Guid appId, IEnumerable<ChangeWithGroup> changes)
+        public IChange CreateChange(Guid recordId, string group, string path, Guid deviceId, DateTime modifiedDateTime, string value)
         {
+            return new Change
+            {
+                Id = Guid.NewGuid(),
+                RecordId = recordId,
+                Group = group,
+                Path = path,
+                DeviceId = deviceId,
+                Modified = modifiedDateTime,
+                Value = value,
+                Tidemark = "%clustertime%"
+            };
+        }
+
+        public async Task UpsertChangesAsync(Guid appId, IEnumerable<IChange> changes)
+        {
+            // TODO: Batch saving
+
             var models = changes.Select(c => ScaleContext.MakeUpsertModel($"{appId}-{c.Group}", "change", (Change)c)).ToList();
             await ScaleContext.UpsertBulk(models);
         }
 
-        public async Task<List<Change>> ListChangesAsync(Guid appId, string group, string tidemark)
+        public async Task<List<IChange>> ListChangesAsync(Guid appId, string group, string tidemark)
         {
             string partition = $"{appId}-{group}";
             var queryParams = new List<object>();
@@ -57,7 +75,7 @@ namespace SharkTank.Scale.Repositories
 
             sw.Stop();
 
-            return results;
+            return results.Cast<IChange>().ToList();
         }
     }
 }

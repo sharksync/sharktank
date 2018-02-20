@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
+using SharkTank.Interfaces.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkTank.Repositories.Entities
+namespace SharkTank.Scale.Entities
 {
-    public class Change
+    public class Change : IChange
     {
         [JsonProperty("change_id")]
         public Guid Id { get; set; }
@@ -22,11 +23,7 @@ namespace SharkTank.Repositories.Entities
         public DateTime Modified { get; set; }
         [JsonProperty("value")]
         public string Value { get; set; }
-    }
 
-    // ChangeWithGroup is used when storing changes to know which group it belongs to
-    public class ChangeWithGroup : Change
-    {
         public string Group { get; set; }
     }
 }
