@@ -1,5 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
 using Microsoft.Extensions.Logging;
 using SharkTank.Interfaces.Entities;
 using SharkTank.Interfaces.Repositories;
@@ -32,52 +33,53 @@ namespace SharkTank.DynamoDB.Repositories
         {
             return new Change
             {
-                Id = Guid.NewGuid(),
                 RecordId = recordId,
                 Group = group,
                 Path = path,
                 DeviceId = deviceId,
                 Modified = modifiedDateTime,
                 Value = value,
-                Tidemark = "%clustertime%"
+                Tidemark = HiResDateTime.UtcNowTicks
             };
         }
 
         public async Task UpsertChangesAsync(Guid appId, IEnumerable<IChange> changes)
         {
-            // TODO: Batch saving
+            var tableConfig = GetChangeTableConfig(appId);
+            var changeBatch = DynamoDBContext.CreateBatchWrite<Change>(tableConfig);
 
-            //var models = changes.Select(c => ScaleContext.MakeUpsertModel($"{appId}-{c.Group}", "change", (Change)c)).ToList();
-            //await ScaleContext.UpsertBulk(models);
+            changeBatch.AddPutItems(changes.Cast<Change>());
+
+            await changeBatch.ExecuteAsync();
         }
 
         public async Task<List<IChange>> ListChangesAsync(Guid appId, string group, string tidemark)
         {
-            return null;
-            //string partition = $"{appId}-{group}";
-            //var queryParams = new List<object>();
-            //string whereClause = null;
+            var tableConfig = GetChangeTableConfig(appId);
+            AsyncSearch<Change> query;
 
-            //if (!string.IsNullOrWhiteSpace(tidemark))
-            //{
-            //    Logger.LogInformation($"Getting changes for group: {group} after tidemark: {tidemark}");
+            if (string.IsNullOrWhiteSpace(tidemark) || !long.TryParse(tidemark, out long tidemarkLong) || tidemarkLong <= 0)
+            {
+                Logger.LogInformation($"Getting all changes for group: {group}");
 
-            //    queryParams.Add(tidemark);
-            //    whereClause = "tidemark > ?";
-            //}
-            //else
-            //    Logger.LogInformation($"Getting all changes for group: {group}");
+                query = DynamoDBContext.QueryAsync<Change>(group, tableConfig);
+            }
+            else
+            {
+                Logger.LogInformation($"Getting changes for group: {group} after tidemark: {tidemarkLong}");
 
-            //Stopwatch sw = new Stopwatch();
-            //sw.Start();
+                query = DynamoDBContext.QueryAsync<Change>(group, QueryOperator.GreaterThan, new[] { (object)tidemarkLong }, tableConfig);
+            }
 
-            //List<Change> results = await ScaleContext.Query<Change>(partition, "change", whereClause, queryParams, orderBy: "tidemark", limit: 50);
+            var changes = await query.GetNextSetAsync();
 
-            //Logger.LogInformation($"Retrieved changes from database in {sw.ElapsedMilliseconds}ms count: {results?.Count}");
+            // Limit changes to 50 at a time
+            return changes.Take(50).Cast<IChange>().ToList();
+        }
 
-            //sw.Stop();
-
-            //return results;
+        private static DynamoDBOperationConfig GetChangeTableConfig(Guid appId)
+        {
+            return new DynamoDBOperationConfig { OverrideTableName = $"{appId}-Change" };
         }
     }
 }

@@ -44,10 +44,11 @@ namespace SharkTank.Scale.Repositories
 
         public async Task UpsertChangesAsync(Guid appId, IEnumerable<IChange> changes)
         {
-            // TODO: Batch saving
-
-            var models = changes.Select(c => ScaleContext.MakeUpsertModel($"{appId}-{c.Group}", "change", (Change)c)).ToList();
-            await ScaleContext.UpsertBulk(models);
+            foreach (var batch in changes.Batch(50))
+            {
+                var models = batch.Select(c => ScaleContext.MakeUpsertModel($"{appId}-{c.Group}", "change", (Change)c)).ToList();
+                await ScaleContext.UpsertBulk(models);
+            }
         }
 
         public async Task<List<IChange>> ListChangesAsync(Guid appId, string group, string tidemark)
