@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SharkSync.Api.ViewModels
+namespace SharkSync.Web.Api.ViewModels
 {
     public class BaseValidationViewModel
     {

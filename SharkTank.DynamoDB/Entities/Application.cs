@@ -16,7 +16,5 @@ namespace SharkTank.Repositories.Entities
         public Guid AccessKey { get; set; }
         [DynamoDBProperty]
         public Guid AccountId { get; set; }
-        [DynamoDBProperty]
-        public string AppSettings { get; set; }
     }
 }

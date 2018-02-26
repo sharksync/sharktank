@@ -1,5 +1,5 @@
-using SharkSync.Api.Controllers;
-using SharkSync.Api.ViewModels;
+using SharkSync.Web.Api.Controllers;
+using SharkSync.Web.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System;
@@ -11,7 +11,7 @@ using NUnit.Framework;
 using SharkTank.Interfaces.Repositories;
 using SharkTank.Interfaces.Entities;
 
-namespace SharkSync.Api.Tests.Controllers
+namespace SharkSync.Web.Api.Tests.Controllers
 {
     [TestFixture]
     public class SyncControllerTests

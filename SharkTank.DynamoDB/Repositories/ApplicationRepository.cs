@@ -1,11 +1,14 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Logging;
+using SharkTank.DynamoDB.Utilities;
 using SharkTank.Interfaces.Entities;
 using SharkTank.Interfaces.Repositories;
 using SharkTank.Repositories;
 using SharkTank.Repositories.Entities;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharkTank.DynamoDB.Repositories

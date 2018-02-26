@@ -1,12 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Api", "SharkSync.Api\SharkSync.Api.csproj", "{D3EE55F0-742D-42C4-BDEB-D562F11A3AF1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Api.Tests", "SharkSync.Api.Tests\SharkSync.Api.Tests.csproj", "{4FA40E1B-59F8-4DAA-827C-FCDBB3E086FF}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.Web", "SharkTank.Web\SharkTank.Web.csproj", "{6C619B59-A251-405E-B871-D551A5AC4152}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.Scale", "SharkTank.Scale\SharkTank.Scale.csproj", "{972CD3D2-5156-4F19-9B1E-0F69B43CCDFB}"
@@ -15,20 +11,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.Interfaces", "Sha
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.DynamoDB", "SharkTank.DynamoDB\SharkTank.DynamoDB.csproj", "{CD0A1447-47F6-46FF-AD49-DEC128068B7E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Web.Api", "SharkSync.Web.Api\SharkSync.Web.Api.csproj", "{ED5CF4EB-DF76-49FE-9C60-BEA296A3744D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Web.Api.Tests", "SharkSync.Web.Api.Tests\SharkSync.Web.Api.Tests.csproj", "{EEE7969C-0243-4033-88D5-F33C4E212740}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D3EE55F0-742D-42C4-BDEB-D562F11A3AF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3EE55F0-742D-42C4-BDEB-D562F11A3AF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3EE55F0-742D-42C4-BDEB-D562F11A3AF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3EE55F0-742D-42C4-BDEB-D562F11A3AF1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4FA40E1B-59F8-4DAA-827C-FCDBB3E086FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4FA40E1B-59F8-4DAA-827C-FCDBB3E086FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4FA40E1B-59F8-4DAA-827C-FCDBB3E086FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4FA40E1B-59F8-4DAA-827C-FCDBB3E086FF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6C619B59-A251-405E-B871-D551A5AC4152}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6C619B59-A251-405E-B871-D551A5AC4152}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C619B59-A251-405E-B871-D551A5AC4152}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,6 +37,14 @@ Global
 		{CD0A1447-47F6-46FF-AD49-DEC128068B7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD0A1447-47F6-46FF-AD49-DEC128068B7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD0A1447-47F6-46FF-AD49-DEC128068B7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED5CF4EB-DF76-49FE-9C60-BEA296A3744D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED5CF4EB-DF76-49FE-9C60-BEA296A3744D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED5CF4EB-DF76-49FE-9C60-BEA296A3744D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED5CF4EB-DF76-49FE-9C60-BEA296A3744D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEE7969C-0243-4033-88D5-F33C4E212740}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEE7969C-0243-4033-88D5-F33C4E212740}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEE7969C-0243-4033-88D5-F33C4E212740}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEE7969C-0243-4033-88D5-F33C4E212740}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

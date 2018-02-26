@@ -1,8 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace SharkTank.Interfaces.Entities
 {
@@ -11,6 +7,5 @@ namespace SharkTank.Interfaces.Entities
         Guid Id { get; set; }
         Guid AccessKey { get; set; }
         Guid AccountId { get; set; }
-        string AppSettings { get; set; }
     }
 }

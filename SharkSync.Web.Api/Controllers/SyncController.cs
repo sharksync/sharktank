@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using SharkSync.Api.ViewModels;
+using SharkSync.Web.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using SharkTank.Interfaces.Repositories;
 using SharkTank.Interfaces.Entities;
+using System.Net;
 
-namespace SharkSync.Api.Controllers
+namespace SharkSync.Web.Api.Controllers
 {
-    [Route("sync")]
+    [Route("api/sync")]
     public class SyncController : Controller
     {
         ILogger Logger { get; set; }
@@ -189,7 +190,11 @@ namespace SharkSync.Api.Controllers
 
             response.Success = (response.Errors == null);
 
-            return new JsonResult(response, new JsonSerializerSettings { Formatting = Formatting.Indented });
+            var result = new JsonResult(response, new JsonSerializerSettings { Formatting = Formatting.Indented });
+
+            result.StatusCode = (int)(response.Success ? HttpStatusCode.OK : HttpStatusCode.BadRequest);
+
+            return result;
         }
 
     }

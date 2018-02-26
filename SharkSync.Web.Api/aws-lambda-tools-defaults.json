@@ -1,0 +1,12 @@
+
+{
+    "profile" : "default",
+    "region"  : "eu-west-1",
+    "configuration" : "Release",
+    "framework"     : "netcoreapp2.0",
+    "template"      : "serverless.template",
+    "template-parameters" : "",
+    "s3-bucket"           : "elasticbeanstalk-eu-west-1-429810410321",
+    "stack-name"          : "sharksync-web-api",
+    "stack-wait"          : false
+}
