@@ -8,16 +8,10 @@ using System.Threading.Tasks;
 
 namespace SharkTank.Repositories.Entities
 {
-    public class Application : IApplication
+    public class Account : IAccount
     {
         [DynamoDBHashKey]
-        public Guid AccountId { get; set; }
-
-        [DynamoDBRangeKey]
         public Guid Id { get; set; }
-
-        [DynamoDBProperty]
-        public Guid AccessKey { get; set; }
 
         [DynamoDBProperty]
         public string Name { get; set; }

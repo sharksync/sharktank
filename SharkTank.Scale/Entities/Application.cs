@@ -17,5 +17,7 @@ namespace SharkTank.Scale.Entities
         public Guid AccountId { get; set; }
         [JsonProperty("app_settings")]
         public string AppSettings { get; set; }
+
+        public string Name { get; set; }
     }
 }

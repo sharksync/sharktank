@@ -23,11 +23,11 @@
         "Policies": [ "AWSLambdaFullAccess" ],
         "Environment" : { },
         "Events": {
-          "ApiSyncPost": {
+          "ApiProxy": {
             "Type": "Api",
             "Properties": {
-              "Path": "/Api/Sync",
-              "Method": "POST"
+              "Path": "/{proxy+}",
+              "Method": "ANY"
             }
           }
         }
@@ -55,10 +55,12 @@
         "Properties" : {
             "TableName" : "Application",
             "AttributeDefinitions" : [
+              {"AttributeName" : "AccountId", "AttributeType" : "S"},
               {"AttributeName" : "Id", "AttributeType" : "S"}
             ],
             "KeySchema" : [
-              {"AttributeName" : "Id", "KeyType" : "HASH"}
+              {"AttributeName" : "AccountId", "KeyType" : "HASH"},
+              {"AttributeName" : "Id", "KeyType" : "RANGE"}
             ],
             "ProvisionedThroughput" : {
                 "ReadCapacityUnits" : 1,
@@ -71,10 +73,12 @@
         "Properties" : {
             "TableName" : "Device",
             "AttributeDefinitions" : [
+              {"AttributeName" : "ApplicationId", "AttributeType" : "S"},
               {"AttributeName" : "Id", "AttributeType" : "S"}
             ],
             "KeySchema" : [
-              {"AttributeName" : "Id", "KeyType" : "HASH"}
+              {"AttributeName" : "ApplicationId", "KeyType" : "HASH"},
+              {"AttributeName" : "Id", "KeyType" : "RANGE"}
             ],
             "ProvisionedThroughput" : {
                 "ReadCapacityUnits" : 1,

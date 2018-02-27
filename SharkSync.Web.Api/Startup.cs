@@ -4,10 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using SharkSync.Web.Api.ViewModels;
 using SharkTank.DynamoDB.Repositories;
 using SharkTank.Interfaces.Repositories;
 
@@ -27,6 +31,7 @@ namespace SharkSync.Web.Api
         {
             services.AddMvc();
 
+            services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
             services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
             services.AddTransient(typeof(IDeviceRepository), typeof(DeviceRepository));
             services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
@@ -37,6 +42,31 @@ namespace SharkSync.Web.Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler(builder =>
+                {
+                    builder.Run(async context =>
+                    {
+                        context.Response.StatusCode = (int)System.Net.HttpStatusCode.InternalServerError;
+                        context.Response.ContentType = "application/json";
+
+                        var error = context.Features.Get<IExceptionHandlerFeature>();
+                        if (error != null)
+                        {
+                            var validation = new BaseValidationViewModel();
+                            validation.Errors = new[] { error.Error.Message };
+                            validation.Success = false;
+                            await context.Response.WriteAsync(JsonConvert.SerializeObject(validation)).ConfigureAwait(false);
+                        }
+                    });
+                });
+            }
+
             app.UseMvc();
         }
     }

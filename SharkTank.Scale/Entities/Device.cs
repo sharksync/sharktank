@@ -12,7 +12,7 @@ namespace SharkTank.Scale.Entities
         [JsonProperty("device_id")]
         public Guid Id { get; set; }
         [JsonProperty("app_id")]
-        public Guid AppId { get; set; }
+        public Guid ApplicationId { get; set; }
         [JsonProperty("account_id")]
         public Guid AccountId { get; set; }
         [JsonProperty("sync_id")]

@@ -40,6 +40,9 @@ namespace SharkSync.Web.Api.Controllers
             requestStartTimeUTC = DateTime.UtcNow;
             var response = new SyncResponseViewModel();
 
+            if (!ModelState.IsValid)
+                return JsonResultWithValidationErrors(response);
+
             try
             {
                 Stopwatch sw = new Stopwatch();
@@ -186,7 +189,7 @@ namespace SharkSync.Web.Api.Controllers
                 return JsonResultWithValidationErrors(new BaseValidationViewModel());
 
             if (!ModelState.IsValid)
-                response.Errors = ModelState.Values.SelectMany(ms => ms.Errors).Select(me => me.ErrorMessage);
+                response.Errors = ModelState.Values.SelectMany(ms => ms.Errors).Select(me => me.Exception?.Message ?? me.ErrorMessage);
 
             response.Success = (response.Errors == null);
 

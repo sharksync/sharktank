@@ -2,11 +2,9 @@
 
 namespace SharkTank.Interfaces.Entities
 {
-    public interface IApplication
+    public interface IAccount
     {
         Guid Id { get; set; }
-        Guid AccessKey { get; set; }
         string Name { get; set; }
-        Guid AccountId { get; set; }
     }
 }

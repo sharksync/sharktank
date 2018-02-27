@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace SharkTank.DynamoDB.Repositories
 {
-    public class ApplicationRepository : IApplicationRepository
+    public class AccountRepository : IAccountRepository
     {
         ILogger Logger { get; set; }
 
@@ -21,23 +21,16 @@ namespace SharkTank.DynamoDB.Repositories
 
         DynamoDBContext DynamoDBContext { get; set; }
 
-        public ApplicationRepository(ILogger<ApplicationRepository> logger, IAmazonDynamoDB dynamoDBClient)
+        public AccountRepository(ILogger<ApplicationRepository> logger, IAmazonDynamoDB dynamoDBClient)
         {
             Logger = logger;
             DynamoDBClient = dynamoDBClient;
             DynamoDBContext = new DynamoDBContext(dynamoDBClient);
         }
 
-        public async Task<IEnumerable<IApplication>> ListByAccountIdAsync(Guid accountId)
+        public async Task<IAccount> AddAsync(string name)
         {
-            var query = DynamoDBContext.QueryAsync<Application>(accountId);
-            var apps = await query.GetNextSetAsync();
-            return apps;
-        }
-
-        public async Task<IApplication> GetByIdAsync(Guid id)
-        {
-            return await DynamoDBContext.LoadAsync<Application>(id);
+            return await Task.FromResult((IAccount)null);
         }
     }
 }

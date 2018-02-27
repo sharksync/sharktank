@@ -4,6 +4,7 @@ using SharkTank.Interfaces.Repositories;
 using SharkTank.Scale.Entities;
 using SharkTank.Scale.ScaleApi;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharkTank.Scale.Repositories
@@ -26,6 +27,11 @@ namespace SharkTank.Scale.Repositories
         public async Task<IApplication> GetByIdAsync(Guid id)
         {
             return await Cache.GetByPrimaryKeyFromCacheOrQuery<Application>(ScaleContext.SystemPartition, "application", "app_id", id);
+        }
+
+        public Task<IEnumerable<IApplication>> ListByAccountIdAsync(Guid accountId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

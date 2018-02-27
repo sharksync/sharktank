@@ -11,14 +11,9 @@ namespace SharkTank.Repositories.Entities
     public class Device : IDevice
     {
         [DynamoDBHashKey]
+        public Guid ApplicationId { get; set; }
+
+        [DynamoDBRangeKey]
         public Guid Id { get; set; }
-        [DynamoDBProperty]
-        public Guid AppId { get; set; }
-        [DynamoDBProperty]
-        public Guid AccountId { get; set; }
-        [DynamoDBProperty]
-        public Guid SyncId { get; set; }
-        [DynamoDBProperty]
-        public string LastSeen { get; set; }
     }
 }
