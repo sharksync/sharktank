@@ -55,12 +55,10 @@
         "Properties" : {
             "TableName" : "Application",
             "AttributeDefinitions" : [
-              {"AttributeName" : "AccountId", "AttributeType" : "S"},
               {"AttributeName" : "Id", "AttributeType" : "S"}
             ],
             "KeySchema" : [
-              {"AttributeName" : "AccountId", "KeyType" : "HASH"},
-              {"AttributeName" : "Id", "KeyType" : "RANGE"}
+              {"AttributeName" : "Id", "KeyType" : "HASH"}
             ],
             "ProvisionedThroughput" : {
                 "ReadCapacityUnits" : 1,

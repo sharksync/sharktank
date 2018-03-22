@@ -1,5 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Logging;
 using SharkTank.DynamoDB.Utilities;
@@ -30,7 +31,8 @@ namespace SharkTank.DynamoDB.Repositories
 
         public async Task<IEnumerable<IApplication>> ListByAccountIdAsync(Guid accountId)
         {
-            var query = DynamoDBContext.QueryAsync<Application>(accountId);
+            var scanCondition = new ScanCondition(nameof(Application.AccountId), ScanOperator.Equal, accountId);
+            var query = DynamoDBContext.ScanAsync<Application>(new[] { scanCondition });
             var apps = await query.GetNextSetAsync();
             return apps;
         }
