@@ -1,0 +1,77 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Shark Sync Serverless Stack
+Resources:
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors: "'www.example.com'"
+      DefinitionBody:
+          'Fn::Transform':
+            Name: 'AWS::Include'
+            Parameters:
+              Location: s3://elasticbeanstalk-eu-west-1-429810410321/swagger.yaml
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: SharkSync.Web.Api::SharkSync.Web.Api.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnetcore2.0
+      CodeUri: ''
+      MemorySize: 256
+      Timeout: 30
+      Role: 
+      Policies:
+      - AWSLambdaFullAccess
+      Events:
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: "/{proxy+}"
+            Method: ANY
+            RestApiId:
+              Ref: ApiGatewayApi
+  AccountTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Account
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  ApplicationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Application
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  DeviceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Device
+      AttributeDefinitions:
+      - AttributeName: ApplicationId
+        AttributeType: S
+      - AttributeName: Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: ApplicationId
+        KeyType: HASH
+      - AttributeName: Id
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1

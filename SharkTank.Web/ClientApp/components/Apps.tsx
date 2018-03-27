@@ -18,12 +18,11 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         super();
         this.state = { apps: [], loading: true, showNewAppRow: false, newAppName: '', showNewAppValidationError: false };
 
-        fetch('api/apps')
-            .then(ApiHandlers.handleErrors)
+        fetch(ApiHandlers.Url + 'Account/Apps')
+            .then(response => ApiHandlers.handleErrors(response))
             .then(response => response.json() as Promise<App[]>)
-            .then(data => {
-                this.setState({ apps: data, loading: false });
-            });
+            .then(data => this.setState({ apps: data, loading: false }))
+            .catch(error => ApiHandlers.handleCatch(error));
     }
 
     public render() {
