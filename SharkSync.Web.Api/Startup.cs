@@ -35,7 +35,7 @@ namespace SharkSync.Web.Api
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",
-                    builder => builder.WithOrigins("http://localhost:62377", "https://nea7ofcxd6.execute-api.eu-west-1.amazonaws.com"));
+                    builder => builder.WithOrigins("http://localhost:62377", "https://z923hkq2sg.execute-api.eu-west-1.amazonaws.com"));
             });
             services.Configure<MvcOptions>(options =>
             {
