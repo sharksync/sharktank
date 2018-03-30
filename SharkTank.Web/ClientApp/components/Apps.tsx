@@ -12,6 +12,11 @@ interface AppsState {
     showNewAppValidationError: boolean;
 }
 
+interface GetListResponse {
+    applications: App[];
+    success: boolean;
+}
+
 export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
     constructor() {
@@ -20,8 +25,8 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
         fetch(ApiHandlers.Url + 'Account/Apps')
             .then(response => ApiHandlers.handleErrors(response))
-            .then(response => response.json() as Promise<App[]>)
-            .then(data => this.setState({ apps: data, loading: false }))
+            .then(response => response.json() as Promise<GetListResponse>)
+            .then(data => this.setState({ apps: data.applications, loading: false }))
             .catch(error => ApiHandlers.handleCatch(error));
     }
 
@@ -49,11 +54,11 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 </thead>
                 <tbody>
                     {apps.map(app =>
-                        <tr key={app.appId}>
+                        <tr key={app.id}>
                             <td>{app.name}</td>
-                            <td className="guidColumn">{app.appId}</td>
+                            <td className="guidColumn">{app.id}</td>
                             <td className="guidColumn">{app.accessKey}</td>
-                            <td className="actionColumn"><DeleteButton deleteHandler={(completedCallback: () => any) => this.deleteApp(app.appId, completedCallback)} /></td>
+                            <td className="actionColumn"><DeleteButton deleteHandler={(completedCallback: () => any) => this.deleteApp(app.id, completedCallback)} /></td>
                         </tr>
                     )}
 
@@ -130,7 +135,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
                 var index = -1;
                 for (var i = 0; i < this.state.apps.length; i++) {
-                    if (this.state.apps[i].appId === appId) {
+                    if (this.state.apps[i].id === appId) {
                         index = i;
                         break;
                     }
@@ -144,7 +149,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 }
 
 interface App {
+    id: string;
     name: string;
-    appId: string;
     accessKey: string;
 }
