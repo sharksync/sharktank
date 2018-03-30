@@ -2,29 +2,42 @@
 swagger: 2.0
 basePath: /prod
 info:
-  title: AwsSamExample
+  title: SharkSyncApi
 schemes:
 - https
 paths:
-  /:
-    x-amazon-apigateway-any-method:
+  /{proxy+}:
+    options:
+      tags:
+      - "CORS"
+      consumes:
+      - application/json
       produces:
       - application/json
       responses:
-        '200':
+        200:
           description: 200 response
           schema:
             $ref: "#/definitions/Empty"
+          headers:
+            Access-Control-Allow-Origin:
+              type: string
+            Access-Control-Allow-Methods:
+              type: string
+            Access-Control-Allow-Headers:
+              type: string
       x-amazon-apigateway-integration:
         responses:
           default:
             statusCode: 200
-        # NOTE: ${LambdaFunction} must match the Lambda resourcename
-        uri: 
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,POST,PUT'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
         passthroughBehavior: when_no_match
-        httpMethod: POST
-        type: aws_proxy
+        requestTemplates:
+          application/json: "{\"statusCode\": 200}"
+        type: mock
   /{proxy+}:
     x-amazon-apigateway-any-method:
       x-amazon-apigateway-auth:
@@ -42,7 +55,3 @@ paths:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations"
         httpMethod: POST
         type: aws_proxy
-definitions:
-  Empty:
-    type: object
-    title: Empty Schema
