@@ -46,7 +46,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(app.Object);
 
             deviceRepository = new Mock<IDeviceRepository>();
-            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(device.Object);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync(device.Object);
 
             changeRepository = new Mock<IChangeRepository>();
             changeRepository.Setup(x => x.CreateChange(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<string>()))
@@ -186,7 +186,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Missing_DeviceId()
         {
-            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((IDevice)null);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync((IDevice)null);
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
@@ -210,7 +210,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
         [Test]
         public async Task SyncController_Post_Fail_Invalid_DeviceId()
         {
-            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((IDevice)null);
+            deviceRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync((IDevice)null);
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()

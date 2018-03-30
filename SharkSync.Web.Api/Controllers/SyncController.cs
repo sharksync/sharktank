@@ -100,7 +100,7 @@ namespace SharkSync.Web.Api.Controllers
 
         private async Task<IDevice> ValidateDevice(SyncRequestViewModel request)
         {
-            var device = await DeviceRepository.GetByIdAsync(request.DeviceId);
+            var device = await DeviceRepository.GetByIdAsync(request.AppId, request.DeviceId);
 
             if (device == null)
                 ModelState.AddModelError("device_id", "No device found for device_id");
@@ -190,8 +190,6 @@ namespace SharkSync.Web.Api.Controllers
 
             if (!ModelState.IsValid)
                 response.Errors = ModelState.Values.SelectMany(ms => ms.Errors).Select(me => me.Exception?.Message ?? me.ErrorMessage);
-
-            response.Success = (response.Errors == null);
 
             var result = new JsonResult(response, new JsonSerializerSettings { Formatting = Formatting.Indented });
 

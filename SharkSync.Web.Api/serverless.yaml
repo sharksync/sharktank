@@ -32,6 +32,19 @@ Resources:
             Method: ANY
             RestApiId:
               Ref: ApiGatewayApi
+  ApiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
   AccountTable:
     Type: AWS::DynamoDB::Table
     Properties:

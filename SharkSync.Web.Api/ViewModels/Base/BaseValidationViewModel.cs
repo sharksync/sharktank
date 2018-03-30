@@ -7,7 +7,11 @@ namespace SharkSync.Web.Api.ViewModels
 {
     public class BaseValidationViewModel
     {
-        public bool Success { get; set; }
         public IEnumerable<string> Errors { get; set; }
+
+        public bool Success
+        {
+            get { return Errors == null || !Errors.Any(); }
+        }
     }
 }

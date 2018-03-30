@@ -26,9 +26,9 @@ namespace SharkTank.Scale.Repositories
             Cache = queryCache;
         }
 
-        public async Task<IDevice> GetByIdAsync(Guid id)
+        public async Task<IDevice> GetByIdAsync(Guid appId, Guid deviceId)
         {
-            return await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(ScaleContext.SystemPartition, "device", "device_id", id);
+            return await Cache.GetByPrimaryKeyFromCacheOrQuery<Device>(ScaleContext.SystemPartition, "device", "device_id", deviceId);
         }
     }
 }

@@ -25,9 +25,9 @@ namespace SharkTank.DynamoDB.Repositories
             DynamoDBContext = new DynamoDBContext(dynamoDBClient);
         }
 
-        public async Task<IDevice> GetByIdAsync(Guid id)
+        public async Task<IDevice> GetByIdAsync(Guid appId, Guid deviceId)
         {
-            return await DynamoDBContext.LoadAsync<Device>(id);
+            return await DynamoDBContext.LoadAsync<Device>(appId, deviceId);
         }
     }
 }

@@ -6,6 +6,6 @@ namespace SharkTank.Interfaces.Repositories
 {
     public interface IDeviceRepository
     {
-        Task<IDevice> GetByIdAsync(Guid id);
+        Task<IDevice> GetByIdAsync(Guid appId, Guid deviceId);
     }
 }

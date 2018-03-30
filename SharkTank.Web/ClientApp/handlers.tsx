@@ -7,7 +7,7 @@ class HttpError extends Error {
 
 export class ApiHandlers {
 
-    static Url = "https://js3pdj4u57.execute-api.eu-west-1.amazonaws.com/Prod/";
+    static Url = "https://nea7ofcxd6.execute-api.eu-west-1.amazonaws.com/Prod/";
 
     static handleErrors(response: Response) {
         if (!response.ok) {

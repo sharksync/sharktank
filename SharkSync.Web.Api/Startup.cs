@@ -60,7 +60,6 @@ namespace SharkSync.Web.Api
                         {
                             var validation = new BaseValidationViewModel();
                             validation.Errors = new[] { error.Error.Message };
-                            validation.Success = false;
                             await context.Response.WriteAsync(JsonConvert.SerializeObject(validation)).ConfigureAwait(false);
                         }
                     });
