@@ -29,10 +29,11 @@ namespace SharkSync.Web.Api.Controllers
             ApplicationRepository = appRepository;
         }
 
+        private static Guid accountId = new Guid("c2133cb4-48bb-473c-8415-1d55bc4d49c4");
+
         [HttpGet()]
         public async Task<ActionResult> GetAsync()
         {
-            Guid accountId = new Guid("c2133cb4-48bb-473c-8415-1d55bc4d49c4");
             var apps = await ApplicationRepository.ListByAccountIdAsync(accountId);
 
             var vm = new ApplicationListResponseViewModel
@@ -44,10 +45,9 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpPost()]
-        public async Task<ActionResult> PostAsync(string appName)
+        public async Task<ActionResult> PostAsync(string name)
         {
-            Guid appId = new Guid("eca29d74-a255-445c-a71d-ad74be90d9c7");
-            var app = await ApplicationRepository.GetByIdAsync(appId);
+            var app = await ApplicationRepository.AddAsync(name, accountId);
 
             var vm = new ApplicationGetResponseViewModel() { Application = new ApplicationViewModel(app) };
 

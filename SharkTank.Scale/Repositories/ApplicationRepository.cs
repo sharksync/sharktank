@@ -34,6 +34,11 @@ namespace SharkTank.Scale.Repositories
             throw new NotImplementedException();
         }
 
+        public Task<IApplication> AddAsync(string name, Guid accountId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task DeleteAsync(Guid id)
         {
             throw new NotImplementedException();

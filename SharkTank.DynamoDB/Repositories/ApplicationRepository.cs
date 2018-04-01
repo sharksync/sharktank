@@ -42,6 +42,13 @@ namespace SharkTank.DynamoDB.Repositories
             return await DynamoDBContext.LoadAsync<Application>(id);
         }
 
+        public async Task<IApplication> AddAsync(string name, Guid accountId)
+        {
+            Application newApp = new Application() { Id = Guid.NewGuid(), Name = name, AccessKey = Guid.NewGuid(), AccountId = accountId };
+            await DynamoDBContext.SaveAsync(newApp);
+            return newApp;
+        }
+
         public async Task DeleteAsync(Guid id)
         {
             await DynamoDBContext.DeleteAsync<Application>(id);

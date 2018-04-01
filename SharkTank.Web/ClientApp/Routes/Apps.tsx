@@ -18,6 +18,11 @@ interface GetListResponse {
     Success: boolean;
 }
 
+interface AddResponse {
+    Application: App;
+    Success: boolean;
+}
+
 interface App {
     Id: string;
     Name: string;
@@ -113,13 +118,13 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
             const formData = new FormData();
 
-            formData.append('appName', this.state.newAppName);
+            formData.append('name', this.state.newAppName);
 
-            fetch('api/apps', { method: 'POST', body: formData })
+            fetch(ApiHandlers.Url + 'Account/Apps', { method: 'POST', body: formData })
                 .then(ApiHandlers.handleErrors)
-                .then(response => response.json() as Promise<App>)
+                .then(response => response.json() as Promise<AddResponse>)
                 .then(data => {
-                    this.state.apps.push(data);
+                    this.state.apps.push(data.Application);
                     this.setState({ showNewAppRow: false });
                 }).catch(error => {
                     this.setState({ showNewAppRow: false });
