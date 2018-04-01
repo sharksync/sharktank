@@ -35,13 +35,13 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> Post([FromBody]SyncRequestViewModel request)
+        public async Task<ActionResult> Post([FromBody]SyncRequestViewModel request)
         {
             requestStartTimeUTC = DateTime.UtcNow;
             var response = new SyncResponseViewModel();
 
             if (!ModelState.IsValid)
-                return JsonResultWithValidationErrors(response);
+                return ModelState.GetJsonResultWithValidationErrors(response);
 
             try
             {
@@ -51,14 +51,14 @@ namespace SharkSync.Web.Api.Controllers
                 Logger.LogInformation($"ValidateApplication in {sw.ElapsedMilliseconds}ms");
 
                 if (!ModelState.IsValid)
-                    return JsonResultWithValidationErrors(response);
+                    return ModelState.GetJsonResultWithValidationErrors(response);
 
                 sw.Restart();
                 var device = await ValidateDevice(request);
                 Logger.LogInformation($"ValidateDevice in {sw.ElapsedMilliseconds}ms");
 
                 if (!ModelState.IsValid)
-                    return JsonResultWithValidationErrors(response);
+                    return ModelState.GetJsonResultWithValidationErrors(response);
 
                 sw.Restart();
                 await ProcessChanges(app, device, request);
@@ -76,7 +76,7 @@ namespace SharkSync.Web.Api.Controllers
                 ModelState.AddModelError("", $"Unhandled exception: {ex.ToString()}");
             }
 
-            return JsonResultWithValidationErrors(response);
+            return ModelState.GetJsonResultWithValidationErrors(response);
         }
 
         private async Task<IApplication> ValidateApplication(SyncRequestViewModel request)
@@ -182,21 +182,5 @@ namespace SharkSync.Web.Api.Controllers
 
             return response;
         }
-
-        private JsonResult JsonResultWithValidationErrors(BaseValidationViewModel response)
-        {
-            if (response == null)
-                return JsonResultWithValidationErrors(new BaseValidationViewModel());
-
-            if (!ModelState.IsValid)
-                response.Errors = ModelState.Values.SelectMany(ms => ms.Errors).Select(me => me.Exception?.Message ?? me.ErrorMessage);
-
-            var result = new JsonResult(response, new JsonSerializerSettings { Formatting = Formatting.Indented });
-
-            result.StatusCode = (int)(response.Success ? HttpStatusCode.OK : HttpStatusCode.BadRequest);
-
-            return result;
-        }
-
     }
 }

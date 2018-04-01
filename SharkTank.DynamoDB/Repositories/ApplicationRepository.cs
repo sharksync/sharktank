@@ -41,5 +41,10 @@ namespace SharkTank.DynamoDB.Repositories
         {
             return await DynamoDBContext.LoadAsync<Application>(id);
         }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            await DynamoDBContext.DeleteAsync<Application>(id);
+        }
     }
 }

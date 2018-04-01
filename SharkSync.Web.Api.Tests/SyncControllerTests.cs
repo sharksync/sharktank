@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using SharkTank.Interfaces.Repositories;
 using SharkTank.Interfaces.Entities;
+using Microsoft.AspNetCore.Mvc;
 
 namespace SharkSync.Web.Api.Tests.Controllers
 {
@@ -83,7 +84,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
         public async Task SyncController_Post_Fail_Empty_Request()
         {
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
-            var response = await controller.Post(null);
+            var response = await controller.Post(null) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -103,7 +104,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
             var response = await controller.Post(new SyncRequestViewModel()
             {
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -126,7 +127,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = Guid.NewGuid()
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -147,7 +148,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -169,7 +170,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             {
                 AppId = app.Object.Id,
                 AppApiAccessKey = Guid.NewGuid()
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -193,7 +194,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             {
                 AppId = app.Object.Id,
                 AppApiAccessKey = app.Object.AccessKey
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -218,7 +219,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                 AppId = app.Object.Id,
                 AppApiAccessKey = app.Object.AccessKey,
                 DeviceId = Guid.NewGuid()
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -241,7 +242,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                 AppId = app.Object.Id,
                 AppApiAccessKey = app.Object.AccessKey,
                 DeviceId = device.Object.Id
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -271,7 +272,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                 }
             };
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
-            var response = await controller.Post(request);
+            var response = await controller.Post(request) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -320,7 +321,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             };
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
-            var response = await controller.Post(request);
+            var response = await controller.Post(request) as JsonResult;
             var syncResponse = response.Value as SyncResponseViewModel;
 
             Assert.NotNull(syncResponse);
@@ -385,7 +386,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             };
 
             var controller = new SyncController(logger.Object, applicationRepository.Object, deviceRepository.Object, changeRepository.Object);
-            var response = await controller.Post(request);
+            var response = await controller.Post(request) as JsonResult;
             var syncResponse = response.Value as SyncResponseViewModel;
 
             Assert.NotNull(syncResponse);
@@ -442,7 +443,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                         Tidemark = tidemark
                     }
                 }
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -478,7 +479,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                         Tidemark = changeObject.Tidemark
                     }
                 }
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -531,7 +532,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                         Tidemark = tidemark
                     }
                 }
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -602,7 +603,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                         Tidemark = null
                     }
                 }
-            });
+            }) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
 

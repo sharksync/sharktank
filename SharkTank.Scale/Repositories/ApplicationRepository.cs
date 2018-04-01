@@ -33,5 +33,10 @@ namespace SharkTank.Scale.Repositories
         {
             throw new NotImplementedException();
         }
+
+        public Task DeleteAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

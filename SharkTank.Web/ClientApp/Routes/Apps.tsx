@@ -1,6 +1,7 @@
 import * as React from 'react';
+import * as FontAwesome from 'react-fontawesome';
 import { RouteComponentProps } from 'react-router';
-import { DeleteButton } from './DeleteButton';
+import { DeleteButton } from '../components/DeleteButton';
 import { ApiHandlers } from '../handlers';
 import swal from 'sweetalert2';
 
@@ -13,8 +14,14 @@ interface AppsState {
 }
 
 interface GetListResponse {
-    applications: App[];
-    success: boolean;
+    Applications: App[];
+    Success: boolean;
+}
+
+interface App {
+    Id: string;
+    Name: string;
+    AccessKey: string;
 }
 
 export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
@@ -26,12 +33,12 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         fetch(ApiHandlers.Url + 'Account/Apps')
             .then(response => ApiHandlers.handleErrors(response))
             .then(response => response.json() as Promise<GetListResponse>)
-            .then(data => this.setState({ apps: data.applications, loading: false }))
+            .then(data => this.setState({ apps: data.Applications, loading: false }))
             .catch(error => ApiHandlers.handleCatch(error));
     }
 
     public render() {
-        let contents = this.state.loading ? <p><em>Loading...</em></p> : this.renderTable(this.state.apps);
+        let contents = this.state.loading ? <div className="pageLoading"><FontAwesome name="spinner" size="2x" spin /><span>Loading...</span></div> : this.renderTable(this.state.apps);
 
         return <div>
             <h1>Your Apps</h1>
@@ -54,11 +61,11 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 </thead>
                 <tbody>
                     {apps.map(app =>
-                        <tr key={app.id}>
-                            <td>{app.name}</td>
-                            <td className="guidColumn">{app.id}</td>
-                            <td className="guidColumn">{app.accessKey}</td>
-                            <td className="actionColumn"><DeleteButton deleteHandler={(completedCallback: () => any) => this.deleteApp(app.id, completedCallback)} /></td>
+                        <tr key={app.Id}>
+                            <td>{app.Name}</td>
+                            <td className="guidColumn">{app.Id}</td>
+                            <td className="guidColumn">{app.AccessKey}</td>
+                            <td className="actionColumn"><DeleteButton confirmMessage="Are you sure you want to delete this app?" deleteHandler={(completedCallback: () => any) => this.deleteApp(app.Id, completedCallback)} /></td>
                         </tr>
                     )}
 
@@ -74,7 +81,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         return (
             <tr>
                 <td>
-                    <div className="form-group">
+                    <div>
                         <span className={"validation-error-tooltip " + (this.state.showNewAppValidationError ? "validation-error-tooltip-shown" : "")}>App name is required</span>
                         <input type="text" id="newAppName" placeholder="New app name" ref="appName" className={"form-control app-name-input " + (this.state.showNewAppValidationError ? "is-invalid" : "")} onChange={(event) => this.newAppNameChanged(event)} />
                     </div>
@@ -129,13 +136,13 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
         formData.append('id', appId);
 
-        fetch('api/apps', { method: 'DELETE', body: formData })
+        fetch(ApiHandlers.Url + 'Account/Apps', { method: 'DELETE', body: formData })
             .then(ApiHandlers.handleErrors)
             .then(response => {
 
                 var index = -1;
                 for (var i = 0; i < this.state.apps.length; i++) {
-                    if (this.state.apps[i].id === appId) {
+                    if (this.state.apps[i].Id === appId) {
                         index = i;
                         break;
                     }
@@ -146,10 +153,4 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 completedCallback();
             });
     }
-}
-
-interface App {
-    id: string;
-    name: string;
-    accessKey: string;
 }

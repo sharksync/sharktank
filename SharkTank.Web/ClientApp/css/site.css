@@ -90,7 +90,7 @@ html {
     padding: 5px 10px;
     border-radius: 6px;
     position: absolute;
-    bottom: 115px;
+    bottom: 100px;
     z-index: 1;
 }
 
@@ -112,6 +112,19 @@ html {
 .is-invalid {
     border-color: #b00;
     color: #b00;
+}
+
+.pageLoading {
+    vertical-align: middle;
+    padding: 10px;
+}
+
+    .pageLoading span {
+        padding: 0 5px;
+    }
+
+.table > tbody > tr > td {
+    vertical-align: middle;
 }
 
 .guidColumn {

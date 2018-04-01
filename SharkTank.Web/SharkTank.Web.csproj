@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove=".gitignore" />
     <None Remove="ClientApp\components\DeleteButton.tsx" />
   </ItemGroup>
 

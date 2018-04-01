@@ -6,10 +6,12 @@ import 'font-awesome/css/font-awesome.css';
 interface DeleteButtonState {
     loading: boolean;
     deleteHandler: DeleteCallback;
+    confirmMessage: string;
 }
 
 interface DeleteButtonProps {
     deleteHandler: DeleteCallback;
+    confirmMessage: string;
 }
 
 type DeleteCallback = (completedCallback: () => any) => any;
@@ -18,7 +20,7 @@ export class DeleteButton extends React.Component<DeleteButtonProps, DeleteButto
     constructor(props: DeleteButtonProps) {
         super();
 
-        this.state = { loading: false, deleteHandler: props.deleteHandler };
+        this.state = { loading: false, deleteHandler: props.deleteHandler, confirmMessage: props.confirmMessage };
         this.handleClick = this.handleClick.bind(this);
         this.disableLoading = this.disableLoading.bind(this);
     }
@@ -27,7 +29,7 @@ export class DeleteButton extends React.Component<DeleteButtonProps, DeleteButto
         if (!this.state.loading) {
             swal({
                 title: 'Confirm delete',
-                text: 'Are you sure you want to delete this item?',
+                text: this.state.confirmMessage,
                 type: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, delete it!',

@@ -9,5 +9,6 @@ namespace SharkTank.Interfaces.Repositories
     {
         Task<IEnumerable<IApplication>> ListByAccountIdAsync(Guid accountId);
         Task<IApplication> GetByIdAsync(Guid id);
+        Task DeleteAsync(Guid id);
     }
 }
