@@ -47,9 +47,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
         return <div>
             <h1>Your Apps</h1>
-
             {contents}
-
         </div>;
     }
 
