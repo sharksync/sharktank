@@ -35,7 +35,7 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody]SyncRequestViewModel request)
+        public async Task<IActionResult> Post([FromBody]SyncRequestViewModel request)
         {
             requestStartTimeUTC = DateTime.UtcNow;
             var response = new SyncResponseViewModel();

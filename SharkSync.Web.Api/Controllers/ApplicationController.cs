@@ -32,7 +32,7 @@ namespace SharkSync.Web.Api.Controllers
         private static Guid accountId = new Guid("c2133cb4-48bb-473c-8415-1d55bc4d49c4");
 
         [HttpGet()]
-        public async Task<ActionResult> GetAsync()
+        public async Task<IActionResult> GetAsync()
         {
             var apps = await ApplicationRepository.ListByAccountIdAsync(accountId);
 
@@ -45,7 +45,7 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpPost()]
-        public async Task<ActionResult> PostAsync(string name)
+        public async Task<IActionResult> PostAsync(string name)
         {
             var app = await ApplicationRepository.AddAsync(name, accountId);
 
@@ -55,7 +55,7 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpDelete()]
-        public async Task<ActionResult> DeleteAsync(Guid id)
+        public async Task<IActionResult> DeleteAsync(Guid id)
         {
             await ApplicationRepository.DeleteAsync(id);
 

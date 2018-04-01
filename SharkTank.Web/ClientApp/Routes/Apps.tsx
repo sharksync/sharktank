@@ -48,6 +48,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         return <div>
             <h1>Your Apps</h1>
             {contents}
+            <a href="http://localhost:57829/Auth/Start">Login</a>
         </div>;
     }
 
