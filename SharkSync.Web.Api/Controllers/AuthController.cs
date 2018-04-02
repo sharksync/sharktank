@@ -13,6 +13,7 @@ using System.Net;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using SharkSync.Web.Api.Services;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -20,9 +21,12 @@ namespace SharkSync.Web.Api.Controllers
     {
         ILogger Logger { get; set; }
 
-        public AuthController(ILogger<AuthController> logger)
+        AuthService AuthService { get; set; }
+
+        public AuthController(ILogger<AuthController> logger, AuthService authService)
         {
             Logger = logger;
+            AuthService = authService;
         }
 
         [HttpGet()]
@@ -35,17 +39,18 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Auth/Complete")]
-        public IActionResult Complete()
+        public async Task<IActionResult> Complete()
         {
-            var vm = new AuthCompleteViewModel();
+            var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
 
-            if (User.Identity.IsAuthenticated)
+            var vm = new AuthCompleteViewModel()
             {
-                vm.Name = User.FindFirst(c => c.Type == ClaimTypes.Name)?.Value;
-                vm.Login = User.FindFirst(c => c.Type == "urn:github:login")?.Value;
-                vm.AvatarUrl = User.FindFirst(c => c.Type == "urn:github:avatar")?.Value;
-                vm.GitHubUrl = User.FindFirst(c => c.Type == "urn:github:url")?.Value;
-            }
+                Id = loggedInAccount.Id,
+                Name = loggedInAccount.Name,
+                EmailAddress = loggedInAccount.EmailAddress,
+                GithubId = loggedInAccount.GithubId,
+                AvatarUrl = loggedInAccount.AvatarUrl
+            };
 
             return ModelState.GetJsonResultWithValidationErrors(vm);
         }

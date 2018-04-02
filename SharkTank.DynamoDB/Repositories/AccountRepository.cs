@@ -30,6 +30,11 @@ namespace SharkTank.DynamoDB.Repositories
             DynamoDBContext = new DynamoDBContext(dynamoDBClient);
         }
 
+        public async Task<IAccount> GetByIdAsync(Guid id)
+        {
+            return await DynamoDBContext.LoadAsync<Account>(id);
+        }
+
         public async Task<IAccount> AddOrGetAsync(string name, string emailAddress, int? githubId, string avatarUrl)
         {
             if (githubId == null)

@@ -9,9 +9,10 @@ namespace SharkSync.Web.Api.ViewModels
 {
     public class AuthCompleteViewModel : BaseValidationViewModel
     {
+        public Guid Id { get; set; }
         public string Name { get; set; }
-        public string Login { get; set; }
+        public string EmailAddress { get; set; }
+        public int? GithubId { get; set; }
         public string AvatarUrl { get; set; }
-        public string GitHubUrl { get; set; }
     }
 }

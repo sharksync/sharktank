@@ -22,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
 using SharkTank.DynamoDB.Repositories;
 using SharkTank.Interfaces.Repositories;
@@ -73,7 +74,7 @@ namespace SharkSync.Web.Api
 
                 options.SaveTokens = true;
 
-                options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
+                options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
 
                 options.Events = new OAuthEvents
                 {
@@ -90,13 +91,14 @@ namespace SharkSync.Web.Api
 
                         var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
 
-                        var id = (int)user["id"];
+                        var githubId = (int)user["id"];
                         var name = (string)user["name"];
                         var email = (string)user["email"];
                         var avatarUrl = (string)user["avatar_url"];
 
-                        var account = await accountRepository.AddOrGetAsync(name, email, id, avatarUrl);
+                        var account = await accountRepository.AddOrGetAsync(name, email, githubId, avatarUrl);
 
+                        user["accountId"] = account.Id.ToString();
                         context.RunClaimActions(user);
                     }
                 };
@@ -106,6 +108,8 @@ namespace SharkSync.Web.Api
             services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
             services.AddTransient(typeof(IDeviceRepository), typeof(DeviceRepository));
             services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
+
+            services.AddScoped(typeof(AuthService));
 
             services.AddAWSService<IAmazonDynamoDB>();
         }

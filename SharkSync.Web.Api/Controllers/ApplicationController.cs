@@ -10,6 +10,7 @@ using System.Diagnostics;
 using SharkTank.Interfaces.Repositories;
 using SharkTank.Interfaces.Entities;
 using System.Net;
+using SharkSync.Web.Api.Services;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -18,23 +19,22 @@ namespace SharkSync.Web.Api.Controllers
     {
         ILogger Logger { get; set; }
 
-        IAccountRepository AccountRepository { get; set; }
+        AuthService AuthService { get; set; }
 
         IApplicationRepository ApplicationRepository { get; set; }
 
-        public ApplicationController(ILogger<ApplicationController> logger, IAccountRepository accountRepository, IApplicationRepository appRepository)
+        public ApplicationController(ILogger<ApplicationController> logger, AuthService authService, IApplicationRepository appRepository)
         {
             Logger = logger;
-            AccountRepository = accountRepository;
+            AuthService = authService;
             ApplicationRepository = appRepository;
         }
-
-        private static Guid accountId = new Guid("c2133cb4-48bb-473c-8415-1d55bc4d49c4");
 
         [HttpGet()]
         public async Task<IActionResult> GetAsync()
         {
-            var apps = await ApplicationRepository.ListByAccountIdAsync(accountId);
+            var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
+            var apps = await ApplicationRepository.ListByAccountIdAsync(loggedInAccount.Id);
 
             var vm = new ApplicationListResponseViewModel
             {
@@ -47,7 +47,8 @@ namespace SharkSync.Web.Api.Controllers
         [HttpPost()]
         public async Task<IActionResult> PostAsync(string name)
         {
-            var app = await ApplicationRepository.AddAsync(name, accountId);
+            var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
+            var app = await ApplicationRepository.AddAsync(name, loggedInAccount.Id);
 
             var vm = new ApplicationGetResponseViewModel() { Application = new ApplicationViewModel(app) };
 
@@ -57,6 +58,8 @@ namespace SharkSync.Web.Api.Controllers
         [HttpDelete()]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
+            // AUTH CHECK HERE
+
             await ApplicationRepository.DeleteAsync(id);
 
             return ModelState.GetJsonResultWithValidationErrors();
