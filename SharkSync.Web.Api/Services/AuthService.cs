@@ -31,13 +31,13 @@ namespace SharkSync.Web.Api.Services
 
         public async Task<IAccount> GetLoggedInAccountAsync(ClaimsPrincipal user)
         {
-            var accountIdString = user.FindFirst(c => c.Type == ClaimTypes.PrimarySid)?.Value;
-
-            if (!Guid.TryParse(accountIdString, out Guid accountId))
-                throw new Exception("Failed to parse accountId from claims ticket");
-
             if (user?.Identity?.IsAuthenticated == true)
             {
+                var accountIdString = user.FindFirst(c => c.Type == ClaimTypes.PrimarySid)?.Value;
+
+                if (!Guid.TryParse(accountIdString, out Guid accountId))
+                    throw new Exception("Failed to parse accountId from claims ticket");
+
                 if (loggedInAccount != null)
                 {
                     // Double check the cached user matches the principal user
@@ -56,5 +56,10 @@ namespace SharkSync.Web.Api.Services
 
             return null;
         }
+    }
+
+    public class UnauthorizedResponseViewModel
+    {
+        public string ChallengeUrl { get; set; }
     }
 }

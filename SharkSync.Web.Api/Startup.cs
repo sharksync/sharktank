@@ -100,6 +100,15 @@ namespace SharkSync.Web.Api
 
                         user["accountId"] = account.Id.ToString();
                         context.RunClaimActions(user);
+                    },
+                    OnRedirectToAuthorizationEndpoint = async context =>
+                    {
+                        var vm = new UnauthorizedResponseViewModel() { ChallengeUrl = context.RedirectUri };
+
+                        context.Response.ContentType = "application/json";
+                        context.Response.StatusCode = (int)System.Net.HttpStatusCode.Unauthorized;
+
+                        await context.Response.WriteAsync(JsonConvert.SerializeObject(vm));
                     }
                 };
             });

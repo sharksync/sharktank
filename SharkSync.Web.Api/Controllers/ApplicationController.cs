@@ -11,9 +11,11 @@ using SharkTank.Interfaces.Repositories;
 using SharkTank.Interfaces.Entities;
 using System.Net;
 using SharkSync.Web.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SharkSync.Web.Api.Controllers
 {
+    [Authorize]
     [Route("Account/Apps")]
     public class ApplicationController : Controller
     {
