@@ -9,11 +9,13 @@ using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Cors.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +41,7 @@ namespace SharkSync.Web.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",
@@ -68,11 +71,9 @@ namespace SharkSync.Web.Api
                 options.TokenEndpoint = "https://github.com/login/oauth/access_token";
                 options.UserInformationEndpoint = "https://api.github.com/user";
 
+                options.SaveTokens = true;
+
                 options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
-                options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
-                options.ClaimActions.MapJsonKey("urn:github:login", "login");
-                options.ClaimActions.MapJsonKey("urn:github:url", "html_url");
-                options.ClaimActions.MapJsonKey("urn:github:avatar", "avatar_url");
 
                 options.Events = new OAuthEvents
                 {
@@ -86,6 +87,15 @@ namespace SharkSync.Web.Api
                         response.EnsureSuccessStatusCode();
 
                         var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+                        var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
+
+                        var id = (int)user["id"];
+                        var name = (string)user["name"];
+                        var email = (string)user["email"];
+                        var avatarUrl = (string)user["avatar_url"];
+
+                        var account = await accountRepository.AddOrGetAsync(name, email, id, avatarUrl);
 
                         context.RunClaimActions(user);
                     }
@@ -103,9 +113,6 @@ namespace SharkSync.Web.Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseMvc();
-            app.UseAuthentication();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -130,6 +137,9 @@ namespace SharkSync.Web.Api
                 });
             }
 
+            app.UseAuthentication();
+
+            app.UseMvc();
         }
     }
 }

@@ -6,6 +6,6 @@ namespace SharkTank.Interfaces.Repositories
 {
     public interface IAccountRepository
     {
-        Task<IAccount> AddAsync(string name);
+        Task<IAccount> AddOrGetAsync(string name, string emailAddress, int? githubId, string avatarUrl);
     }
 }

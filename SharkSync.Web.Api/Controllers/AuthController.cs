@@ -12,6 +12,7 @@ using SharkTank.Interfaces.Entities;
 using System.Net;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -26,6 +27,7 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Auth/Start")]
+        [AllowAnonymous]
         public IActionResult Start()
         {
             return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete") });

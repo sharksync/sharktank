@@ -1,5 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Logging;
 using SharkTank.DynamoDB.Utilities;
@@ -9,6 +10,7 @@ using SharkTank.Repositories;
 using SharkTank.Repositories.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SharkTank.DynamoDB.Repositories
@@ -28,9 +30,35 @@ namespace SharkTank.DynamoDB.Repositories
             DynamoDBContext = new DynamoDBContext(dynamoDBClient);
         }
 
-        public async Task<IAccount> AddAsync(string name)
+        public async Task<IAccount> AddOrGetAsync(string name, string emailAddress, int? githubId, string avatarUrl)
         {
-            return await Task.FromResult((IAccount)null);
+            if (githubId == null)
+                throw new Exception("GithubId required for new accounts");
+
+            var scanCondition = new ScanCondition(nameof(Account.GithubId), ScanOperator.Equal, githubId);
+            var query = DynamoDBContext.ScanAsync<Account>(new[] { scanCondition });
+            var accounts = await query.GetNextSetAsync();
+
+            Account account = null;
+
+            if (!accounts.Any())
+            {
+                account = new Account()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = name,
+                    EmailAddress = emailAddress,
+                    GithubId = githubId,
+                    AvatarUrl = avatarUrl
+                };
+                await DynamoDBContext.SaveAsync(account);
+            }
+            else
+            {
+                account = accounts.First();
+            }
+
+            return account;
         }
     }
 }
