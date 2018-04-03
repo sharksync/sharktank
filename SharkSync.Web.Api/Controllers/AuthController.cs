@@ -31,28 +31,20 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Auth/Start")]
-        [AllowAnonymous]
-        public IActionResult Start()
+        public IActionResult Start(string returnUrl)
         {
-            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete") });
+            // TODO: Validate return URL is the correct domain
+
+            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete", new { returnUrl }) });
         }
 
         [HttpGet()]
         [Route("Auth/Complete")]
-        public async Task<IActionResult> Complete()
+        public async Task<IActionResult> Complete(string returnUrl)
         {
-            var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
+            // TODO: Validate return URL is the correct domain
 
-            var vm = new AuthCompleteViewModel()
-            {
-                Id = loggedInAccount.Id,
-                Name = loggedInAccount.Name,
-                EmailAddress = loggedInAccount.EmailAddress,
-                GithubId = loggedInAccount.GithubId,
-                AvatarUrl = loggedInAccount.AvatarUrl
-            };
-
-            return ModelState.GetJsonResultWithValidationErrors(vm);
+            return Redirect(returnUrl);
         }
     }
 }

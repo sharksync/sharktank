@@ -18,9 +18,11 @@ export class ApiHandlers {
         if (!response.ok) {
 
             if (response.status == 401) {
+
                 // Auth required, redirect to location header
-                (response.json() as Promise<UnauthorizedResponse>)
-                    .then(unauthorised => window.location.href = unauthorised.ChallengeUrl);
+                window.location.href = ApiHandlers.Url + "Auth/Start?returnUrl=" + window.location.href;
+                throw Error("Unauthorized");
+
             } else {
                 swal(
                     'Failed action',
@@ -30,6 +32,7 @@ export class ApiHandlers {
                 throw Error(response.statusText);
             }
         }
+
         return response;
     }
 

@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace SharkSync.Web.Api.Controllers
 {
-    [Authorize]
     [Route("Account/Apps")]
     public class ApplicationController : Controller
     {
@@ -36,6 +35,9 @@ namespace SharkSync.Web.Api.Controllers
         public async Task<IActionResult> GetAsync()
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
+            if (loggedInAccount == null)
+                return new UnauthorizedResult();
+
             var apps = await ApplicationRepository.ListByAccountIdAsync(loggedInAccount.Id);
 
             var vm = new ApplicationListResponseViewModel
@@ -50,6 +52,9 @@ namespace SharkSync.Web.Api.Controllers
         public async Task<IActionResult> PostAsync(string name)
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
+            if (loggedInAccount == null)
+                return new UnauthorizedResult();
+
             var app = await ApplicationRepository.AddAsync(name, loggedInAccount.Id);
 
             var vm = new ApplicationGetResponseViewModel() { Application = new ApplicationViewModel(app) };
@@ -60,6 +65,10 @@ namespace SharkSync.Web.Api.Controllers
         [HttpDelete()]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
+            var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
+            if (loggedInAccount == null)
+                return new UnauthorizedResult();
+
             // AUTH CHECK HERE
 
             await ApplicationRepository.DeleteAsync(id);
