@@ -40,7 +40,7 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Auth/Complete")]
-        public async Task<IActionResult> Complete(string returnUrl)
+        public IActionResult Complete(string returnUrl)
         {
             // TODO: Validate return URL is the correct domain
 

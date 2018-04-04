@@ -37,7 +37,7 @@ export class ApiHandlers {
     }
 
     static handleCatch(error: Error) {
-        if (error) {
+        if (error && error.message != "Unauthorized") {
             swal(
                 'Failed action',
                 'Failed to complete action, please try again.',
