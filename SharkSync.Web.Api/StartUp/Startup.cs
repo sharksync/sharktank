@@ -31,12 +31,20 @@ namespace SharkSync.Web.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
+
+            AppSettings = new AppSettings();
+            Configuration.GetSection(nameof(AppSettings)).Bind(AppSettings);
         }
 
         public static IConfiguration Configuration { get; private set; }
+
+        public static IHostingEnvironment Environment { get; private set; }
+
+        private AppSettings AppSettings { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
@@ -47,7 +55,7 @@ namespace SharkSync.Web.Api
             {
                 options.AddPolicy("AllowSpecificOrigin",
                     builder => builder
-                        .WithOrigins("http://localhost:62377", "https://z923hkq2sg.execute-api.eu-west-1.amazonaws.com")
+                        .WithOrigins(AppSettings.ClientAppDomain)
                         .AllowCredentials()
                         .AllowAnyMethod());
             });
@@ -64,8 +72,7 @@ namespace SharkSync.Web.Api
             })
             .AddCookie(options =>
             {
-                //TODO: HTTPS required?
-                //options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
+                options.Cookie.SecurePolicy = Environment.IsProduction() ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest; 
             })
             .AddOAuth("GitHub", options =>
             {
