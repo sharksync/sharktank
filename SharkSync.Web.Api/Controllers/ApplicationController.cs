@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace SharkSync.Web.Api.Controllers
 {
-    [Route("Account/Apps")]
+    [Route("Api/Apps")]
     public class ApplicationController : Controller
     {
         ILogger Logger { get; set; }

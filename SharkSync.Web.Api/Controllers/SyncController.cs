@@ -13,7 +13,7 @@ using System.Net;
 
 namespace SharkSync.Web.Api.Controllers
 {
-    [Route("api/sync")]
+    [Route("Api/Sync")]
     public class SyncController : Controller
     {
         ILogger Logger { get; set; }

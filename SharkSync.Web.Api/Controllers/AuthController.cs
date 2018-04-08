@@ -1,19 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using SharkSync.Web.Api.ViewModels;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System.Diagnostics;
-using SharkTank.Interfaces.Repositories;
-using SharkTank.Interfaces.Entities;
-using System.Net;
 using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using SharkSync.Web.Api.Services;
+using System.Threading.Tasks;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -30,7 +19,7 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpGet()]
-        [Route("Auth/Start")]
+        [Route("Api/Auth/Start")]
         public IActionResult Start(string returnUrl)
         {
             // TODO: Validate return URL is the correct domain
@@ -39,12 +28,23 @@ namespace SharkSync.Web.Api.Controllers
         }
 
         [HttpGet()]
-        [Route("Auth/Complete")]
+        [Route("Api/Auth/Complete")]
         public IActionResult Complete(string returnUrl)
         {
             // TODO: Validate return URL is the correct domain
 
             return Redirect(returnUrl);
+        }
+
+        [HttpGet()]
+        [Route("Api/Auth/Logout")]
+        public async Task<IActionResult> Logout(string returnUrl)
+        {
+            // TODO: Validate return URL is the correct domain
+
+            await HttpContext.SignOutAsync();
+
+            return Ok();
         }
     }
 }

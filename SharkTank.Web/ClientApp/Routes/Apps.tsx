@@ -35,7 +35,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         super();
         this.state = { apps: [], loading: true, showNewAppRow: false, newAppName: '', showNewAppValidationError: false };
 
-        fetch(ApiHandlers.Url + 'Account/Apps', {
+        fetch(ApiHandlers.Url + 'Api/Apps', {
             credentials: 'include'
         })
             .then(response => ApiHandlers.handleErrors(response))
@@ -120,7 +120,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
             formData.append('name', this.state.newAppName);
 
-            fetch(ApiHandlers.Url + 'Account/Apps', { method: 'POST', credentials: 'include', body: formData })
+            fetch(ApiHandlers.Url + 'Api/Apps', { method: 'POST', credentials: 'include', body: formData })
                 .then(ApiHandlers.handleErrors)
                 .then(response => response.json() as Promise<AddResponse>)
                 .then(data => {
@@ -141,7 +141,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
         formData.append('id', appId);
 
-        fetch(ApiHandlers.Url + 'Account/Apps', { method: 'DELETE', credentials: 'include', body: formData })
+        fetch(ApiHandlers.Url + 'Api/Apps', { method: 'DELETE', credentials: 'include', body: formData })
             .then(ApiHandlers.handleErrors)
             .then(response => {
 
