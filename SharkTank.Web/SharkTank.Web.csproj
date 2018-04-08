@@ -5,6 +5,7 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <IsPackable>false</IsPackable>
+    <UserSecretsId>7d5e8da0-75a4-493d-9cfb-d95fb4ba762b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +28,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SharkTank.Repositories\SharkTank.Interfaces.csproj" />
-    <ProjectReference Include="..\SharkTank.Scale\SharkTank.Scale.csproj" />
   </ItemGroup>
 
   <ItemGroup>

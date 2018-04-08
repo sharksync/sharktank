@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Logging;
 using SharkTank.Interfaces.Entities;
 using SharkTank.Interfaces.Repositories;
@@ -77,9 +78,52 @@ namespace SharkTank.DynamoDB.Repositories
             return changes.Take(50).Cast<IChange>().ToList();
         }
 
+        public async Task CreateChangeTableForApp(Guid appId)
+        {
+            await DynamoDBClient.CreateTableAsync(
+                GetChangeTableName(appId), 
+                new List<KeySchemaElement>()
+                {
+                    new KeySchemaElement()
+                    {
+                        KeyType = KeyType.HASH,
+                        AttributeName = nameof(Change.Group),
+                    },
+                    new KeySchemaElement()
+                    {
+                        KeyType = KeyType.RANGE,
+                        AttributeName = nameof(Change.Tidemark),
+                    }
+                }, 
+                new List<AttributeDefinition>()
+                {
+                    new AttributeDefinition()
+                    {
+                        AttributeName = nameof(Change.Group),
+                        AttributeType = ScalarAttributeType.S,
+                    },
+                    new AttributeDefinition()
+                    {
+                        AttributeName = nameof(Change.Tidemark),
+                        AttributeType = ScalarAttributeType.S,
+                    }
+                }, 
+                new ProvisionedThroughput() { ReadCapacityUnits = 1, WriteCapacityUnits = 1 });
+        }
+
+        public async Task DeleteChangeTableForApp(Guid appId)
+        {
+            await DynamoDBClient.DeleteTableAsync(GetChangeTableName(appId));
+        }
+
+        private static string GetChangeTableName(Guid appId)
+        {
+            return $"{appId}-Change";
+        }
+
         private static DynamoDBOperationConfig GetChangeTableConfig(Guid appId)
         {
-            return new DynamoDBOperationConfig { OverrideTableName = $"{appId}-Change" };
+            return new DynamoDBOperationConfig { OverrideTableName = GetChangeTableName(appId) };
         }
     }
 }

@@ -24,11 +24,14 @@ namespace SharkSync.Web.Api.Controllers
 
         IApplicationRepository ApplicationRepository { get; set; }
 
-        public ApplicationController(ILogger<ApplicationController> logger, AuthService authService, IApplicationRepository appRepository)
+        IChangeRepository ChangeRepository { get; set; }
+
+        public ApplicationController(ILogger<ApplicationController> logger, AuthService authService, IApplicationRepository appRepository, IChangeRepository changeRepository)
         {
             Logger = logger;
             AuthService = authService;
             ApplicationRepository = appRepository;
+            ChangeRepository = changeRepository;
         }
 
         [HttpGet()]
@@ -57,6 +60,8 @@ namespace SharkSync.Web.Api.Controllers
 
             var app = await ApplicationRepository.AddAsync(name, loggedInAccount.Id);
 
+            await ChangeRepository.CreateChangeTableForApp(app.Id);
+
             var vm = new ApplicationGetResponseViewModel() { Application = new ApplicationViewModel(app) };
 
             return ModelState.GetJsonResultWithValidationErrors(vm);
@@ -69,9 +74,14 @@ namespace SharkSync.Web.Api.Controllers
             if (loggedInAccount == null)
                 return new UnauthorizedResult();
 
-            // AUTH CHECK HERE
+            var app = await ApplicationRepository.GetByIdAsync(id);
 
+            if (app.AccountId != loggedInAccount.Id)
+                return new ForbidResult();
+            
             await ApplicationRepository.DeleteAsync(id);
+
+            await ChangeRepository.DeleteChangeTableForApp(id);
 
             return ModelState.GetJsonResultWithValidationErrors();
         }
