@@ -20,7 +20,7 @@ export class ApiHandlers {
             if (response.status == 401) {
 
                 // Auth required, redirect to location header
-                window.location.href = ApiHandlers.Url + "Api/Auth/Start?returnUrl=" + window.location.href;
+                window.location.href = ApiHandlers.Url + "Console/Login?returnUrl=" + window.location.href;
                 throw Error("Unauthorized");
 
             } else {

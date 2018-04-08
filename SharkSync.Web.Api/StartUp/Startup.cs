@@ -63,12 +63,11 @@ namespace SharkSync.Web.Api
             {
                 options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
             });
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = "GitHub";
+                options.DefaultChallengeScheme = "";
             })
             .AddCookie(options =>
             {
@@ -76,8 +75,8 @@ namespace SharkSync.Web.Api
             })
             .AddOAuth("GitHub", options =>
             {
-                options.ClientId = Configuration["GitHub:ClientId"];
-                options.ClientSecret = Configuration["GitHub:ClientSecret"];
+                options.ClientId = Configuration["Authentication:GitHub:ClientId"];
+                options.ClientSecret = Configuration["Authentication:GitHub:ClientSecret"];
                 options.CallbackPath = new PathString("/signin-github");
 
                 options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
@@ -114,6 +113,10 @@ namespace SharkSync.Web.Api
                         context.RunClaimActions(user);
                     }
                 };
+            }).AddGoogle(googleOptions =>
+            {
+                googleOptions.ClientId = Configuration["Authentication:Google:ClientId"];
+                googleOptions.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
             });
 
             services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));

@@ -20,11 +20,11 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Api/Auth/Start")]
-        public IActionResult Start(string returnUrl)
+        public IActionResult Start(string provider, string returnUrl)
         {
             // TODO: Validate return URL is the correct domain
 
-            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete", new { returnUrl }) });
+            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete", new { returnUrl }) }, provider);
         }
 
         [HttpGet()]
