@@ -12,7 +12,7 @@ namespace SharkSync.Web.Api.ViewModels
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string EmailAddress { get; set; }
-        public int? GithubId { get; set; }
+        public int? GitHubId { get; set; }
         public string AvatarUrl { get; set; }
     }
 }

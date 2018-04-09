@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Mvc.Cors.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharkSync.Web.Api.Services;
@@ -35,27 +36,28 @@ namespace SharkSync.Web.Api
         {
             Configuration = configuration;
             Environment = env;
-
-            AppSettings = new AppSettings();
-            Configuration.GetSection(nameof(AppSettings)).Bind(AppSettings);
         }
 
         public static IConfiguration Configuration { get; private set; }
 
         public static IHostingEnvironment Environment { get; private set; }
 
-        private AppSettings AppSettings { get; set; }
-
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
 
+            var appSettings = new AppSettings();
+            var appSettingSection = Configuration.GetSection(nameof(AppSettings));
+
+            services.Configure<AppSettings>(appSettingSection);
+            appSettingSection.Bind(appSettings);
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",
                     builder => builder
-                        .WithOrigins(AppSettings.ClientAppDomain)
+                        .WithOrigins(appSettings.ClientAppRootUrl)
                         .AllowCredentials()
                         .AllowAnyMethod());
             });
@@ -102,12 +104,12 @@ namespace SharkSync.Web.Api
 
                         var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
 
-                        var githubId = (int)user["id"];
+                        var gitHubId = (int)user["id"];
                         var name = (string)user["name"];
                         var email = (string)user["email"];
                         var avatarUrl = (string)user["avatar_url"];
 
-                        var account = await accountRepository.AddOrGetAsync(name, email, githubId, avatarUrl);
+                        var account = await accountRepository.AddOrGetAsync(name, email, gitHubId, avatarUrl);
 
                         user["accountId"] = account.Id.ToString();
                         context.RunClaimActions(user);

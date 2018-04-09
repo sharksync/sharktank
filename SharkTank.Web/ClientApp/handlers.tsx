@@ -1,4 +1,3 @@
-
 import swal from 'sweetalert2';
 
 class HttpError extends Error {
@@ -20,7 +19,7 @@ export class ApiHandlers {
             if (response.status == 401) {
 
                 // Auth required, redirect to location header
-                window.location.href = ApiHandlers.Url + "Console/Login?returnUrl=" + window.location.href;
+                window.location.href = "/Console/Login";
                 throw Error("Unauthorized");
 
             } else {

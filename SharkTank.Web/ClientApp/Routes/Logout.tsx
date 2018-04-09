@@ -23,6 +23,6 @@ export class Logout extends React.Component<RouteComponentProps<{}>, LogoutState
     }
 
     public render() {
-        return this.state.redirect ? <Redirect to="/" push /> : null;
+        return this.state.redirect ? <Redirect to="/Console/Login" push /> : null;
     }
 }

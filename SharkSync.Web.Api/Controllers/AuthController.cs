@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SharkSync.Web.Api.Services;
 using System.Threading.Tasks;
 
@@ -12,36 +13,33 @@ namespace SharkSync.Web.Api.Controllers
 
         AuthService AuthService { get; set; }
 
-        public AuthController(ILogger<AuthController> logger, AuthService authService)
+        AppSettings AppSettings { get; set; }
+
+        public AuthController(ILogger<AuthController> logger, AuthService authService, IOptions<AppSettings> appSettingsOptions)
         {
             Logger = logger;
             AuthService = authService;
+            AppSettings = appSettingsOptions.Value;
         }
 
         [HttpGet()]
         [Route("Api/Auth/Start")]
-        public IActionResult Start(string provider, string returnUrl)
+        public IActionResult Start(string provider)
         {
-            // TODO: Validate return URL is the correct domain
-
-            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete", new { returnUrl }) }, provider);
+            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete") }, provider);
         }
 
         [HttpGet()]
         [Route("Api/Auth/Complete")]
-        public IActionResult Complete(string returnUrl)
+        public IActionResult Complete()
         {
-            // TODO: Validate return URL is the correct domain
-
-            return Redirect(returnUrl);
+            return Redirect($"{AppSettings.ClientAppRootUrl}/Console/Apps");
         }
 
         [HttpGet()]
         [Route("Api/Auth/Logout")]
-        public async Task<IActionResult> Logout(string returnUrl)
+        public async Task<IActionResult> Logout()
         {
-            // TODO: Validate return URL is the correct domain
-
             await HttpContext.SignOutAsync();
 
             return Ok();

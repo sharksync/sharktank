@@ -7,6 +7,6 @@ namespace SharkSync.Web.Api
 {
     public class AppSettings
     {
-        public string ClientAppDomain { get; set; }
+        public string ClientAppRootUrl { get; set; }
     }
 }

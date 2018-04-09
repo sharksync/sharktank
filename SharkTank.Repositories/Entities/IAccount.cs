@@ -7,7 +7,7 @@ namespace SharkTank.Interfaces.Entities
         Guid Id { get; set; }
         string Name { get; set; }
         string EmailAddress { get; set; }
-        int? GithubId { get; set; }
+        int? GitHubId { get; set; }
         string AvatarUrl { get; set; }
     }
 }
