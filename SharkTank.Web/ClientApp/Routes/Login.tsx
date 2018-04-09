@@ -15,9 +15,7 @@ export class Login extends React.Component<RouteComponentProps<{}>, LoginState> 
     }
 
     handleClick(provider: String, e: React.MouseEvent<HTMLButtonElement>) {
-
         window.location.href = ApiHandlers.Url + "Api/Auth/Start?provider=" + provider + "&returnUrl=" + window.location.href;
-
     }
 
     public render() {
