@@ -1,7 +1,12 @@
 import * as React from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import * as Layout from 'ClientApp/components/Layout';
 
-export class NavMenu extends React.Component<{}, {}> {
+interface NavMenuState {
+    loggedInUser: Layout.LoggedInUser | null;
+}
+
+export class NavMenu extends React.Component<NavMenuState, {}> {
     public render() {
         return <div className='main-nav'>
             <div className='navbar navbar-inverse'>
@@ -16,20 +21,39 @@ export class NavMenu extends React.Component<{}, {}> {
                 </div>
                 <div className='clearfix'></div>
                 <div className='navbar-collapse collapse'>
-                    <ul className='nav navbar-nav'>
-                        <li>
-                            <NavLink to={'/Console/Apps'} exact activeClassName='active'>
-                                <span className='glyphicon glyphicon-home'></span> Apps
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={'/Console/Logout'} exact activeClassName='active'>
-                                <span className='glyphicon glyphicon-log-out'></span> Logout
-                            </NavLink>
-                        </li>
-                    </ul>
+                    {this.props.loggedInUser ? this.renderLoggedInMenu() : this.renderLoggedOutMenu() }
                 </div>
             </div>
         </div>;
+    }
+
+    public renderLoggedInMenu() {
+        return <ul className='nav navbar-nav'>
+            <li>
+                <NavLink to={'/Console/Apps'} exact activeClassName='active'>
+                    <span className='glyphicon glyphicon-home'></span> Apps
+                </NavLink>
+            </li>
+            <li>
+                <NavLink to={'/Console/Logout'} exact activeClassName='active'>
+                    <span className='glyphicon glyphicon-log-out'></span> Logout
+                </NavLink>
+            </li>
+        </ul>;
+    }
+
+    public renderLoggedOutMenu() {
+        return <ul className='nav navbar-nav'>
+            <li>
+                <NavLink to={'/Console/Apps'} exact activeClassName='active'>
+                    <span className='glyphicon glyphicon-home'></span> Apps
+                </NavLink>
+            </li>
+            <li>
+                <NavLink to={'/Console/Logout'} exact activeClassName='active'>
+                    <span className='glyphicon glyphicon-log-out'></span> Logout
+                </NavLink>
+            </li>
+        </ul>;
     }
 }

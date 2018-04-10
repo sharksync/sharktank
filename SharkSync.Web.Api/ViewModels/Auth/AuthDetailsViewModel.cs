@@ -7,12 +7,16 @@ using System.Threading.Tasks;
 
 namespace SharkSync.Web.Api.ViewModels
 {
-    public class AuthCompleteViewModel : BaseValidationViewModel
+    public class AuthDetailsViewModel : BaseValidationViewModel
+    {
+        public UserDetailsViewModel LoggedInUser { get; set; }
+    }
+
+    public class UserDetailsViewModel
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string EmailAddress { get; set; }
-        public int? GitHubId { get; set; }
         public string AvatarUrl { get; set; }
     }
 }

@@ -18,6 +18,12 @@ export class ApiHandlers {
 
             if (response.status == 401) {
 
+                // Clear stored auth details
+                localStorage.removeItem('loggedInUserId');
+                localStorage.removeItem('loggedInUserName');
+                localStorage.removeItem('loggedInUserEmail');
+                localStorage.removeItem('loggedInUserAvatarUrl');
+
                 // Auth required, redirect to location header
                 window.location.href = "/Console/Login";
                 throw Error("Unauthorized");
