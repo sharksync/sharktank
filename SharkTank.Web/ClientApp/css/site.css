@@ -52,6 +52,27 @@ html {
             padding: 0px;
         }
 
+        .main-nav .navbar-collapse {
+            border-top: 1px solid #444;
+            padding: 0px;
+        }
+
+        .main-nav .navbar-profile {
+            width: auto;
+            position: absolute;
+            bottom: 1px;
+        }
+
+        .main-nav .navbar-profile span {
+            padding-left: 10px;
+            color: rgba(255,255,255,0.75);
+            font-weight: 600;
+        }
+
+        .main-nav .navbar-profile .avatar {
+            border-radius: 3px;
+        }
+
         .main-nav .navbar ul {
             float: none;
         }

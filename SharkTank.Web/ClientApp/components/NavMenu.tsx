@@ -1,13 +1,76 @@
 import * as React from 'react';
+import { ApiHandlers } from '../handlers';
 import { Link, NavLink } from 'react-router-dom';
-import * as Layout from 'ClientApp/components/Layout';
 
 interface NavMenuState {
-    loggedInUser: Layout.LoggedInUser | null;
+    loggedInUser: LoggedInUser | null;
 }
 
-export class NavMenu extends React.Component<NavMenuState, {}> {
+interface AuthDetailsResponse {
+    LoggedInUser: LoggedInUser;
+    Success: boolean;
+}
+
+export interface LoggedInUser {
+    Id: string;
+    Name: string;
+    EmailAddress: string;
+    AvatarUrl: string;
+}
+
+export class NavMenu extends React.Component<{}, NavMenuState> {
+
+    public componentWillMount() {
+        console.log("componentWillMount");
+    }
+
+    public updateLoggedInState() {
+
+        var id = localStorage.getItem('loggedInUserId');
+        var name = localStorage.getItem('loggedInUserName');
+        var email = localStorage.getItem('loggedInUserEmail');
+        var avatarUrl = localStorage.getItem('loggedInUserAvatarUrl');
+
+        var currentUrl = window.location.href.toLowerCase();
+        var onSignInOrSignOutPage = currentUrl.indexOf("/console/login") > -1 || currentUrl.indexOf("/console/logout") > -1; 
+
+        if (id && name && email && avatarUrl && !onSignInOrSignOutPage) {
+
+            this.state = {
+                loggedInUser: {
+                    Id: id,
+                    Name: name,
+                    EmailAddress: email,
+                    AvatarUrl: avatarUrl
+                }
+            };
+        }
+        else {
+
+            if (!onSignInOrSignOutPage) {
+
+                fetch(ApiHandlers.Url + 'Api/Auth/Details', {
+                    credentials: 'include'
+                })
+                    .then(response => response.json() as Promise<AuthDetailsResponse>)
+                    .then(data => {
+                        this.setState({ loggedInUser: data.LoggedInUser });
+
+                        localStorage.setItem('loggedInUserId', data.LoggedInUser.Id);
+                        localStorage.setItem('loggedInUserName', data.LoggedInUser.Name);
+                        localStorage.setItem('loggedInUserEmail', data.LoggedInUser.EmailAddress);
+                        localStorage.setItem('loggedInUserAvatarUrl', data.LoggedInUser.AvatarUrl);
+                    });
+            }
+
+            this.state = { loggedInUser: null };
+        }
+
+    }
+
     public render() {
+        this.updateLoggedInState();
+
         return <div className='main-nav'>
             <div className='navbar navbar-inverse'>
                 <div className='navbar-header'>
@@ -21,7 +84,11 @@ export class NavMenu extends React.Component<NavMenuState, {}> {
                 </div>
                 <div className='clearfix'></div>
                 <div className='navbar-collapse collapse'>
-                    {this.props.loggedInUser ? this.renderLoggedInMenu() : this.renderLoggedOutMenu() }
+                    {this.state.loggedInUser ? this.renderLoggedInMenu() : this.renderLoggedOutMenu() }
+                </div>
+                <div className='clearfix'></div>
+                <div className='navbar-profile'>
+                    {this.state.loggedInUser ? this.renderProfile(this.state.loggedInUser) : null}
                 </div>
             </div>
         </div>;
@@ -45,14 +112,18 @@ export class NavMenu extends React.Component<NavMenuState, {}> {
     public renderLoggedOutMenu() {
         return <ul className='nav navbar-nav'>
             <li>
-                <NavLink to={'/Console/Apps'} exact activeClassName='active'>
-                    <span className='glyphicon glyphicon-home'></span> Apps
+                <NavLink to={'/Console/Login'} exact activeClassName='active'>
+                    <span className='glyphicon glyphicon-log-in'></span> Login
                 </NavLink>
             </li>
+        </ul>;
+    }
+
+    public renderProfile(loggedInUser: LoggedInUser) {
+        return <ul className='nav navbar-nav'>
             <li>
-                <NavLink to={'/Console/Logout'} exact activeClassName='active'>
-                    <span className='glyphicon glyphicon-log-out'></span> Logout
-                </NavLink>
+                <img src={loggedInUser.AvatarUrl} height="20px" width="20px" className="avatar" />
+                <span>{loggedInUser.Name}</span>
             </li>
         </ul>;
     }

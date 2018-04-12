@@ -14,6 +14,12 @@ export class Logout extends React.Component<RouteComponentProps<{}>, LogoutState
 
         this.state = { redirect: false };
 
+        // Clear stored auth details
+        localStorage.removeItem('loggedInUserId');
+        localStorage.removeItem('loggedInUserName');
+        localStorage.removeItem('loggedInUserEmail');
+        localStorage.removeItem('loggedInUserAvatarUrl');
+
         fetch(ApiHandlers.Url + 'Api/Auth/Logout', {
             credentials: 'include'
         })

@@ -16,6 +16,7 @@ export class ApiHandlers {
     static handleErrors(response: Response) {
         if (!response.ok) {
 
+            // Need to sign in?
             if (response.status == 401) {
 
                 // Clear stored auth details
