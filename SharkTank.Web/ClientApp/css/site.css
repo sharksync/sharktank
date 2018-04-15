@@ -198,10 +198,9 @@ html {
     margin: 0 10px;
 }
 
-.facebook-login {
-    color: #FFF;
-    background-color: #395697;
-    border-color: transparent;
+.microsoft-login {
+    color: #535a60;
+    border-color: #d6d9dc;
     cursor: pointer;
     border-radius: 3px;
     padding: 8px 0;
@@ -209,6 +208,8 @@ html {
     box-sizing: border-box;
     border: 1px solid #d6d9dc;
     text-align: center;
+    background: #FFF;
+    vertical-align: baseline;
     width: 200px;
     height: 100px;
     margin: 0 10px;

@@ -116,7 +116,8 @@ namespace SharkSync.Web.Api
                         context.RunClaimActions(user);
                     }
                 };
-            }).AddGoogle(options =>
+            })
+            .AddGoogle(options =>
             {
                 options.ClientId = Configuration["Authentication:Google:ClientId"];
                 options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
@@ -150,6 +151,43 @@ namespace SharkSync.Web.Api
                             email = (string)emailsObject.First()["value"];
 
                         var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, googleId: googleId);
+
+                        user["accountId"] = account.Id.ToString();
+                        context.RunClaimActions(user);
+                    }
+                };
+            })
+            .AddMicrosoftAccount(options =>
+            {
+                options.ClientId = Configuration["Authentication:Microsoft:ApplicationId"];
+                options.ClientSecret = Configuration["Authentication:Microsoft:Password"];
+
+                options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
+
+                options.Events = new OAuthEvents
+                {
+                    OnCreatingTicket = async context =>
+                    {
+                        var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+
+                        var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                        response.EnsureSuccessStatusCode();
+
+                        var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+                        var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
+
+                        var microsoftId = (string)user["id"];
+                        var name = (string)user["displayName"];
+                        var email = (string)user["userPrincipalName"];
+
+                        // userPrincipalName might not be an email, depending on the account type
+                        if (!email.Contains("@"))
+                            email = null;
+
+                        var account = await accountRepository.AddOrGetAsync(name, email, null, microsoftId: microsoftId);
 
                         user["accountId"] = account.Id.ToString();
                         context.RunClaimActions(user);
