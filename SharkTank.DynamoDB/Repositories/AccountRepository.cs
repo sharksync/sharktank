@@ -35,12 +35,20 @@ namespace SharkTank.DynamoDB.Repositories
             return await DynamoDBContext.LoadAsync<Account>(id);
         }
 
-        public async Task<IAccount> AddOrGetAsync(string name, string emailAddress, int? gitHubId, string avatarUrl)
+        public async Task<IAccount> AddOrGetAsync(string name, string emailAddress, string avatarUrl, string gitHubId = null, string googleId = null, string microsoftId = null)
         {
-            if (gitHubId == null)
-                throw new Exception("GitHubId required for new accounts");
+            if (gitHubId == null && googleId == null && microsoftId == null)
+                throw new Exception("GitHubId, GoogleId or MicrosoftId required for new accounts");
 
-            var scanCondition = new ScanCondition(nameof(Account.GitHubId), ScanOperator.Equal, gitHubId);
+            ScanCondition scanCondition = null;
+
+            if (gitHubId != null)
+                scanCondition = new ScanCondition(nameof(Account.GitHubId), ScanOperator.Equal, gitHubId);
+            else if (googleId != null)
+                scanCondition = new ScanCondition(nameof(Account.GoogleId), ScanOperator.Equal, googleId);
+            else if (microsoftId != null)
+                scanCondition = new ScanCondition(nameof(Account.MicrosoftId), ScanOperator.Equal, microsoftId);
+
             var query = DynamoDBContext.ScanAsync<Account>(new[] { scanCondition });
             var accounts = await query.GetNextSetAsync();
 
@@ -53,8 +61,10 @@ namespace SharkTank.DynamoDB.Repositories
                     Id = Guid.NewGuid(),
                     Name = name,
                     EmailAddress = emailAddress,
+                    AvatarUrl = avatarUrl,
                     GitHubId = gitHubId,
-                    AvatarUrl = avatarUrl
+                    GoogleId = googleId,
+                    MicrosoftId = microsoftId
                 };
                 await DynamoDBContext.SaveAsync(account);
             }

@@ -20,9 +20,16 @@ namespace SharkTank.Repositories.Entities
         public string EmailAddress { get; set; }
 
         [DynamoDBProperty]
-        public int? GitHubId { get; set; }
+        public string AvatarUrl { get; set; }
 
         [DynamoDBProperty]
-        public string AvatarUrl { get; set; }
+        public string GitHubId { get; set; }
+
+        [DynamoDBProperty]
+        public string GoogleId { get; set; }
+
+        [DynamoDBProperty]
+        public string MicrosoftId { get; set; }
+
     }
 }

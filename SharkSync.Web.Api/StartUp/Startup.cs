@@ -81,7 +81,8 @@ namespace SharkSync.Web.Api
                 options.ClientSecret = Configuration["Authentication:GitHub:ClientSecret"];
                 options.CallbackPath = new PathString("/signin-github");
 
-                options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
+                // Include the users email address in the scope
+                options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize?scope=user:email";
                 options.TokenEndpoint = "https://github.com/login/oauth/access_token";
                 options.UserInformationEndpoint = "https://api.github.com/user";
 
@@ -104,21 +105,56 @@ namespace SharkSync.Web.Api
 
                         var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
 
-                        var gitHubId = (int)user["id"];
+                        var gitHubId = (string)user["id"];
                         var name = (string)user["name"];
                         var email = (string)user["email"];
                         var avatarUrl = (string)user["avatar_url"];
 
-                        var account = await accountRepository.AddOrGetAsync(name, email, gitHubId, avatarUrl);
+                        var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, gitHubId: gitHubId);
 
                         user["accountId"] = account.Id.ToString();
                         context.RunClaimActions(user);
                     }
                 };
-            }).AddGoogle(googleOptions =>
+            }).AddGoogle(options =>
             {
-                googleOptions.ClientId = Configuration["Authentication:Google:ClientId"];
-                googleOptions.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+                options.ClientId = Configuration["Authentication:Google:ClientId"];
+                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+
+                options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
+
+                options.Events = new OAuthEvents
+                {
+                    OnCreatingTicket = async context =>
+                    {
+                        var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+
+                        var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                        response.EnsureSuccessStatusCode();
+
+                        var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+                        var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
+
+                        var googleId = (string)user["id"];
+                        var name = (string)user["displayName"];
+                        var imageObject = (JObject)user["image"];
+                        string avatarUrl = null;
+                        if (imageObject != null)
+                            avatarUrl = (string)imageObject["url"];
+                        var emailsObject = (JArray)user["emails"];
+                        string email = null;
+                        if (emailsObject != null && emailsObject.Any())
+                            email = (string)emailsObject.First()["value"];
+
+                        var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, googleId: googleId);
+
+                        user["accountId"] = account.Id.ToString();
+                        context.RunClaimActions(user);
+                    }
+                };
             });
 
             services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
