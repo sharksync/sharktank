@@ -20,10 +20,6 @@ export interface LoggedInUser {
 
 export class NavMenu extends React.Component<{}, NavMenuState> {
 
-    public componentWillMount() {
-        console.log("componentWillMount");
-    }
-
     public updateLoggedInState() {
 
         var id = localStorage.getItem('loggedInUserId');
@@ -101,11 +97,6 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
                     <span className='glyphicon glyphicon-home'></span> Apps
                 </NavLink>
             </li>
-            <li>
-                <NavLink to={'/Console/Logout'} exact activeClassName='active'>
-                    <span className='glyphicon glyphicon-log-out'></span> Logout
-                </NavLink>
-            </li>
         </ul>;
     }
 
@@ -122,8 +113,13 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
     public renderProfile(loggedInUser: LoggedInUser) {
         return <ul className='nav navbar-nav'>
             <li>
-                <img src={loggedInUser.AvatarUrl} height="20px" width="20px" className="avatar" />
+                <img src={loggedInUser.AvatarUrl} height="32px" width="32px" className="avatar" />              
                 <span>{loggedInUser.Name}</span>
+            </li>
+            <li>
+                <NavLink to={'/Console/Logout'} exact activeClassName='active'>
+                    <span className='glyphicon glyphicon-log-out'></span> Logout
+                </NavLink>
             </li>
         </ul>;
     }
