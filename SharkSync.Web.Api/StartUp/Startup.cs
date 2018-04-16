@@ -6,6 +6,8 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -61,10 +63,47 @@ namespace SharkSync.Web.Api
                         .AllowCredentials()
                         .AllowAnyMethod());
             });
+
             services.Configure<MvcOptions>(options =>
             {
                 options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
             });
+
+            AddAuthenticationOptions(services);
+
+            services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
+            services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
+            services.AddTransient(typeof(IDeviceRepository), typeof(DeviceRepository));
+            services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
+
+            services.AddScoped(typeof(AuthService));
+
+            services.AddAWSService<IAmazonDynamoDB>();
+            services.AddAWSService<IAmazonSecretsManager>();
+        }
+
+        private class OAuthSecret
+        {
+            public string GitHubClientId { get; set; }
+            public string GitHubClientSecret { get; set; }
+            public string GoogleClientId { get; set; }
+            public string GoogleClientSecret { get; set; }
+            public string MicrosoftApplicationId { get; set; }
+            public string MicrosoftPassword { get; set; }
+        }
+
+        private void AddAuthenticationOptions(IServiceCollection services)
+        {
+            var awsOptions = Configuration.GetAWSOptions();
+            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
+            var oAuthSecretTask = secretManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = "SharkSync-OAuth" });
+            oAuthSecretTask.Wait();
+
+            if (oAuthSecretTask.Result == null || string.IsNullOrWhiteSpace(oAuthSecretTask.Result.SecretString))
+                throw new Exception("Missing AWS SecretsManager value for \"SharkSync-OAuth\" secret");
+
+            var oAuthSecret = JsonConvert.DeserializeObject<OAuthSecret>(oAuthSecretTask.Result.SecretString);
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -73,12 +112,12 @@ namespace SharkSync.Web.Api
             })
             .AddCookie(options =>
             {
-                options.Cookie.SecurePolicy = Environment.IsProduction() ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest; 
+                options.Cookie.SecurePolicy = Environment.IsProduction() ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
             })
             .AddOAuth("GitHub", options =>
             {
-                options.ClientId = Configuration["Authentication:GitHub:ClientId"];
-                options.ClientSecret = Configuration["Authentication:GitHub:ClientSecret"];
+                options.ClientId = oAuthSecret.GitHubClientId;
+                options.ClientSecret = oAuthSecret.GitHubClientSecret;
                 options.CallbackPath = new PathString("/signin-github");
 
                 // Include the users email address in the scope
@@ -119,8 +158,8 @@ namespace SharkSync.Web.Api
             })
             .AddGoogle(options =>
             {
-                options.ClientId = Configuration["Authentication:Google:ClientId"];
-                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+                options.ClientId = oAuthSecret.GoogleClientId;
+                options.ClientSecret = oAuthSecret.GoogleClientSecret;
 
                 options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
 
@@ -159,8 +198,8 @@ namespace SharkSync.Web.Api
             })
             .AddMicrosoftAccount(options =>
             {
-                options.ClientId = Configuration["Authentication:Microsoft:ApplicationId"];
-                options.ClientSecret = Configuration["Authentication:Microsoft:Password"];
+                options.ClientId = oAuthSecret.MicrosoftApplicationId;
+                options.ClientSecret = oAuthSecret.MicrosoftPassword;
 
                 options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
 
@@ -194,15 +233,6 @@ namespace SharkSync.Web.Api
                     }
                 };
             });
-
-            services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
-            services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
-            services.AddTransient(typeof(IDeviceRepository), typeof(DeviceRepository));
-            services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
-
-            services.AddScoped(typeof(AuthService));
-
-            services.AddAWSService<IAmazonDynamoDB>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
