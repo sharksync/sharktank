@@ -23,6 +23,23 @@ html {
     z-index: 1;
 }
 
+.main-nav .navbar-profile span {
+    padding-left: 10px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+}
+
+.main-nav .navbar-profile a.logout {
+    width: 120px;
+    float: right;
+    text-align: right;
+    padding: 5px 16px;
+}
+
+.main-nav .navbar-profile li {
+    margin: 6px;
+}
+
 @media (max-width: 767px) {
     /* On small screens, the nav menu spans the full width of the screen. Leave a space for it. */
     body {
@@ -37,60 +54,56 @@ html {
         width: calc(25% - 20px);
     }
 
-        .main-nav .navbar {
-            border-radius: 0px;
-            border-width: 0px;
-            height: 100%;
-        }
+    .main-nav .navbar {
+        border-radius: 0px;
+        border-width: 0px;
+        height: 100%;
+    }
 
-        .main-nav .navbar-header {
-            float: none;
-        }
+    .main-nav .navbar-header {
+        float: none;
+    }
 
-        .main-nav .navbar-collapse {
-            border-top: 1px solid #444;
-            padding: 0px;
-        }
+    .main-nav .navbar-collapse {
+        border-top: 1px solid #444;
+        padding: 0px;
+    }
 
-        .main-nav .navbar-collapse {
-            border-top: 1px solid #444;
-            padding: 0px;
-        }
+    .main-nav .navbar-collapse {
+        border-top: 1px solid #444;
+        padding: 0px;
+    }
 
-        .main-nav .navbar-profile {
-            width: auto;
-            position: absolute;
-            bottom: 1px;
-        }
+    .main-nav .navbar ul {
+        float: none;
+    }
 
-        .main-nav .navbar-profile span {
-            padding-left: 10px;
-            color: rgba(255,255,255,0.75);
-            font-weight: 600;
-        }
+    .main-nav .navbar li {
+        float: none;
+        font-size: 15px;
+        margin: 6px;
+    }
 
-        .main-nav .navbar ul {
-            float: none;
-        }
+    .main-nav .navbar li a {
+        padding: 10px 16px;
+        border-radius: 4px;
+    }
 
-        .main-nav .navbar li {
-            float: none;
-            font-size: 15px;
-            margin: 6px;
-        }
+    .main-nav .navbar a {
+        /* If a menu item's text is too long, truncate it */
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-            .main-nav .navbar li a {
-                padding: 10px 16px;
-                border-radius: 4px;
-            }
+    .main-nav .navbar-profile {
+        width: 100%;
+        position: absolute;
+        bottom: 1px;
+        border-top: 1px solid #444;
+    }
 
-        .main-nav .navbar a {
-            /* If a menu item's text is too long, truncate it */
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
 }
 
 .validation-error-tooltip {
@@ -136,9 +149,9 @@ html {
     padding: 10px;
 }
 
-    .pageLoading span {
-        padding: 0 5px;
-    }
+.pageLoading span {
+    padding: 0 5px;
+}
 
 .table > tbody > tr > td {
     vertical-align: middle;

@@ -83,7 +83,7 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
                     {this.state.loggedInUser ? this.renderLoggedInMenu() : this.renderLoggedOutMenu() }
                 </div>
                 <div className='clearfix'></div>
-                <div className='navbar-profile'>
+                <div className='navbar-profile navbar-collapse collapse'>
                     {this.state.loggedInUser ? this.renderProfile(this.state.loggedInUser) : null}
                 </div>
             </div>
@@ -115,9 +115,7 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
             <li>
                 <img src={loggedInUser.AvatarUrl} height="32px" width="32px" className="avatar" />              
                 <span>{loggedInUser.Name}</span>
-            </li>
-            <li>
-                <NavLink to={'/Console/Logout'} exact activeClassName='active'>
+                <NavLink to={'/Console/Logout'} exact activeClassName='active' className="logout">
                     <span className='glyphicon glyphicon-log-out'></span> Logout
                 </NavLink>
             </li>
