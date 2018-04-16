@@ -2,6 +2,15 @@ html {
     font-size: 14px;
 }
 
+.navbar-inverse .navbar-brand {
+    background-image: url('../img/SharkSyncLogo-White.png');
+    background-repeat: no-repeat;
+    background-position: left;
+    background-position-x: 15px;
+    padding-left: 80px;
+    color: #fff;
+}
+
 .main-nav li .glyphicon {
     margin-right: 10px;
 }
@@ -49,9 +58,11 @@ html {
 
 @media (min-width: 768px) {
     /* On small screens, convert the nav menu to a vertical sidebar */
+
     .main-nav {
         height: 100%;
         width: calc(25% - 20px);
+        min-width: 205px;
     }
 
     .main-nav .navbar {

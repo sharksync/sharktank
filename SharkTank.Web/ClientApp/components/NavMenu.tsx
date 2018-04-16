@@ -76,7 +76,7 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
                         <span className='icon-bar'></span>
                         <span className='icon-bar'></span>
                     </button>
-                    <Link className='navbar-brand' to={'/'}>Shark Sync</Link>
+                    <Link className='navbar-brand' to={'/'}>SharkSync.io</Link>
                 </div>
                 <div className='clearfix'></div>
                 <div className='navbar-collapse collapse'>
