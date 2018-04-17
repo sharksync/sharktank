@@ -3,7 +3,7 @@
 phases:
   build:
     commands:
-      - dotnet restore --configuration release
+      - dotnet restore
       - dotnet build --configuration release
       - dotnet publish --configuration release
 artifacts:
