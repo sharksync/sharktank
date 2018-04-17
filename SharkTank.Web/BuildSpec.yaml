@@ -3,6 +3,7 @@
 phases:
   build:
     commands:
+      - sudo apt-get install npm -y
       - dotnet restore
       - dotnet build --configuration release
       - dotnet publish --configuration release
