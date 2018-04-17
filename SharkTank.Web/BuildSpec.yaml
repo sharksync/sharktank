@@ -10,4 +10,4 @@ phases:
       - dotnet publish --configuration release
 artifacts:
   files:
-    - bin/Release/netcoreapp2.0/publish/wwwroot/*
+    - SharkTank.Web/bin/Release/netcoreapp2.0/publish/wwwroot/*
