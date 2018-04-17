@@ -31,7 +31,7 @@
     "style-loader": "0.20.3",
     "typescript": "2.8.1",
     "url-loader": "1.0.1",
-    "webpack": "4.6.0",
+    "webpack": "3.11.0",
     "webpack-hot-middleware": "2.21.2",
     "sweetalert2": "7.18.0"
   }
