@@ -37,10 +37,6 @@ namespace SharkTank.Web
                     ReactHotModuleReplacement = true
                 });
             }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-            }
 
             app.UseStaticFiles();
 
