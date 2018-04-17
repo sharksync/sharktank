@@ -3,9 +3,9 @@
 phases:
   build:
     commands:
-      - dotnet restore
-      - dotnet build
-      - dotnet publish
+      - dotnet restore --configuration release
+      - dotnet build --configuration release
+      - dotnet publish --configuration release
 artifacts:
   files:
     - wwwroot/*
