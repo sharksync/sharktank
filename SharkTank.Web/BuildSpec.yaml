@@ -3,7 +3,10 @@
 phases:
   build:
     commands:
-      - sudo apt-get install npm -y
+      - apt-get update -y
+      - apt-get purge nodejs npm
+      - apt-get install -y nodejs
+      - node --version
       - dotnet restore
       - dotnet build --configuration release
       - dotnet publish --configuration release
