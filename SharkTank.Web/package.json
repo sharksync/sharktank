@@ -13,7 +13,7 @@
     "@types/webpack-env": "1.13.6",
     "aspnet-webpack": "2.0.3",
     "aspnet-webpack-react": "3.0.0",
-    "awesome-typescript-loader": "5.0.0",
+    "awesome-typescript-loader": "3.4.1",
     "bootstrap": "4.1.0",
     "popper.js": "1.14.3",
     "css-loader": "0.28.11",
