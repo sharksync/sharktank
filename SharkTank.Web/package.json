@@ -15,6 +15,7 @@
     "aspnet-webpack-react": "3.0.0",
     "awesome-typescript-loader": "3.4.1",
     "bootstrap": "4.0.0",
+    "popper.js" : "1.14.3",
     "css-loader": "0.28.9",
     "event-source-polyfill": "0.0.12",
     "extract-text-webpack-plugin": "3.0.2",
