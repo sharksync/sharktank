@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
-using SharkTank.Interfaces.Entities;
+using SharkSync.Interfaces.Entities;
 using System.Threading.Tasks;
 
 namespace SharkSync.Web.Api.Controllers

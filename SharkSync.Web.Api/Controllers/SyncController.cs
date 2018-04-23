@@ -7,8 +7,8 @@ using SharkSync.Web.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using SharkTank.Interfaces.Repositories;
-using SharkTank.Interfaces.Entities;
+using SharkSync.Interfaces.Repositories;
+using SharkSync.Interfaces.Entities;
 using System.Net;
 
 namespace SharkSync.Web.Api.Controllers

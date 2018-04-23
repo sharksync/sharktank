@@ -27,8 +27,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
-using SharkTank.DynamoDB.Repositories;
-using SharkTank.Interfaces.Repositories;
+using SharkSync.DynamoDB.Repositories;
+using SharkSync.Interfaces.Repositories;
 
 namespace SharkSync.Web.Api
 {

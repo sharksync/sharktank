@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SharkSync.Web.Api\SharkSync.Web.Api.csproj" />
-    <ProjectReference Include="..\SharkTank.Repositories\SharkTank.Interfaces.csproj" />
+    <ProjectReference Include="..\SharkSync.Repositories\SharkSync.Interfaces.csproj" />
   </ItemGroup>
 
 </Project>

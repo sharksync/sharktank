@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.Web", "SharkTank.Web\SharkTank.Web.csproj", "{6C619B59-A251-405E-B871-D551A5AC4152}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Web", "SharkSync.Web\SharkSync.Web.csproj", "{6C619B59-A251-405E-B871-D551A5AC4152}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.Interfaces", "SharkTank.Repositories\SharkTank.Interfaces.csproj", "{75F8A3C9-2DA1-42F3-A7FE-A076AFC52235}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Interfaces", "SharkSync.Repositories\SharkSync.Interfaces.csproj", "{75F8A3C9-2DA1-42F3-A7FE-A076AFC52235}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkTank.DynamoDB", "SharkTank.DynamoDB\SharkTank.DynamoDB.csproj", "{CD0A1447-47F6-46FF-AD49-DEC128068B7E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.DynamoDB", "SharkSync.DynamoDB\SharkSync.DynamoDB.csproj", "{CD0A1447-47F6-46FF-AD49-DEC128068B7E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Web.Api", "SharkSync.Web.Api\SharkSync.Web.Api.csproj", "{ED5CF4EB-DF76-49FE-9C60-BEA296A3744D}"
 EndProject

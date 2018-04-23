@@ -8,8 +8,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using SharkTank.Interfaces.Repositories;
-using SharkTank.Interfaces.Entities;
+using SharkSync.Interfaces.Repositories;
+using SharkSync.Interfaces.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SharkSync.Web.Api.Tests.Controllers
