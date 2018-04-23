@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: SharkSync.Web
+Description: SharkSync.Web Stack
 Resources:
   S3BucketWeb:
     Type: AWS::S3::Bucket
