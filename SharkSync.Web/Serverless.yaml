@@ -15,7 +15,7 @@ provider:
    profile: silvergames
 
 functions:
-   directoryRootOriginRequestRewriter:
+   OriginRequestLambdaEdge:
       name: 'sharksync-web-origin-request'
       handler: 'Lambda@Edge/origin-request.js'
       memorySize: 128
