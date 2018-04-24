@@ -1,0 +1,228 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "DirectoryRootOriginRequestRewriterLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/sharksync-web-origin-request"
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com",
+                  "edgelambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "sharksync-web",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sharksync-web-origin-request:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sharksync-web-origin-request:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogStreams"
+                  ],
+                  "Resource": "arn:aws:logs:*:*:*"
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "sharksync-web",
+              "dev",
+              "eu-west-1",
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "DirectoryRootOriginRequestRewriterLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/sharksync-web/dev/1524602199273-2018-04-24T20:36:39.273Z/sharksync-web.zip"
+        },
+        "FunctionName": "sharksync-web-origin-request",
+        "Handler": "Lambda@Edge/origin-request.js",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs6.10",
+        "Timeout": 1
+      },
+      "DependsOn": [
+        "DirectoryRootOriginRequestRewriterLogGroup",
+        "IamRoleLambdaExecution"
+      ]
+    },
+    "DirectoryRootOriginRequestRewriterLambdaVersionCe5c38qLd2Ok2pJOm1ASBghzlKjCCRxzrM4D70tiCCM": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "DirectoryRootOriginRequestRewriterLambdaFunction"
+        },
+        "CodeSha256": "6E7H8Y2ZpKqMKJOVyQEKN8BYGyXL9gbp6TfuxzsxmOc="
+      }
+    },
+    "S3BucketWeb": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "BucketName": "io.sharksync.web"
+      }
+    },
+    "S3BucketPolicyBucketWebCloudfront": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "S3BucketWeb"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "S3BucketWeb"
+                    },
+                    "/*"
+                  ]
+                ]
+              },
+              "Principal": {
+                "AWS": [
+                  "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E2L91VF2FR5I1N"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "CloudFrontWebApp": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Origins": [
+            {
+              "DomainName": "io.sharksync.web.s3.amazonaws.com",
+              "Id": "s3",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": "origin-access-identity/cloudfront/E2L91VF2FR5I1N"
+              }
+            }
+          ],
+          "Enabled": "true",
+          "Comment": "io.sharksync.web",
+          "DefaultRootObject": "index.html",
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD"
+            ],
+            "TargetOriginId": "s3",
+            "ForwardedValues": {
+              "QueryString": "false",
+              "Cookies": {
+                "Forward": "none"
+              }
+            },
+            "SmoothStreaming": "false",
+            "Compress": "true",
+            "ViewerProtocolPolicy": "redirect-to-https"
+          },
+          "PriceClass": "PriceClass_All",
+          "HttpVersion": "http2"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    },
+    "DirectoryRootOriginRequestRewriterLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "DirectoryRootOriginRequestRewriterLambdaVersionCe5c38qLd2Ok2pJOm1ASBghzlKjCCRxzrM4D70tiCCM"
+      }
+    }
+  }
+}
