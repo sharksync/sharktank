@@ -26,6 +26,22 @@ Resources:
           Principal:
             AWS:
               - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E2L91VF2FR5I1N'
+  LambdaEdgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - edgelambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      RoleName: 'lambda-edge-role'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
   CloudFrontWebApp:
     Type: AWS::CloudFront::Distribution
     Properties:
