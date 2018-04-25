@@ -1,11 +1,11 @@
 {
-    "profile" : "default",
-    "region"  : "eu-west-1",
-    "configuration" : "Release",
-    "framework"     : "netcoreapp2.0",
-    "template"      : "serverless.yaml",
-    "template-parameters" : "",
-    "s3-bucket"           : "elasticbeanstalk-eu-west-1-429810410321",
-    "stack-name"          : "sharksync-web-api",
-    "stack-wait"          : false
+  "profile": "default",
+  "region": "eu-west-1",
+  "configuration": "Release",
+  "framework": "netcoreapp2.0",
+  "template": "serverless.yaml",
+  "template-parameters": "",
+  "s3-bucket": "codepipeline-eu-west-1-68136494854",
+  "stack-name": "sharksync-web-api",
+  "stack-wait": true
 }

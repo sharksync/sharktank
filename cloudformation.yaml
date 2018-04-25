@@ -71,3 +71,46 @@ Resources:
               LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:1
         PriceClass: PriceClass_All
         HttpVersion: http2
+  AccountTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Account
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  ApplicationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Application
+      AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  DeviceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Device
+      AttributeDefinitions:
+      - AttributeName: ApplicationId
+        AttributeType: S
+      - AttributeName: Id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: ApplicationId
+        KeyType: HASH
+      - AttributeName: Id
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1

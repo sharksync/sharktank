@@ -8,4 +8,5 @@ phases:
       - dotnet restore
       - dotnet build --configuration release
       - dotnet publish --configuration release
+      - dotnet lambda deploy-serverless
       - aws s3 cp SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot s3://io.sharksync.web/ --recursive
