@@ -8,10 +8,11 @@ interface UnauthorizedResponse {
     ChallengeUrl: string;
 }
 
+declare var WEB_API_URL: string;
+
 export class ApiHandlers {
 
-    //static Url = "https://z923hkq2sg.execute-api.eu-west-1.amazonaws.com/Prod/";
-    static Url = "http://localhost:57829/";
+    static Url = WEB_API_URL;
 
     static handleErrors(response: Response) {
         if (!response.ok) {

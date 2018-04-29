@@ -10,7 +10,7 @@ export class Login extends React.Component<RouteComponentProps<{}>, LoginState> 
 
     constructor() {
         super();
-
+        
         this.handleClick = this.handleClick.bind(this);
     }
 
