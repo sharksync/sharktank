@@ -15,12 +15,21 @@ Resources:
             - lambda.amazonaws.com
           Action:
           - sts:AssumeRole
-        - Effect: Allow
-          Resource: ["*"]
-          Action: ["secretsmanager:*", "dynamodb:*"]
       RoleName: 'web-api-lambda-role'
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+  WebApiLambdaRoleInlinePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "web-api-policy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: Allow
+            Resource: ["*"]
+            Action: ["secretsmanager:*", "dynamodb:*"]
+      Roles: 
+        - Ref: "WebApiLambdaRole"
   WebApiServerless:
     Type: AWS::Serverless::Function
     Properties:
