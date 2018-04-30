@@ -3,7 +3,25 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: SharkSync.Web.Api Stack
 Resources:
-  SharkSyncWebApiServerlessProxy:
+  WebApiLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+        - Effect: Allow
+          Resource: ["*"]
+          Action: ["secretsmanager:*", "dynamodb:*"]
+      RoleName: 'web-api-lambda-role'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+  WebApiServerless:
     Type: AWS::Serverless::Function
     Properties:
       Handler: SharkSync.Web.Api::SharkSync.Web.Api.LambdaEntryPoint::FunctionHandlerAsync
@@ -12,8 +30,7 @@ Resources:
       MemorySize: 256
       Timeout: 30
       Role: 
-      Policies:
-      - AWSLambdaFullAccess
+	     Ref: WebApiLambdaRole
       Events:
         ApiProxy:
           Type: Api
