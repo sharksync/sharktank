@@ -30,7 +30,7 @@ Resources:
       MemorySize: 256
       Timeout: 30
       Role: 
-	     Ref: WebApiLambdaRole
+         Ref: WebApiLambdaRole
       Events:
         ApiProxy:
           Type: Api
