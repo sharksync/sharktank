@@ -59,6 +59,9 @@ Resources:
           - GET
           - HEAD
           TargetOriginId: s3
+          MinTTL: 3153600000
+          DefaultTTL: 3153600000
+          MaxTTL: 3153600000
           ForwardedValues:
             QueryString: 'false'
             Cookies:
