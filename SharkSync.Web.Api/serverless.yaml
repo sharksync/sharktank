@@ -38,8 +38,7 @@ Resources:
       CodeUri: ''
       MemorySize: 256
       Timeout: 30
-      Role: 
-         Ref: WebApiLambdaRole
+      Role: !GetAtt WebApiLambdaRole.arn
       Events:
         ApiProxy:
           Type: Api
