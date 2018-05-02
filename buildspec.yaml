@@ -8,7 +8,9 @@ phases:
       - dotnet restore
       - dotnet build --configuration release
       - dotnet publish --configuration release
-      - aws s3 cp SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot s3://io.sharksync.web/ --recursive
       - cd SharkSync.Web.Api
-      - dotnet lambda deploy-serverless
+      - dotnet lambda package --configuration release
+      - aws s3 cp SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip s3://io.sharksync.builds/SharkSync.Web.Api.zip
+      - aws s3 cp SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot s3://io.sharksync.web/ --recursive
+      - aws cloudformation deploy --template-file cloudformation.yaml --stack-name sharksync-web --capabilities CAPABILITY_NAMED_IAM
       - aws cloudfront create-invalidation --distribution-id E2GJ1WJW08B0G1 --paths /index.html

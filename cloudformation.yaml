@@ -1,12 +1,14 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: SharkSync.Web Stack
+Description: SharkSync Stack
 Resources:
+
   S3BucketWeb:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: io.sharksync.web
+
   S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -26,6 +28,7 @@ Resources:
           Principal:
             AWS:
               - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E2L91VF2FR5I1N'
+
   LambdaEdgeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -42,6 +45,7 @@ Resources:
       RoleName: 'lambda-edge-role'
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
   CloudFrontWebApp:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -74,6 +78,7 @@ Resources:
               LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
         PriceClass: PriceClass_All
         HttpVersion: http2
+
   AccountTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -87,6 +92,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+
   ApplicationTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -100,6 +106,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+
   DeviceTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -117,3 +124,87 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+
+  WebApiLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      RoleName: 'web-api-lambda-role'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  WebApiLambdaRoleInlinePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "web-api-policy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: Allow
+            Resource: ["*"]
+            Action: ["secretsmanager:*", "dynamodb:*"]
+      Roles: 
+        - Ref: "WebApiLambdaRole"
+
+  WebApiLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: SharkSync.Web.Api::SharkSync.Web.Api.LambdaEntryPoint::FunctionHandlerAsync
+      Code:
+        S3Bucket: io.sharksync.builds
+        S3Key: SharkSync.Web.Api.zip
+      Role:
+        Fn::GetAtt:
+          - WebApiLambdaRole
+          - Arn
+      Runtime: dotnetcore2.0
+      MemorySize: 256
+      Timeout: 300
+
+  WebApiGatewayApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: SharkSync.WebApi
+
+  WebApiGatewayResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId: !GetAtt WebApiGatewayApi.RootResourceId
+      RestApiId: !Ref WebApiGatewayApi
+      PathPart: '{proxy+}'
+
+  WebApiGatewayProxyMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !Ref WebApiGatewayResource
+      RestApiId: !Ref WebApiGatewayApi
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: ANY
+        Type: AWS_PROXY
+        Uri: !Sub
+        - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Arn}/invocations
+        - Arn:
+            Fn::GetAtt:
+            - WebApiLambda
+            - Arn
+        PassthroughBehavior: WHEN_NO_MATCH
+        IntegrationResponses:
+          - StatusCode: 200
+
+  WebApiGatewayDeployment:
+    DependsOn:
+      - WebApiGatewayProxyMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref WebApiGatewayApi
+      StageName: Prod
