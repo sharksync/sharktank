@@ -11,7 +11,7 @@ phases:
       - cd SharkSync.Web.Api
       - dotnet lambda package --configuration release
       - cd ../
-      - ./hashfilenames.sh
+      - /bin/bash -x hashfilenames.sh
       - aws s3 cp $LAMBDA_FILE s3://io.sharksync.builds/$LAMBDA_FILE
       - cd SharkSync.Web
       - aws s3 cp bin/Release/netcoreapp2.0/publish/wwwroot s3://io.sharksync.web/ --recursive
