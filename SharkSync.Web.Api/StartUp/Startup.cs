@@ -125,8 +125,6 @@ namespace SharkSync.Web.Api
                 options.TokenEndpoint = "https://github.com/login/oauth/access_token";
                 options.UserInformationEndpoint = "https://api.github.com/user";
 
-                options.SaveTokens = true;
-
                 options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
 
                 options.Events = new OAuthEvents
