@@ -1,6 +1,11 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: SharkSync Stack
+
+Parameters: 
+  LambdaZip: 
+    Type: String
+
 Resources:
 
   S3BucketWeb:
@@ -160,7 +165,8 @@ Resources:
       Handler: SharkSync.Web.Api::SharkSync.Web.Api.LambdaEntryPoint::FunctionHandlerAsync
       Code:
         S3Bucket: io.sharksync.builds
-        S3Key: SharkSync.Web.Api.zip
+        S3Key: 
+		  Ref: LambdaZip
       Role:
         Fn::GetAtt:
           - WebApiLambdaRole

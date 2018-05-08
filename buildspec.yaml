@@ -13,7 +13,8 @@ phases:
       - cd ../
       - npm install
       - npm run-script grunt postBuild
-      - aws s3 cp SharkSync.Web.Api/bin/release/netcoreapp2.0 s3://io.sharksync.builds/
+      - LAMBDAZIP=$(ls SharkSync.Web.Api/bin/release/netcoreapp2.0 | grep ".zip$" | head -1)
+      - aws s3 cp SharkSync.Web.Api/bin/release/netcoreapp2.0/$LAMBDAZIP s3://io.sharksync.builds/$LAMBDAZIP
       - aws s3 cp SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot s3://io.sharksync.web/ --recursive
-      - aws cloudformation deploy --template-file cloudformation.yaml --stack-name sharksync-web --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset
+      - aws cloudformation deploy --template-file cloudformation.yaml --stack-name sharksync-web --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset --parameter-overrides LambdaZip=$LAMBDAZIP
       - aws cloudfront create-invalidation --distribution-id E2GJ1WJW08B0G1 --paths /index.html
