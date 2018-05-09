@@ -166,7 +166,7 @@ Resources:
       Code:
         S3Bucket: io.sharksync.builds
         S3Key: 
-		  Ref: LambdaZip
+          Ref: LambdaZip
       Role:
         Fn::GetAtt:
           - WebApiLambdaRole
