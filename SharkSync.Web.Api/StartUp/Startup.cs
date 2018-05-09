@@ -29,6 +29,7 @@ using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
 using SharkSync.DynamoDB.Repositories;
 using SharkSync.Interfaces.Repositories;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 
 namespace SharkSync.Web.Api
 {
@@ -69,6 +70,8 @@ namespace SharkSync.Web.Api
                 options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
             });
 
+            AddDataProtectionOptions(services);
+
             AddAuthenticationOptions(services);
 
             services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
@@ -90,6 +93,18 @@ namespace SharkSync.Web.Api
             public string GoogleClientSecret { get; set; }
             public string MicrosoftApplicationId { get; set; }
             public string MicrosoftPassword { get; set; }
+        }
+
+        private void AddDataProtectionOptions(IServiceCollection services)
+        {
+            var awsOptions = Configuration.GetAWSOptions();
+            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
+
+            services.AddDataProtection();
+            services.Configure<KeyManagementOptions>(o =>
+            {
+                o.XmlRepository = new SecretsManagerXmlRepository(secretManager, "SharkSync-DataProtection");
+            });
         }
 
         private void AddAuthenticationOptions(IServiceCollection services)
