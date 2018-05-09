@@ -10,14 +10,14 @@
                     assets: ['dist/*.js', 'dist/*.css'],
                     baseDir: 'SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot/'
                 },
-                src: ['wwwroot/index.html']
+                src: ['SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot/index.html']
             },
             lambdaCacheBust: {
                 options: {
                     deleteOriginals: true,
-                    assets: ['*.zip'],
-                    baseDir: 'SharkSync.Web.Api/bin/release/netcoreapp2.0/'
-                }
+                    assets: ['SharkSync.Web.Api/bin/release/netcoreapp2.0/*.zip'],
+                },
+                src: ['dummyfile']
             }
         }
 
