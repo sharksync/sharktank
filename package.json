@@ -5,7 +5,7 @@
   "devDependencies": {
     "grunt": "1.0.2",
     "grunt-cache-bust": "1.6.0",
-    "grunt-cli": "1.2.0",
+    "grunt-cli": "1.2.0"
   },
   "scripts": {
     "grunt": "grunt"
