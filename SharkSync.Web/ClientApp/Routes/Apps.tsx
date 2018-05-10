@@ -42,8 +42,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 'Content-Type': 'application/json',
                 'Cache': 'no-cache'
             },
-            credentials: 'include',
-            mode: 'cors'
+            credentials: 'include'
         })
             .then(response => ApiHandlers.handleErrors(response))
             .then(response => response.json() as Promise<GetListResponse>)
@@ -136,7 +135,6 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                         'Cache': 'no-cache'
                     },
                     credentials: 'include',
-                    mode: 'cors',
                     body: formData
                 })
                 .then(ApiHandlers.handleErrors)
@@ -168,7 +166,6 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                     'Cache': 'no-cache'
                 },
                 credentials: 'include',
-                mode: 'cors',
                 body: formData
             })
             .then(ApiHandlers.handleErrors)

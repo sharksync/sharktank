@@ -52,8 +52,7 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
                         'Content-Type': 'application/json',
                         'Cache': 'no-cache'
                     },
-                    credentials: 'include',
-                    mode: 'cors'
+                    credentials: 'include'
                 })
                     .then(response => response.json() as Promise<AuthDetailsResponse>)
                     .then(data => {

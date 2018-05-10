@@ -129,6 +129,8 @@ namespace SharkSync.Web.Api
             .AddCookie(options =>
             {
                 options.Cookie.SecurePolicy = Environment.IsProduction() ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.Path = null;
             })
             .AddOAuth("GitHub", options =>
             {
