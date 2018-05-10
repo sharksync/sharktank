@@ -1,6 +1,6 @@
 import swal from 'sweetalert2';
 
-class HttpError extends Error {
+interface HttpError extends Error {
     response: Response;
 }
 

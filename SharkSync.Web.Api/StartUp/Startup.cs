@@ -62,6 +62,7 @@ namespace SharkSync.Web.Api
                     builder => builder
                         .WithOrigins(appSettings.ClientAppRootUrl)
                         .AllowCredentials()
+                        .AllowAnyHeader()
                         .AllowAnyMethod());
             });
 

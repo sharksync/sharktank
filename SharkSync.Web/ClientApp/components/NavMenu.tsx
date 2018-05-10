@@ -46,7 +46,14 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
             if (!onSignInOrSignOutPage) {
 
                 fetch(ApiHandlers.Url + 'Api/Auth/Details', {
-                    credentials: 'include'
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Cache': 'no-cache'
+                    },
+                    credentials: 'include',
+                    mode: 'cors'
                 })
                     .then(response => response.json() as Promise<AuthDetailsResponse>)
                     .then(data => {
