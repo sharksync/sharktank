@@ -21,7 +21,8 @@ module.exports = (env) => {
                 { test: /\.css$/, use: isDevBuild ? ['style-loader', 'css-loader'] : ExtractTextPlugin.extract({ use: 'css-loader?minimize' }) },
                 { test: /\.(png|jpg|jpeg|gif|svg)$/, use: 'url-loader?limit=25000' },
                 { test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: 'url-loader?limit=25000&mimetype=font/woff' },
-                { test: /\.ttf(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: 'url-loader?limit=25000&mimetype=font/ttf' }
+                { test: /\.ttf(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: 'url-loader?limit=25000&mimetype=font/ttf' },
+                { test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: 'file-loader', publicPath: '/dist/' }
             ]
         },
         plugins: [
