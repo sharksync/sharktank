@@ -76,6 +76,9 @@ namespace SharkSync.Web.Api.Controllers
 
             var app = await ApplicationRepository.GetByIdAsync(id);
 
+            if (app == null)
+                return new NotFoundResult();
+
             if (app.AccountId != loggedInAccount.Id)
                 return new ForbidResult();
             
