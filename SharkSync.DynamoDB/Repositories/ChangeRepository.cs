@@ -30,14 +30,13 @@ namespace SharkSync.DynamoDB.Repositories
             DynamoDBContext = new DynamoDBContext(dynamoDBClient);
         }
 
-        public IChange CreateChange(Guid recordId, string group, string path, Guid deviceId, DateTime modifiedDateTime, string value)
+        public IChange CreateChange(Guid recordId, string group, string path, DateTime modifiedDateTime, string value)
         {
             return new Change
             {
                 RecordId = recordId,
                 Group = group,
                 Path = path,
-                DeviceId = deviceId,
                 Modified = modifiedDateTime,
                 Value = value,
                 Tidemark = HiResDateTime.UtcNowTicks

@@ -77,7 +77,6 @@ namespace SharkSync.Web.Api
 
             services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
             services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
-            services.AddTransient(typeof(IDeviceRepository), typeof(DeviceRepository));
             services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
 
             services.AddScoped(typeof(AuthService));

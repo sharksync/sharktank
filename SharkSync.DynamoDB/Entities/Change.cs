@@ -19,9 +19,6 @@ namespace SharkSync.Repositories.Entities
         public string Path { get; set; }
 
         [DynamoDBProperty]
-        public Guid DeviceId { get; set; }
-
-        [DynamoDBProperty]
         public DateTime Modified { get; set; }
 
         [DynamoDBProperty]

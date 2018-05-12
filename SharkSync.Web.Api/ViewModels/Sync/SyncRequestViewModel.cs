@@ -14,9 +14,6 @@ namespace SharkSync.Web.Api.ViewModels
         [JsonProperty("app_api_access_key")]
         public Guid AppApiAccessKey { get; set; }
 
-        [JsonProperty("device_id")]
-        public Guid DeviceId { get; set; }
-
         [JsonProperty("groups")]
         public List<GroupViewModel> Groups { get; set; }
 

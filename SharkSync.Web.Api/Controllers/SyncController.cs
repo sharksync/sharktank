@@ -20,17 +20,14 @@ namespace SharkSync.Web.Api.Controllers
 
         IApplicationRepository ApplicationRepository { get; set; }
 
-        IDeviceRepository DeviceRepository { get; set; }
-
         IChangeRepository ChangeRepository { get; set; }
 
         DateTime requestStartTimeUTC { get; set; }
 
-        public SyncController(ILogger<SyncController> logger, IApplicationRepository appRepository, IDeviceRepository deviceRepository, IChangeRepository changeRepository)
+        public SyncController(ILogger<SyncController> logger, IApplicationRepository appRepository, IChangeRepository changeRepository)
         {
             Logger = logger;
             ApplicationRepository = appRepository;
-            DeviceRepository = deviceRepository;
             ChangeRepository = changeRepository;
         }
 
@@ -54,18 +51,11 @@ namespace SharkSync.Web.Api.Controllers
                     return ModelState.GetJsonResultWithValidationErrors(response);
 
                 sw.Restart();
-                var device = await ValidateDevice(request);
-                Logger.LogInformation($"ValidateDevice in {sw.ElapsedMilliseconds}ms");
-
-                if (!ModelState.IsValid)
-                    return ModelState.GetJsonResultWithValidationErrors(response);
-
-                sw.Restart();
-                await ProcessChanges(app, device, request);
+                await ProcessChanges(app, request);
                 Logger.LogInformation($"ProcessChanges in {sw.ElapsedMilliseconds}ms");
 
                 sw.Restart();
-                response = await GetChanges(app, device, request);
+                response = await GetChanges(app, request);
                 Logger.LogInformation($"GetChanges in {sw.ElapsedMilliseconds}ms");
 
                 sw.Stop();
@@ -98,17 +88,7 @@ namespace SharkSync.Web.Api.Controllers
             return null;
         }
 
-        private async Task<IDevice> ValidateDevice(SyncRequestViewModel request)
-        {
-            var device = await DeviceRepository.GetByIdAsync(request.AppId, request.DeviceId);
-
-            if (device == null)
-                ModelState.AddModelError("device_id", "No device found for device_id");
-
-            return device;
-        }
-
-        private async Task ProcessChanges(IApplication app, IDevice device, SyncRequestViewModel request)
+        private async Task ProcessChanges(IApplication app, SyncRequestViewModel request)
         {
             if (request.Changes != null && request.Changes.Any())
             {
@@ -128,7 +108,7 @@ namespace SharkSync.Web.Api.Controllers
                             string path = change.Path.Substring(change.Path.IndexOf("/") + 1);
                             DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
 
-                            var dbChange = ChangeRepository.CreateChange(recordId, change.Group, path, device.Id, modifiedUTC, change.Value);
+                            var dbChange = ChangeRepository.CreateChange(recordId, change.Group, path, modifiedUTC, change.Value);
                             dbChanges.Add(dbChange);
                         }
                         else
@@ -153,7 +133,7 @@ namespace SharkSync.Web.Api.Controllers
             }
         }
 
-        private async Task<SyncResponseViewModel> GetChanges(IApplication app, IDevice device, SyncRequestViewModel request)
+        private async Task<SyncResponseViewModel> GetChanges(IApplication app, SyncRequestViewModel request)
         {
             var response = new SyncResponseViewModel() { Groups = new List<SyncResponseViewModel.GroupViewModel>() };
 
