@@ -39,7 +39,6 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json',
                 'Cache': 'no-cache'
             },
             credentials: 'include'
@@ -131,7 +130,6 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json',
                         'Cache': 'no-cache'
                     },
                     credentials: 'include',
@@ -162,7 +160,6 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json',
                     'Cache': 'no-cache'
                 },
                 credentials: 'include',
