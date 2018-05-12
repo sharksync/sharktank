@@ -44,6 +44,9 @@ namespace SharkSync.DynamoDB.Repositories
 
         public async Task<IApplication> AddAsync(string name, Guid accountId)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("You must provide a value for name", nameof(name));
+
             Application newApp = new Application() { Id = Guid.NewGuid(), Name = name, AccessKey = Guid.NewGuid(), AccountId = accountId };
             await DynamoDBContext.SaveAsync(newApp);
             return newApp;
