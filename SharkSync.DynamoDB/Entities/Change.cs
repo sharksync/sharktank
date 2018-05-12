@@ -23,13 +23,5 @@ namespace SharkSync.Repositories.Entities
 
         [DynamoDBProperty]
         public string Value { get; set; }
-
-        // Convert from the string tidemark to the long internal value
-        [DynamoDBIgnore]
-        string IChange.Tidemark
-        {
-            get { return Tidemark.ToString(); }
-            set { Tidemark = long.Parse(value); }
-        }
     }
 }

@@ -53,12 +53,12 @@ namespace SharkSync.DynamoDB.Repositories
             await changeBatch.ExecuteAsync();
         }
 
-        public async Task<List<IChange>> ListChangesAsync(Guid appId, string group, string tidemark)
+        public async Task<List<IChange>> ListChangesAsync(Guid appId, string group, long? tidemark)
         {
             var tableConfig = GetChangeTableConfig(appId);
             AsyncSearch<Change> query;
 
-            if (string.IsNullOrWhiteSpace(tidemark) || !long.TryParse(tidemark, out long tidemarkLong) || tidemarkLong <= 0)
+            if (tidemark == null || tidemark <= 0)
             {
                 Logger.LogInformation($"Getting all changes for group: {group}");
 
@@ -66,9 +66,9 @@ namespace SharkSync.DynamoDB.Repositories
             }
             else
             {
-                Logger.LogInformation($"Getting changes for group: {group} after tidemark: {tidemarkLong}");
+                Logger.LogInformation($"Getting changes for group: {group} after tidemark: {tidemark}");
 
-                query = DynamoDBContext.QueryAsync<Change>(group, QueryOperator.GreaterThan, new[] { (object)tidemarkLong }, tableConfig);
+                query = DynamoDBContext.QueryAsync<Change>(group, QueryOperator.GreaterThan, new[] { (object)tidemark }, tableConfig);
             }
 
             var changes = await query.GetNextSetAsync();
@@ -104,7 +104,7 @@ namespace SharkSync.DynamoDB.Repositories
                     new AttributeDefinition()
                     {
                         AttributeName = nameof(Change.Tidemark),
-                        AttributeType = ScalarAttributeType.S,
+                        AttributeType = ScalarAttributeType.N,
                     }
                 }, 
                 new ProvisionedThroughput() { ReadCapacityUnits = 1, WriteCapacityUnits = 1 });

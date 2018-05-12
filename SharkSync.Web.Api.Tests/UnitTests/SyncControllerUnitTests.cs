@@ -12,10 +12,10 @@ using SharkSync.Interfaces.Repositories;
 using SharkSync.Interfaces.Entities;
 using Microsoft.AspNetCore.Mvc;
 
-namespace SharkSync.Web.Api.Tests.Controllers
+namespace SharkSync.Web.Api.Tests.UnitTests
 {
     [TestFixture]
-    public class SyncControllerTests
+    public class SyncControllerUnitTests
     {
         Mock<IApplication> app;
         Mock<IChange> change;
@@ -65,7 +65,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
                     }
                 });
 
-            changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(changes);
+            changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>())).ReturnsAsync(changes);
 
             logger = new Mock<ILogger<SyncController>>();
         }
@@ -85,7 +85,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -191,7 +191,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.True(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -221,7 +221,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -276,7 +276,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.AreEqual(value, returnChanges[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -353,11 +353,11 @@ namespace SharkSync.Web.Api.Tests.Controllers
             string listReturnGroup = null;
             string listReturnTidemark = null;
 
-            string tidemark = null;
+            long? tidemark = null;
             string group = "group";
 
             changeRepository
-                .Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()))
                 .ReturnsAsync(changes)
                 .Callback<Guid, string, string>((a, g, t) =>
                 {
@@ -392,7 +392,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.AreEqual(tidemark, listReturnTidemark);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Once);
         }
 
         [Test]
@@ -435,13 +435,13 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Once);
         }
 
         [Test]
         public async Task SyncController_Post_Success_Single_Group_With_Two_Changes()
         {
-            string tidemark = "tidemark";
+            long tidemark = new DateTime().Ticks;
             string group = "group";
 
             var changeObject = change.Object;
@@ -491,13 +491,13 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.AreEqual(changeObject2.Value, syncResponse.Groups[0].Changes[1].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Once);
         }
 
         [Test]
         public async Task SyncController_Post_Success_Two_Groups_With_Two_Changes()
         {
-            string tidemark = "tidemark";
+            long tidemark = new DateTime().Ticks;
             string group = "group";
             string group2 = "group2";
 
@@ -509,8 +509,8 @@ namespace SharkSync.Web.Api.Tests.Controllers
             change2.Setup(c => c.Group).Returns(group2);
             var changeObject2 = change2.Object;
 
-            changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(delegate (Guid appId, string g, string t)
+            changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()))
+                .ReturnsAsync(delegate (Guid appId, string g, long? t)
                 {
                     if (g == group)
                         return new List<IChange>() { changeObject };
@@ -565,7 +565,7 @@ namespace SharkSync.Web.Api.Tests.Controllers
             Assert.AreEqual(changeObject2.Value, syncResponse.Groups[1].Changes[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Exactly(2));
         }
     }
 }

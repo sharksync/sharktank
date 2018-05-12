@@ -12,7 +12,7 @@ namespace SharkSync.Web.Api.ViewModels
 
         public class GroupViewModel
         {
-            public string Tidemark { get; set; }
+            public long Tidemark { get; set; }
             public string Group { get; set; }
             public List<ChangeViewModel> Changes { get; set; }
         }
