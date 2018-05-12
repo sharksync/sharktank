@@ -16,13 +16,20 @@ using System.Text;
 using System.Net;
 using Newtonsoft.Json;
 using SharkSync.Repositories.Entities;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2;
+using Amazon.Runtime;
+using Amazon.Runtime.CredentialManagement;
+using Amazon;
+using Amazon.DynamoDBv2.Model;
 
 namespace SharkSync.Web.Api.Tests.IntegrationTests
 {
     [TestFixture]
     public class SyncControllerIntegrationTests
     {
-        private const string SyncRequestUrl = "https://5j4kepan7c.execute-api.eu-west-1.amazonaws.com/Prod/Api/Sync";
+        //private const string SyncRequestUrl = "https://5j4kepan7c.execute-api.eu-west-1.amazonaws.com/Prod/Api/Sync";
+        private const string SyncRequestUrl = "http://localhost:57829/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
         private static readonly IApplication testApp = new Application
@@ -32,6 +39,22 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
             AccessKey = new Guid("3d65a27c-9d1d-48a3-a888-89cc0f7851d0"),
             Name = "Integration Test App"
         };
+
+        private AmazonDynamoDBClient dynamoDBClient = null;
+        private DynamoDBContext dynamoDBContext = null;
+        private DynamoDBOperationConfig appConfig = null;
+        [SetUp]
+        public void SetUp()
+        {
+            var credentialProfileStoreChain = new CredentialProfileStoreChain();
+            AWSCredentials awsCredentials;
+            if (!credentialProfileStoreChain.TryGetAWSCredentials("silvergames", out awsCredentials))
+                throw new AmazonClientException("Unable to find a profile named silvergames");
+
+            dynamoDBClient = new AmazonDynamoDBClient(awsCredentials, RegionEndpoint.EUWest1);
+            dynamoDBContext = new DynamoDBContext(dynamoDBClient);
+            appConfig = new DynamoDBOperationConfig { OverrideTableName = $"{testApp.Id}-Change" };
+        }
 
         [Test]
         public async Task SyncController_Post_Fail_Missing_Request()
@@ -147,7 +170,12 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
             Guid recordId = Guid.NewGuid();
             int modifiedSecondsAgo = 10;
             string value = "Neil";
-            List<IChange> returnChanges = null;
+
+            // Delete any existing records
+            var query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
+            var storedChanges = await query.GetNextSetAsync();
+            foreach (var change in storedChanges)
+                await dynamoDBContext.DeleteAsync(change, appConfig);
 
             SyncRequestViewModel request = new SyncRequestViewModel()
             {
@@ -165,8 +193,9 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
                 }
             };
 
-            var jsonPayload = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-            var response = await HttpClient.PostAsync(SyncRequestUrl, jsonPayload);
+            var jsonPayload = JsonConvert.SerializeObject(request);
+            var requestContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            var response = await HttpClient.PostAsync(SyncRequestUrl, requestContent);
 
             var responsePayload = await response.Content?.ReadAsStringAsync();
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
@@ -180,12 +209,15 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
             Assert.NotNull(syncResponse.Groups);
             Assert.AreEqual(0, syncResponse.Groups.Count);
 
-            Assert.NotNull(returnChanges);
-            Assert.AreEqual(1, returnChanges.Count);
-            Assert.AreEqual(group, returnChanges[0].Group);
-            Assert.AreEqual(propertyName, returnChanges[0].Path);
-            Assert.AreEqual(recordId, returnChanges[0].RecordId);
-            Assert.AreEqual(value, returnChanges[0].Value);
+            query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
+            storedChanges = await query.GetNextSetAsync();
+
+            Assert.NotNull(storedChanges);
+            Assert.AreEqual(1, storedChanges.Count);
+            Assert.AreEqual(group, storedChanges[0].Group);
+            Assert.AreEqual(propertyName, storedChanges[0].Path);
+            Assert.AreEqual(recordId, storedChanges[0].RecordId);
+            Assert.AreEqual(value, storedChanges[0].Value);
         }
 
         //[Test]
