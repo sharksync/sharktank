@@ -32,17 +32,10 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
         private const string SyncRequestUrl = "http://localhost:57829/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
-        private static readonly IApplication testApp = new Application
-        {
-            Id = new Guid("afd8db1e-73b8-4d5f-9cb1-6b49d205555a"),
-            AccountId = new Guid("250c6f28-4611-4c28-902c-8464fabc510b"),
-            AccessKey = new Guid("3d65a27c-9d1d-48a3-a888-89cc0f7851d0"),
-            Name = "Integration Test App"
-        };
 
         private AmazonDynamoDBClient dynamoDBClient = null;
         private DynamoDBContext dynamoDBContext = null;
-        private DynamoDBOperationConfig appConfig = null;
+
         [SetUp]
         public void SetUp()
         {
@@ -53,7 +46,6 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
 
             dynamoDBClient = new AmazonDynamoDBClient(awsCredentials, RegionEndpoint.EUWest1);
             dynamoDBContext = new DynamoDBContext(dynamoDBClient);
-            appConfig = new DynamoDBOperationConfig { OverrideTableName = $"{testApp.Id}-Change" };
         }
 
         [Test]
@@ -122,7 +114,7 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
         {
             SyncRequestViewModel request = new SyncRequestViewModel()
             {
-                AppId = testApp.Id
+                AppId = new Guid("afd8db1e-73b8-4d5f-9cb1-6b49d205555a")
             };
 
             var jsonPayload = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
@@ -143,6 +135,14 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
         [Test]
         public async Task SyncController_Post_Success_Basic_NoChanges_NoGroups()
         {
+            var testApp = new Application
+            {
+                Id = new Guid("afd8db1e-73b8-4d5f-9cb1-6b49d205555a"),
+                AccountId = new Guid("250c6f28-4611-4c28-902c-8464fabc510b"),
+                AccessKey = new Guid("3d65a27c-9d1d-48a3-a888-89cc0f7851d0"),
+                Name = "Integration Test App"
+            };
+
             SyncRequestViewModel request = new SyncRequestViewModel()
             {
                 AppId = testApp.Id,
@@ -165,17 +165,21 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
         [Test]
         public async Task SyncController_Post_Success_Single_Change()
         {
+            var testApp = new Application
+            {
+                Id = new Guid("59eadf1b-c4bf-4ded-8a2b-b80305b960fe"),
+                AccountId = new Guid("250c6f28-4611-4c28-902c-8464fabc510b"),
+                AccessKey = new Guid("e7b40cf0-2781-4dc7-9545-91fd812fc506"),
+                Name = "Integration Test App 2"
+            };
+
             string propertyName = "name";
             string group = "group";
             Guid recordId = Guid.NewGuid();
             int modifiedSecondsAgo = 10;
             string value = "Neil";
 
-            // Delete any existing records
-            var query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
-            var storedChanges = await query.GetNextSetAsync();
-            foreach (var change in storedChanges)
-                await dynamoDBContext.DeleteAsync(change, appConfig);
+            await DeleteChangeRows(testApp.Id, group);
 
             SyncRequestViewModel request = new SyncRequestViewModel()
             {
@@ -189,6 +193,14 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
                         Path = $"{recordId}/{propertyName}",
                         SecondsAgo = modifiedSecondsAgo,
                         Value = value
+                    }
+                },
+                Groups = new List<SyncRequestViewModel.GroupViewModel>
+                {
+                    new SyncRequestViewModel.GroupViewModel
+                    {
+                        Group = group,
+                        Tidemark = null
                     }
                 }
             };
@@ -207,306 +219,143 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
             Assert.NotNull(syncResponse.Groups);
-            Assert.AreEqual(0, syncResponse.Groups.Count);
+            Assert.AreEqual(1, syncResponse.Groups.Count);
 
-            query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
-            storedChanges = await query.GetNextSetAsync();
+            Assert.NotNull(syncResponse.Groups[0].Changes);
+            Assert.AreEqual(1, syncResponse.Groups[0].Changes.Count);
 
-            Assert.NotNull(storedChanges);
-            Assert.AreEqual(1, storedChanges.Count);
-            Assert.AreEqual(group, storedChanges[0].Group);
-            Assert.AreEqual(propertyName, storedChanges[0].Path);
-            Assert.AreEqual(recordId, storedChanges[0].RecordId);
-            Assert.AreEqual(value, storedChanges[0].Value);
+            var dynamoRows = await GetChangeRows(testApp.Id, group);
+
+            Assert.NotNull(dynamoRows);
+            Assert.AreEqual(1, dynamoRows.Count);
+            Assert.AreEqual(group, dynamoRows[0].Group);
+            Assert.AreEqual(propertyName, dynamoRows[0].Path);
+            Assert.AreEqual(recordId, dynamoRows[0].RecordId);
+            Assert.AreEqual(value, dynamoRows[0].Value);
+
+            Assert.AreEqual(dynamoRows[0].Modified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
         }
 
-        //[Test]
-        //public async Task SyncController_Post_Success_Two_Changes()
-        //{
-        //    string propertyName = "name";
-        //    string propertyName2 = "age";
-        //    string group = "group";
-        //    Guid recordId = Guid.NewGuid();
-        //    int modifiedSecondsAgo = 10;
-        //    string value = "Neil";
-        //    string value2 = "10";
-        //    List<IChange> returnChanges = null;
+        [Test]
+        public async Task SyncController_Post_Success_Single_Group_With_Two_Changes()
+        {
+            var testApp = new Application
+            {
+                Id = new Guid("b858ceb1-00d0-4427-b45d-e9890b77da36"),
+                AccountId = new Guid("250c6f28-4611-4c28-902c-8464fabc510b"),
+                AccessKey = new Guid("03172495-6158-44ae-b5b4-6ea5163f02d8"),
+                Name = "Integration Test App 3"
+            };
 
-        //    changeRepository
-        //        .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<IChange>>()))
-        //        .Returns(() => Task.FromResult((string)null))
-        //        .Callback<Guid, IEnumerable<IChange>>((a, l) =>
-        //        {
-        //            returnChanges = l.ToList();
-        //        });
+            string propertyName = "name";
+            string propertyName2 = "age";
+            string group = "group";
+            Guid recordId = Guid.NewGuid();
+            int modifiedSecondsAgo = 10;
+            string value = "Neil";
+            string value2 = "10";
 
-        //    var request = new SyncRequestViewModel()
-        //    {
-        //        AppId = app.Object.Id,
-        //        AppApiAccessKey = app.Object.AccessKey,
-        //        Changes = new List<SyncRequestViewModel.ChangeViewModel>
-        //        {
-        //            new SyncRequestViewModel.ChangeViewModel
-        //            {
-        //                Group = group,
-        //                Path = $"{recordId}/{propertyName}",
-        //                SecondsAgo = modifiedSecondsAgo,
-        //                Value = value
-        //            },
-        //            new SyncRequestViewModel.ChangeViewModel
-        //            {
-        //                Group = group,
-        //                Path = $"{recordId}/{propertyName2}",
-        //                SecondsAgo = modifiedSecondsAgo,
-        //                Value = value2
-        //            }
-        //        }
-        //    };
+            await DeleteChangeRows(testApp.Id, group);
 
-        //    var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
-        //    var response = await controller.Post(request) as JsonResult;
-        //    var syncResponse = response.Value as SyncResponseViewModel;
+            SyncRequestViewModel request = new SyncRequestViewModel()
+            {
+                AppId = testApp.Id,
+                AppApiAccessKey = testApp.AccessKey,
+                Changes = new List<SyncRequestViewModel.ChangeViewModel>
+                {
+                    new SyncRequestViewModel.ChangeViewModel
+                    {
+                        Group = group,
+                        Path = $"{recordId}/{propertyName}",
+                        SecondsAgo = modifiedSecondsAgo,
+                        Value = value
+                    },
+                    new SyncRequestViewModel.ChangeViewModel
+                    {
+                        Group = group,
+                        Path = $"{recordId}/{propertyName2}",
+                        SecondsAgo = modifiedSecondsAgo,
+                        Value = value2
+                    }
+                }, 
+                Groups = new List<SyncRequestViewModel.GroupViewModel>
+                {
+                    new SyncRequestViewModel.GroupViewModel
+                    {
+                        Group = group,
+                        Tidemark = null
+                    }
+                }
+            };
 
-        //    Assert.NotNull(syncResponse);
-        //    Assert.Null(syncResponse.Errors);
-        //    Assert.True(syncResponse.Success);
-        //    Assert.NotNull(syncResponse.Groups);
-        //    Assert.AreEqual(0, syncResponse.Groups.Count);
+            var jsonPayload = JsonConvert.SerializeObject(request);
+            var requestContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            var response = await HttpClient.PostAsync(SyncRequestUrl, requestContent);
 
-        //    Assert.NotNull(returnChanges);
-        //    Assert.AreEqual(2, returnChanges.Count);
-        //    Assert.AreEqual(group, returnChanges[0].Group);
-        //    Assert.AreEqual(propertyName, returnChanges[0].Path);
-        //    Assert.AreEqual(recordId, returnChanges[0].RecordId);
-        //    Assert.AreEqual(value, returnChanges[0].Value);
-        //    Assert.AreEqual(group, returnChanges[1].Group);
-        //    Assert.AreEqual(propertyName2, returnChanges[1].Path);
-        //    Assert.AreEqual(recordId, returnChanges[1].RecordId);
-        //    Assert.AreEqual(value2, returnChanges[1].Value);
+            var responsePayload = await response.Content?.ReadAsStringAsync();
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            Assert.NotNull(responsePayload);
 
-        //    changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
-        //}
+            var syncResponse = JsonConvert.DeserializeObject<SyncResponseViewModel>(responsePayload);
 
-        //[Test]
-        //public async Task SyncController_Post_Success_Null_Tidemark_With_No_Changes()
-        //{
-        //    Guid appId;
-        //    string listReturnGroup = null;
-        //    string listReturnTidemark = null;
+            Assert.NotNull(syncResponse);
+            Assert.Null(syncResponse.Errors);
+            Assert.True(syncResponse.Success);
 
-        //    string tidemark = null;
-        //    string group = "group";
+            var dynamoRows = await GetChangeRows(testApp.Id, group);
 
-        //    changeRepository
-        //        .Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
-        //        .ReturnsAsync(changes)
-        //        .Callback<Guid, string, string>((a, g, t) =>
-        //        {
-        //            appId = a;
-        //            listReturnGroup = g;
-        //            listReturnTidemark = t;
-        //        });
+            Assert.NotNull(dynamoRows);
+            Assert.AreEqual(2, dynamoRows.Count);
+            Assert.AreEqual(group, dynamoRows[0].Group);
+            Assert.AreEqual(propertyName, dynamoRows[0].Path);
+            Assert.AreEqual(recordId, dynamoRows[0].RecordId);
+            Assert.AreEqual(value, dynamoRows[0].Value);
+            Assert.AreEqual(group, dynamoRows[1].Group);
+            Assert.AreEqual(propertyName2, dynamoRows[1].Path);
+            Assert.AreEqual(recordId, dynamoRows[1].RecordId);
+            Assert.AreEqual(value2, dynamoRows[1].Value);
 
-        //    var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
-        //    var response = await controller.Post(new SyncRequestViewModel()
-        //    {
-        //        AppId = app.Object.Id,
-        //        AppApiAccessKey = app.Object.AccessKey,
-        //        Groups = new List<SyncRequestViewModel.GroupViewModel>
-        //        {
-        //            new SyncRequestViewModel.GroupViewModel
-        //            {
-        //                Group = group,
-        //                Tidemark = tidemark
-        //            }
-        //        }
-        //    }) as JsonResult;
+            Assert.NotNull(syncResponse.Groups);
+            Assert.AreEqual(1, syncResponse.Groups.Count);
+            Assert.AreEqual(dynamoRows.Last().Tidemark, syncResponse.Groups[0].Tidemark);
+            Assert.AreEqual(group, syncResponse.Groups[0].Group);
 
-        //    var syncResponse = response.Value as SyncResponseViewModel;
+            Assert.NotNull(syncResponse.Groups[0].Changes);
+            Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
 
-        //    Assert.NotNull(syncResponse);
-        //    Assert.Null(syncResponse.Errors);
-        //    Assert.True(syncResponse.Success);
+            Assert.AreEqual(dynamoRows[0].Modified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
 
-        //    Assert.AreEqual(app.Object.Id, appId);
-        //    Assert.AreEqual(group, listReturnGroup);
-        //    Assert.AreEqual(tidemark, listReturnTidemark);
+            Assert.AreEqual(dynamoRows[1].Modified, syncResponse.Groups[0].Changes[1].Modified);
+            Assert.AreEqual(propertyName2, syncResponse.Groups[0].Changes[1].Path);
+            Assert.AreEqual(value2, syncResponse.Groups[0].Changes[1].Value);
+        }
 
-        //    changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-        //    changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-        //}
+        public async Task<List<Change>> GetChangeRows(Guid appId, string group)
+        {
+            var appConfig = GetConfig(appId);
 
-        //[Test]
-        //public async Task SyncController_Post_Success_Tidemark_With_Single_Change()
-        //{
-        //    var changeObject = change.Object;
-        //    changes.Add(changeObject);
+            var query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
+            var storedChanges = await query.GetNextSetAsync();
+            return storedChanges;
+        }
 
-        //    var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
-        //    var response = await controller.Post(new SyncRequestViewModel()
-        //    {
-        //        AppId = app.Object.Id,
-        //        AppApiAccessKey = app.Object.AccessKey,
-        //        Groups = new List<SyncRequestViewModel.GroupViewModel>
-        //        {
-        //            new SyncRequestViewModel.GroupViewModel
-        //            {
-        //                Group = changeObject.Group,
-        //                Tidemark = changeObject.Tidemark
-        //            }
-        //        }
-        //    }) as JsonResult;
+        public async Task DeleteChangeRows(Guid appId, string group)
+        {
+            var appConfig = GetConfig(appId);
 
-        //    var syncResponse = response.Value as SyncResponseViewModel;
+            var query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
+            var storedChanges = await query.GetNextSetAsync();
+            foreach (var change in storedChanges)
+                await dynamoDBContext.DeleteAsync(change, appConfig);
+        }
 
-        //    Assert.NotNull(syncResponse);
-        //    Assert.Null(syncResponse.Errors);
-        //    Assert.True(syncResponse.Success);
-
-        //    Assert.NotNull(syncResponse.Groups);
-        //    Assert.AreEqual(1, syncResponse.Groups.Count);
-        //    Assert.AreEqual(changeObject.Tidemark, syncResponse.Groups[0].Tidemark);
-        //    Assert.AreEqual(changeObject.Group, syncResponse.Groups[0].Group);
-
-        //    Assert.NotNull(syncResponse.Groups[0].Changes);
-        //    Assert.AreEqual(1, syncResponse.Groups[0].Changes.Count);
-
-        //    Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-        //    Assert.AreEqual(changeObject.Path, syncResponse.Groups[0].Changes[0].Path);
-        //    Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
-
-        //    changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-        //    changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-        //}
-
-        //[Test]
-        //public async Task SyncController_Post_Success_Single_Group_With_Two_Changes()
-        //{
-        //    string tidemark = "tidemark";
-        //    string group = "group";
-
-        //    var changeObject = change.Object;
-        //    change.Setup(c => c.Tidemark).Returns(tidemark);
-        //    changes.Add(changeObject);
-
-        //    var change2 = new Mock<IChange>();
-        //    change2.Setup(c => c.Tidemark).Returns(tidemark);
-        //    var changeObject2 = change2.Object;
-        //    changes.Add(changeObject2);
-
-        //    var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
-        //    var response = await controller.Post(new SyncRequestViewModel()
-        //    {
-        //        AppId = app.Object.Id,
-        //        AppApiAccessKey = app.Object.AccessKey,
-        //        Groups = new List<SyncRequestViewModel.GroupViewModel>
-        //        {
-        //            new SyncRequestViewModel.GroupViewModel
-        //            {
-        //                Group = group,
-        //                Tidemark = tidemark
-        //            }
-        //        }
-        //    }) as JsonResult;
-
-        //    var syncResponse = response.Value as SyncResponseViewModel;
-
-        //    Assert.NotNull(syncResponse);
-        //    Assert.Null(syncResponse.Errors);
-        //    Assert.True(syncResponse.Success);
-
-        //    Assert.NotNull(syncResponse.Groups);
-        //    Assert.AreEqual(1, syncResponse.Groups.Count);
-        //    Assert.AreEqual(tidemark, syncResponse.Groups[0].Tidemark);
-        //    Assert.AreEqual(group, syncResponse.Groups[0].Group);
-
-        //    Assert.NotNull(syncResponse.Groups[0].Changes);
-        //    Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
-
-        //    Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-        //    Assert.AreEqual(changeObject.Path, syncResponse.Groups[0].Changes[0].Path);
-        //    Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
-
-        //    Assert.AreEqual(changeObject2.Modified, syncResponse.Groups[0].Changes[1].Modified);
-        //    Assert.AreEqual(changeObject2.Path, syncResponse.Groups[0].Changes[1].Path);
-        //    Assert.AreEqual(changeObject2.Value, syncResponse.Groups[0].Changes[1].Value);
-
-        //    changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-        //    changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-        //}
-
-        //[Test]
-        //public async Task SyncController_Post_Success_Two_Groups_With_Two_Changes()
-        //{
-        //    string tidemark = "tidemark";
-        //    string group = "group";
-        //    string group2 = "group2";
-
-        //    var changeObject = change.Object;
-        //    change.Setup(c => c.Tidemark).Returns(tidemark);
-
-        //    var change2 = new Mock<IChange>();
-        //    change2.Setup(c => c.Tidemark).Returns(tidemark);
-        //    change2.Setup(c => c.Group).Returns(group2);
-        //    var changeObject2 = change2.Object;
-
-        //    changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
-        //        .ReturnsAsync(delegate (Guid appId, string g, string t)
-        //        {
-        //            if (g == group)
-        //                return new List<IChange>() { changeObject };
-        //            else
-        //                return new List<IChange>() { changeObject2 };
-        //        });
-
-        //    var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
-        //    var response = await controller.Post(new SyncRequestViewModel()
-        //    {
-        //        AppId = app.Object.Id,
-        //        AppApiAccessKey = app.Object.AccessKey,
-        //        Groups = new List<SyncRequestViewModel.GroupViewModel>
-        //        {
-        //            new SyncRequestViewModel.GroupViewModel
-        //            {
-        //                Group = group,
-        //                Tidemark = tidemark
-        //            },
-        //            new SyncRequestViewModel.GroupViewModel
-        //            {
-        //                Group = group2,
-        //                Tidemark = null
-        //            }
-        //        }
-        //    }) as JsonResult;
-
-        //    var syncResponse = response.Value as SyncResponseViewModel;
-
-        //    Assert.NotNull(syncResponse);
-        //    Assert.Null(syncResponse.Errors);
-        //    Assert.True(syncResponse.Success);
-
-        //    Assert.NotNull(syncResponse.Groups);
-        //    Assert.AreEqual(2, syncResponse.Groups.Count);
-        //    Assert.AreEqual(tidemark, syncResponse.Groups[0].Tidemark);
-        //    Assert.AreEqual(group, syncResponse.Groups[0].Group);
-        //    Assert.NotNull(syncResponse.Groups[0].Changes);
-        //    Assert.AreEqual(1, syncResponse.Groups[0].Changes.Count);
-
-        //    Assert.AreEqual(tidemark, syncResponse.Groups[1].Tidemark);
-        //    Assert.AreEqual(group2, syncResponse.Groups[1].Group);
-        //    Assert.NotNull(syncResponse.Groups[1].Changes);
-        //    Assert.AreEqual(1, syncResponse.Groups[1].Changes.Count);
-
-        //    Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-        //    Assert.AreEqual(changeObject.Path, syncResponse.Groups[0].Changes[0].Path);
-        //    Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
-
-        //    Assert.AreEqual(changeObject2.Modified, syncResponse.Groups[1].Changes[0].Modified);
-        //    Assert.AreEqual(changeObject2.Path, syncResponse.Groups[1].Changes[0].Path);
-        //    Assert.AreEqual(changeObject2.Value, syncResponse.Groups[1].Changes[0].Value);
-
-        //    changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-        //    changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
-        //}
+        private DynamoDBOperationConfig GetConfig(Guid appId)
+        {
+            return new DynamoDBOperationConfig { OverrideTableName = $"{appId}-Change" };
+        }
     }
 }
