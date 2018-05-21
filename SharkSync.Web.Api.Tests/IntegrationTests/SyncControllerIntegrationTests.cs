@@ -28,8 +28,8 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
     [TestFixture]
     public class SyncControllerIntegrationTests
     {
-        //private const string SyncRequestUrl = "https://5j4kepan7c.execute-api.eu-west-1.amazonaws.com/Prod/Api/Sync";
-        private const string SyncRequestUrl = "http://localhost:57829/Api/Sync";
+        private const string SyncRequestUrl = "https://5j4kepan7c.execute-api.eu-west-1.amazonaws.com/Prod/Api/Sync";
+        //private const string SyncRequestUrl = "http://localhost:57829/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
