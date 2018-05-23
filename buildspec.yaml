@@ -12,7 +12,7 @@ phases:
       - cd SharkSync.Web.Api
       - dotnet lambda package --configuration release
       - cd ../
-      - ./upload-github-release-asset.sh github_api_token=GITHUB_TOKEN owner=sharksync repo=sharktank tag=v0.1.0 filename=./SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip
+      - bash upload-github-release-asset.sh github_api_token=GITHUB_TOKEN owner=sharksync repo=sharktank tag=v0.1.0 filename=./SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip
       - npm run-script grunt postBuild
       - LAMBDAZIP=$(ls SharkSync.Web.Api/bin/release/netcoreapp2.0 | grep ".zip$" | head -1)
       - aws s3 cp SharkSync.Web.Api/bin/release/netcoreapp2.0/$LAMBDAZIP s3://io.sharksync.builds/$LAMBDAZIP
