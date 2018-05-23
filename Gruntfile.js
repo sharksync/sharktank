@@ -11,13 +11,6 @@
                     baseDir: 'SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot/'
                 },
                 src: ['SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot/index.html']
-            },
-            lambdaCacheBust: {
-                options: {
-                    deleteOriginals: true,
-                    assets: ['SharkSync.Web.Api/bin/release/netcoreapp2.0/*.zip'],
-                },
-                src: ['dummyfile']
             }
         }
 
@@ -27,6 +20,6 @@
     grunt.loadNpmTasks('grunt-cache-bust');
 
     // Register pre and post build tasks
-    grunt.registerTask('postBuild', ['cacheBust:indexCacheBust', 'cacheBust:lambdaCacheBust']);
+    grunt.registerTask('postBuild', ['cacheBust:indexCacheBust']);
 
 };
