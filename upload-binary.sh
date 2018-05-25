@@ -61,4 +61,8 @@ echo "Uploading asset... "
 # Construct url
 GH_ASSET="https://uploads.github.com/repos/$owner/$repo/releases/$id/assets?name=$(basename $filename)"
 
+# Upload the binary to Github
 curl "$GITHUB_OAUTH_BASIC" --data-binary @"$filename" -H "Authorization: token $github_api_token" -H "Content-Type: application/octet-stream" $GH_ASSET
+
+# Upload the binary to S3
+aws s3 cp $filename "s3://io.sharksync.builds/$github_api_token/"

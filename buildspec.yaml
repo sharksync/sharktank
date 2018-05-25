@@ -15,6 +15,6 @@ phases:
       - npm run-script grunt postBuild
       - zip -r SharkSync.Web.Html.zip SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot
       - bash create-github-release.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank
-      - bash upload-github-release-asset.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip
-      - bash upload-github-release-asset.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Html.zip
-      - bash upload-github-release-asset.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./cloudformation.yaml
+      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip
+      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Html.zip
+      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./cloudformation.yaml
