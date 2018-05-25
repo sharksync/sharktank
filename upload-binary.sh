@@ -51,6 +51,9 @@ curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "Error: Invalid repo, token or 
 # Read asset tags.
 response=$(curl -sH "$AUTH" $GH_TAGS)
 
+# Get version of the last release
+version=$(echo "$response" | grep -oP '(?<="tag_name": ")[^"]*')
+
 # Get ID of the asset based on given filename.
 eval $(echo "$response" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
 [ "$id" ] || { echo "Error: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
@@ -65,4 +68,4 @@ GH_ASSET="https://uploads.github.com/repos/$owner/$repo/releases/$id/assets?name
 curl "$GITHUB_OAUTH_BASIC" --data-binary @"$filename" -H "Authorization: token $github_api_token" -H "Content-Type: application/octet-stream" $GH_ASSET
 
 # Upload the binary to S3
-aws s3 cp $filename "s3://io.sharksync.builds/$github_api_token/"
+aws s3 cp $filename "s3://io.sharksync.builds/$version/"
