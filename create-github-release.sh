@@ -36,5 +36,8 @@ nextVersion=$(echo $version | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(leng
 
 echo "Next version: $nextVersion"
 
+# set the environment variable for the version number
+export BUILD_VERSION=$nextVersion
+
 # Create a new release
 curl -sH "$AUTH" --data "{\"tag_name\":\"$nextVersion\",\"target_commitish\":\"master\",\"name\":\"$nextVersion\",\"body\":\"Release of version $nextVersion\",\"draft\":false,\"prerelease\":false}" $GH_RELEASES

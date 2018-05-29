@@ -12,14 +12,33 @@
                 },
                 src: ['SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot/index.html']
             }
+        },
+
+        'string-replace': {
+            version: {
+                files: {
+                    'cloudformation.yaml': 'cloudformation.yaml',
+                },
+                options: {
+                    replacements: [
+                        {
+                            pattern: 'Default: v0.0.0',
+                            replacement: 'Default: <%= BUILD_VERSION %>'
+                        }
+                    ]
+                }
+            }
         }
 
     });
 
     // Plugins used
     grunt.loadNpmTasks('grunt-cache-bust');
+    grunt.loadNpmTasks('grunt-string-replace');
 
-    // Register pre and post build tasks
-    grunt.registerTask('postBuild', ['cacheBust:indexCacheBust']);
+    grunt.registerTask('loadconst', 'Load environment variables', function () {
+        grunt.config('BUILD_VERSION', process.env.BUILD_VERSION);
+    });
 
+    grunt.registerTask('postBuild', ['loadconst', 'cacheBust:indexCacheBust', 'string-replace:version']);
 };
