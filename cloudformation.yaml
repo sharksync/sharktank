@@ -238,3 +238,51 @@ Resources:
           - ":"
           - Ref: WebApiGatewayApi
           - "/*/*/*"
+
+  DeploymentLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      RoleName: 'deployment-lambda-role'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  DeploymentLambdaRoleInlinePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "deployment-policy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: Allow
+            Resource: ["arn:aws:s3:::io.sharksync.builds/", "arn:aws:s3:::io.sharksync.web/"]
+            Action: ["s3:PutObject", "s3:GetObject"]
+      Roles: 
+        - Ref: "DeploymentLambdaRole"
+
+  DeploymentLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: SharkSync.Deployment::SharkSync.Deployment.UnpackZipIntoS3BucketFunction::FunctionHandlerAsync
+      Code:
+        S3Bucket: io.sharksync.builds
+        S3Key: 
+          Fn::Join:
+          - ''
+          - - !Ref Version
+            - '/SharkSync.Deployment.zip'
+      Role:
+        Fn::GetAtt:
+          - DeploymentLambdaRole
+          - Arn
+      Runtime: dotnetcore2.0
+      MemorySize: 128
+      Timeout: 300
