@@ -1,5 +1,7 @@
 ﻿module.exports = function (grunt) {
 
+    var version = grunt.option('version') || 'v0.0.0';
+
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
@@ -23,7 +25,7 @@
                     replacements: [
                         {
                             pattern: 'Default: v0.0.0',
-                            replacement: 'Default: <%= BUILD_VERSION %>'
+                            replacement: 'Default: <%= version %>'
                         }
                     ]
                 }
@@ -35,10 +37,6 @@
     // Plugins used
     grunt.loadNpmTasks('grunt-cache-bust');
     grunt.loadNpmTasks('grunt-string-replace');
-
-    grunt.registerTask('loadconst', 'Load environment variables', function () {
-        grunt.config('BUILD_VERSION', process.env.BUILD_VERSION);
-    });
 
     grunt.registerTask('postBuild', ['loadconst', 'cacheBust:indexCacheBust', 'string-replace:version']);
 };
