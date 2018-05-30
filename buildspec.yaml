@@ -10,7 +10,7 @@ phases:
       - dotnet build --configuration release
       - dotnet publish --configuration release
       - cd SharkSync.Web.Api
-      - dotnet lambda package --configuration release
+      - dotnet lambda package --configuration release --framework netcoreapp2.0
       - cd ../
       - npm run-script grunt postBuild
       - zip -r SharkSync.Web.Html.zip SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot
