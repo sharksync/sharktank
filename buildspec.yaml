@@ -14,7 +14,7 @@ phases:
       - cd ../
       - bash create-github-release.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank
       - npm run-script grunt postBuild --version=${BUILD_VERSION}
-      - cd SharkSync.Web.Html.zip SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot
+      - cd SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot
       - zip -r ../../../../../../SharkSync.Web.Html.zip .
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Html.zip

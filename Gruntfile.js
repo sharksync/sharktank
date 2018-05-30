@@ -1,7 +1,5 @@
 ﻿module.exports = function (grunt) {
 
-    var version = grunt.option('version') || 'v0.0.0';
-
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
@@ -38,5 +36,7 @@
     grunt.loadNpmTasks('grunt-cache-bust');
     grunt.loadNpmTasks('grunt-string-replace');
 
-    grunt.registerTask('postBuild', ['loadconst', 'cacheBust:indexCacheBust', 'string-replace:version']);
+    var version = grunt.option('version') || 'v0.0.0';
+
+    grunt.registerTask('postBuild', ['cacheBust:indexCacheBust', 'string-replace:version']);
 };
