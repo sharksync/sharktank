@@ -148,7 +148,7 @@ Resources:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   WebApiLambdaRoleInlinePolicy:
-    Type: "AWS::IAM::Policy"
+    Type: AWS::IAM::Policy
     Properties: 
       PolicyName: "web-api-policy"
       PolicyDocument: 
@@ -180,19 +180,19 @@ Resources:
       Timeout: 300
 
   WebApiGatewayApi:
-    Type: 'AWS::ApiGateway::RestApi'
+    Type: AWS::ApiGateway::RestApi
     Properties:
       Name: SharkSync.WebApi
 
   WebApiGatewayResource:
-    Type: 'AWS::ApiGateway::Resource'
+    Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt WebApiGatewayApi.RootResourceId
       RestApiId: !Ref WebApiGatewayApi
       PathPart: '{proxy+}'
 
   WebApiGatewayProxyMethod:
-    Type: 'AWS::ApiGateway::Method'
+    Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: ANY
       ResourceId: !Ref WebApiGatewayResource
@@ -220,7 +220,7 @@ Resources:
       StageName: Prod
 
   LambdaInvokePermission:
-    Type: 'AWS::Lambda::Permission'
+    Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !GetAtt 
         - WebApiLambda
@@ -256,7 +256,7 @@ Resources:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   DeploymentLambdaRoleInlinePolicy:
-    Type: "AWS::IAM::Policy"
+    Type: AWS::IAM::Policy
     Properties: 
       PolicyName: "deployment-policy"
       PolicyDocument: 
@@ -268,7 +268,7 @@ Resources:
       Roles: 
         - Ref: "DeploymentLambdaRole"
 
-  DeploymentLambda:
+  UnpackZipIntoS3BucketFunctionLambda:
     Type: AWS::Lambda::Function
     Properties:
       Handler: SharkSync.Deployment::SharkSync.Deployment.UnpackZipIntoS3BucketFunction::FunctionHandlerAsync
@@ -286,3 +286,16 @@ Resources:
       Runtime: dotnetcore2.0
       MemorySize: 128
       Timeout: 300
+
+  UnpackZipIntoS3BucketFunction:
+    Type: Custom::UnpackZipIntoS3BucketFunction
+    Properties:
+      ServiceToken: !GetAtt UnpackZipIntoS3BucketFunctionLambda.Arn
+      zipS3Bucket: io.sharksync.builds
+      zipS3Key: 
+        Fn::Join:
+        - ''
+        - - !Ref Version
+          - '/SharkSync.Web.Html.zip'
+      outputS3Bucket: io.sharksync.web
+      outputPrefix: 
