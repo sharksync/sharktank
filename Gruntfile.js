@@ -1,5 +1,8 @@
 ﻿module.exports = function (grunt) {
 
+    // args are passed "postBuild:v1.1.1", get the final version number from it
+    var buildNumber = process.argv[2].substring(10);
+
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
@@ -23,7 +26,7 @@
                     replacements: [
                         {
                             pattern: 'Default: v0.0.0',
-                            replacement: 'Default: <%= version %>'
+                            replacement: 'Default: ' + buildNumber
                         }
                     ]
                 }
@@ -35,8 +38,6 @@
     // Plugins used
     grunt.loadNpmTasks('grunt-cache-bust');
     grunt.loadNpmTasks('grunt-string-replace');
-
-    var version = grunt.option('version') || 'v0.0.0';
 
     grunt.registerTask('postBuild', ['cacheBust:indexCacheBust', 'string-replace:version']);
 };
