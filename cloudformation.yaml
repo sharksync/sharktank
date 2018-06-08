@@ -298,4 +298,4 @@ Resources:
         - - !Ref Version
           - '/SharkSync.Web.Html.zip'
       outputS3Bucket: io.sharksync.web
-      outputPrefix: 
+      outputPrefix: ''
