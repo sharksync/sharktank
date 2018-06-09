@@ -34,10 +34,9 @@ echo "Found version: $version"
 
 nextVersion=$(echo $version | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}')
 
-# set the environment variable for the version number
-export BUILD_VERSION=$nextVersion
-
-echo "Next version: $BUILD_VERSION"
+echo "Next version: $nextVersion"
 
 # Create a new release
 curl -sH "$AUTH" --data "{\"tag_name\":\"$nextVersion\",\"target_commitish\":\"master\",\"name\":\"$nextVersion\",\"body\":\"Release of version $nextVersion\",\"draft\":false,\"prerelease\":false}" $GH_RELEASES
+
+npm run-script grunt postBuild:$nextVersion
