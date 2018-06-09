@@ -16,7 +16,15 @@ namespace SharkSync.Deployment
         public static async Task Main(string[] args)
         {
             await new UnpackZipIntoS3BucketFunction(new AmazonS3Client(RegionEndpoint.EUWest1))
-                .FunctionHandlerAsync("io.sharksync.builds", "v1.0.9/SharkSync.Web.Html.zip", "io.sharksync.web", null, null);
+                .FunctionHandlerAsync(new UnpackZipIntoS3BucketRequest
+                {
+                    ResourceProperties = new UnpackZipIntoS3BucketRequest.ResourcePropertiesModel()
+                    {
+                        ZipS3Bucket = "io.sharksync.builds",
+                        ZipS3Key = "v1.0.9/SharkSync.Web.Html.zip",
+                        OutputS3Bucket = "io.sharksync.web"
+                    }
+                }, null);
         }
     }
 }
