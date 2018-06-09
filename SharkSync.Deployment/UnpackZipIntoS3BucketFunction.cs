@@ -42,7 +42,7 @@ namespace SharkSync.Deployment
 
         public async Task<CloudFormationResponse> FunctionHandlerAsync(UnpackZipIntoS3BucketRequest request, ILambdaContext context)
         {
-            context.Logger.Log("GetLatestAMIAsync invoked: " + JsonConvert.SerializeObject(request));
+            context.Logger.Log("UnpackZipIntoS3BucketFunction invoked: " + JsonConvert.SerializeObject(request));
 
             if (request.RequestType != "Delete")
             {
@@ -70,7 +70,7 @@ namespace SharkSync.Deployment
                     }
                 }
             }
-            
+
             return await CloudFormationResponse.CompleteCloudFormationResponse(null, request, context);
         }
     }
