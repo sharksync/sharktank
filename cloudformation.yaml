@@ -2,17 +2,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: SharkSync Stack
 
-Parameters: 
-  Route53HostedZoneId: 
-    Type: String
+Parameters:
   DomainName: 
     Type: String
-  WebsiteSubdomain: 
+  Subdomain: 
     Type: String
     Default: www
-  ApiSubdomain: 
-    Type: String
-    Default: api
 
 Mappings: 
   Build: 
@@ -23,6 +18,11 @@ Resources:
 
   S3BucketWeb:
     Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: 404.html
 
   CloudFrontAccessIdentity:
     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
@@ -74,6 +74,102 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Ref DomainName
+      
+  CloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        IPV6Enabled: true
+        HttpVersion: http2
+        Comment: !Ref 'AWS::StackName'
+        Aliases: 
+          - Fn::Join:
+              - ''
+              - - Ref: Subdomain
+                - Ref: DomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref WebsiteCertifcate
+          SslSupportMethod: sni-only
+        Origins:
+        - Id: s3
+          DomainName: !Select [2, !Split ["/", !GetAtt S3BucketWeb.WebsiteURL]]
+          S3OriginConfig:
+            OriginAccessIdentity: 
+              Fn::Join:
+               - ''
+               - - 'origin-access-identity/cloudfront/'
+                 - Ref: CloudFrontAccessIdentity
+        - Id: api-gateway
+          DomainName: !Sub
+            - ${apigId}.execute-api.${AWS::Region}.amazonaws.com
+            - { apigId: !Ref WebApiGatewayApi }
+          OriginPath: /Prod
+          CustomOriginConfig:
+            HTTPSPort: 443
+            OriginProtocolPolicy: https-only
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          TargetOriginId: s3
+          MinTTL: 3153600000
+          DefaultTTL: 3153600000
+          MaxTTL: 3153600000
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          SmoothStreaming: false
+          Compress: true
+          ViewerProtocolPolicy: redirect-to-https
+          LambdaFunctionAssociations:
+            - EventType: origin-request
+              LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
+        CacheBehaviors:
+          - PathPattern: '/api/*'
+            AllowedMethods: ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+            CachedMethods: ["GET", "HEAD", "OPTIONS"]
+            ForwardedValues:
+              Headers:
+              - Access-Control-Request-Headers
+              - Access-Control-Request-Method
+              - Origin
+              - Authorization
+              QueryString: true
+            TargetOriginId: api-gateway
+            ViewerProtocolPolicy: https-only
+            Compress: true
+            DefaultTTL: 0
+        PriceClass: PriceClass_All
+
+  DNSARecord:    
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: 
+        Fn::Join:
+         - ''
+         - - Ref Subdomain
+           - Ref DomainName
+      Type: A
+      HostedZoneName: !Ref DomainName
+      AliasTarget:
+        HostedZoneId: Z2FDTNDATAQYW2
+        DNSName: !GetAtt CloudFront.DomainName
+  DNSAAAARecord:    
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: 
+        Fn::Join:
+         - ''
+         - - Ref Subdomain
+           - Ref DomainName
+      Type: AAAA
+      HostedZoneName: !Ref DomainName
+      AliasTarget:
+        HostedZoneId: Z2FDTNDATAQYW2
+        DNSName: !GetAtt CloudFront.DomainName
 
   AccountTable:
     Type: AWS::DynamoDB::Table
