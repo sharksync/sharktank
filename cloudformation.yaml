@@ -5,9 +5,17 @@ Description: SharkSync Stack
 Parameters:
   DomainName: 
     Type: String
+    Description: The DNS name of an existing Amazon Route 53 hosted zone e.g. jevsejev.io
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
   Subdomain: 
     Type: String
     Default: www
+    Description: The sub domain for the hosted website
+  AcmCertificateArn:
+    Type: String
+    Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate must be in the us-east-1 region.
+    AllowedPattern: "arn:aws:acm:.*"
 
 Mappings: 
   Build: 
@@ -18,11 +26,6 @@ Resources:
 
   S3BucketWeb:
     Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: 404.html
 
   CloudFrontAccessIdentity:
     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
@@ -70,11 +73,6 @@ Resources:
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-  WebsiteCertifcate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: !Ref DomainName
-      
   CloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -89,11 +87,11 @@ Resources:
               - - Ref: Subdomain
                 - Ref: DomainName
         ViewerCertificate:
-          AcmCertificateArn: !Ref WebsiteCertifcate
+          AcmCertificateArn: !Ref AcmCertificateArn
           SslSupportMethod: sni-only
         Origins:
         - Id: s3
-          DomainName: !Select [2, !Split ["/", !GetAtt S3BucketWeb.WebsiteURL]]
+          DomainName: !GetAtt S3BucketWeb.DomainName
           S3OriginConfig:
             OriginAccessIdentity: 
               Fn::Join:
