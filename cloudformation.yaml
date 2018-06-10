@@ -2,6 +2,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: SharkSync Stack
 
+Parameters: 
+  WebsiteDnsName: 
+    Type: String
+  WebsiteRoute53HostedZoneId: 
+    Type: String
+  ApiDnsName: 
+    Type: String
+  ApiRoute53HostedZoneId: 
+    Type: String
+
 Mappings: 
   Build: 
     Version: 
@@ -11,9 +21,12 @@ Resources:
 
   S3BucketWeb:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
+
+  CloudFrontAccessIdentity:
+    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
     Properties:
-      BucketName: io.sharksync.web
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref 'AWS::StackName'
 
   S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -33,7 +46,10 @@ Resources:
               - "/*"
           Principal:
             AWS:
-              - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E2L91VF2FR5I1N'
+              - Fn::Join:
+                - ''
+                - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity '
+                  - Ref: CloudFrontAccessIdentity
 
   LambdaEdgeRole:
     Type: AWS::IAM::Role
@@ -52,17 +68,38 @@ Resources:
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-  CloudFrontWebApp:
+  CloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Enabled: true
+        IPV6Enabled: true
+        HttpVersion: http2
+        Comment: !Ref 'AWS::StackName'
+        Aliases: 
+          - !Ref ApiDnsName
+          - !Ref WebsiteDnsName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
         Origins:
-        - DomainName: io.sharksync.web.s3.amazonaws.com
-          Id: s3
+        - Id: s3
+          DomainName: !GetAtt 
+            - S3Bucket
+            - WebsiteURL
           S3OriginConfig:
-            OriginAccessIdentity: origin-access-identity/cloudfront/E2L91VF2FR5I1N
-        Enabled: 'true'
-        Comment: io.sharksync.web
+            OriginAccessIdentity: Fn::Join:
+               - ''
+               - - 'origin-access-identity/cloudfront/'
+                 - Ref: CloudFrontAccessIdentity
+        - Id: api-gateway
+          DomainName: !Sub
+            - ${apigId}.execute-api.${AWS::Region}.amazonaws.com
+            - { apigId: !Ref WebApiGatewayApi }
+          OriginPath: /Prod
+          CustomOriginConfig:
+            HTTPSPort: 443
+            OriginProtocolPolicy: https-only
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods:
@@ -82,8 +119,63 @@ Resources:
           LambdaFunctionAssociations:
             - EventType: origin-request
               LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
+        CacheBehaviors:
+          AllowedMethods: ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+          CachedMethods: ["GET", "HEAD", "OPTIONS"]
+          ForwardedValues:
+            Headers:
+            - Access-Control-Request-Headers
+            - Access-Control-Request-Method
+            - Origin
+            - Authorization
+            QueryString: true
+          TargetOriginId: api-gateway
+          ViewerProtocolPolicy: https-only
+          Compress: true
+          DefaultTTL: 0
         PriceClass: PriceClass_All
-        HttpVersion: http2
+
+  DNSARecord:    
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: !Ref 'AWS::StackName'
+      Name: !Ref ApiDnsName
+      Type: A
+      HostedZoneName: !Join ['.', [ !Select [1, !Split ['.', !Ref ApiDnsName]], !Select [2, !Split ['.', !Ref ApiDnsName]], '']]
+      AliasTarget:
+        HostedZoneId: !Ref ApiRoute53HostedZoneId
+        DNSName: !GetAtt CloudFront.DomainName
+  DNSAAAARecord:    
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: !Ref 'AWS::StackName'
+      Name: !Ref ApiDnsName
+      Type: AAAA
+      HostedZoneName: !Join ['.', [ !Select [1, !Split ['.', !Ref ApiDnsName]], !Select [2, !Split ['.', !Ref ApiDnsName]], '']]
+      AliasTarget:
+        HostedZoneId: !Ref ApiRoute53HostedZoneId
+        DNSName: !GetAtt CloudFront.DomainName
+
+  DNSARecord:    
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: !Ref 'AWS::StackName'
+      Name: !Ref WebsiteDnsName
+      Type: A
+      HostedZoneName: !Join ['.', [ !Select [1, !Split ['.', !Ref WebsiteDnsName]], !Select [2, !Split ['.', !Ref WebsiteDnsName]], '']]
+      AliasTarget:
+        HostedZoneId: !Ref WebsiteRoute53HostedZoneId
+        DNSName: !GetAtt CloudFront.DomainName
+  DNSAAAARecord:    
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: !Ref 'AWS::StackName'
+      Name: !Ref WebsiteDnsName
+      Type: AAAA
+      HostedZoneName: !Join ['.', [ !Select [1, !Split ['.', !Ref WebsiteDnsName]], !Select [2, !Split ['.', !Ref WebsiteDnsName]], '']]
+      AliasTarget:
+        HostedZoneId: !Ref WebsiteRoute53HostedZoneId
+        DNSName: !GetAtt CloudFront.DomainName
 
   AccountTable:
     Type: AWS::DynamoDB::Table
