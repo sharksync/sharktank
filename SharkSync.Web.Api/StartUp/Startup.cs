@@ -56,15 +56,19 @@ namespace SharkSync.Web.Api
             services.Configure<AppSettings>(appSettingSection);
             appSettingSection.Bind(appSettings);
 
-            services.AddCors(options =>
+            // Only add CORS if the client is on another domain
+            if (appSettings.ClientAppRootUrl != "~")
             {
-                options.AddPolicy("AllowSpecificOrigin",
-                    builder => builder
-                        .WithOrigins(appSettings.ClientAppRootUrl)
-                        .AllowCredentials()
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
-            });
+                services.AddCors(options =>
+                {
+                    options.AddPolicy("AllowSpecificOrigin",
+                        builder => builder
+                            .WithOrigins(appSettings.ClientAppRootUrl)
+                            .AllowCredentials()
+                            .AllowAnyHeader()
+                            .AllowAnyMethod());
+                });
+            }
 
             services.Configure<MvcOptions>(options =>
             {
