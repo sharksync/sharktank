@@ -85,6 +85,7 @@ Resources:
           - Fn::Join:
               - ''
               - - Ref: Subdomain
+                - '.'
                 - Ref: DomainName
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificateArn
@@ -148,14 +149,15 @@ Resources:
       Name: 
         Fn::Join:
          - ''
-         - - Ref Subdomain
-           - Ref DomainName
+         - - !Ref Subdomain
+           - '.'
+           - !Ref DomainName
            - '.'
       Type: A
       HostedZoneName: 
         Fn::Join:
          - ''
-         - - Ref DomainName
+         - - !Ref DomainName
            - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
@@ -166,14 +168,15 @@ Resources:
       Name: 
         Fn::Join:
          - ''
-         - - Ref Subdomain
-           - Ref DomainName
+         - - !Ref Subdomain
+           - '.'
+           - !Ref DomainName
            - '.'
       Type: AAAA
       HostedZoneName: 
         Fn::Join:
          - ''
-         - - Ref DomainName
+         - - !Ref DomainName
            - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
