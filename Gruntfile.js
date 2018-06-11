@@ -17,19 +17,16 @@
             }
         },
 
-        'string-replace': {
+        replace: {
             version: {
-                files: {
-                    'cloudformation.yaml': 'cloudformation.yaml',
-                },
-                options: {
-                    replacements: [
-                        {
-                            pattern: 'v0.0.0',
-                            replacement: buildNumber
-                        }
-                    ]
-                }
+                src: ['cloudformation.yaml'],
+                overwrite: true,
+                replacements: [
+                    {
+                        from: 'v0.0.0',
+                        to: buildNumber
+                    }
+                ]
             }
         }
 
@@ -37,7 +34,7 @@
 
     // Plugins used
     grunt.loadNpmTasks('grunt-cache-bust');
-    grunt.loadNpmTasks('grunt-string-replace');
+    grunt.loadNpmTasks('grunt-text-replace');
 
-    grunt.registerTask('postBuild', ['cacheBust:indexCacheBust', 'string-replace:version']);
+    grunt.registerTask('postBuild', ['cacheBust:indexCacheBust', 'replace:version']);
 };
