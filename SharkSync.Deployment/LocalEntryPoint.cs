@@ -15,7 +15,7 @@ namespace SharkSync.Deployment
     {
         public static async Task Main(string[] args)
         {
-            await new UnpackZipIntoS3BucketFunction(new AmazonS3Client(RegionEndpoint.EUWest1))
+            await new UnpackZipIntoS3BucketFunction(null)
                 .FunctionHandlerAsync(new UnpackZipIntoS3BucketRequest
                 {
                     ResourceProperties = new UnpackZipIntoS3BucketRequest.ResourcePropertiesModel()

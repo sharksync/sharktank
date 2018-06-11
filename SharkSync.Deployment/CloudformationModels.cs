@@ -33,11 +33,21 @@ namespace SharkSync.Deployment
 
         public static async Task<CloudFormationResponse> CompleteCloudFormationResponse(object data, CloudFormationRequest request, ILambdaContext context)
         {
+            return await ProcessCloudFormationResponse("SUCCESS", data, request, context);
+        }
+
+        public static async Task<CloudFormationResponse> FailCloudFormationResponse(Exception ex, CloudFormationRequest request, ILambdaContext context)
+        {
+            return await ProcessCloudFormationResponse("FAILED", ex.ToString(), request, context);
+        }
+
+        private static async Task<CloudFormationResponse> ProcessCloudFormationResponse(string status, object data, CloudFormationRequest request, ILambdaContext context)
+        {
             var responseBody = new CloudFormationResponse
             {
-                Status = data is Exception ? "FAILED" : "SUCCESS",
-                Reason = "See the details in CloudWatch Log Stream: " + context.LogStreamName,
-                PhysicalResourceId = context.LogStreamName,
+                Status = status,
+                Reason = $"See the details in CloudWatch Log Stream: {context?.LogStreamName}",
+                PhysicalResourceId = context?.LogStreamName,
                 StackId = request.StackId,
                 RequestId = request.RequestId,
                 LogicalResourceId = request.LogicalResourceId,
@@ -49,6 +59,7 @@ namespace SharkSync.Deployment
                 HttpClient client = new HttpClient();
 
                 var jsonContent = new StringContent(JsonConvert.SerializeObject(responseBody));
+
                 jsonContent.Headers.Remove("Content-Type");
 
                 var postResponse = await client.PutAsync(request.ResponseURL, jsonContent);
