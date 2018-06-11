@@ -150,8 +150,13 @@ Resources:
          - ''
          - - Ref Subdomain
            - Ref DomainName
+           - '.'
       Type: A
-      HostedZoneName: !Ref DomainName
+      HostedZoneName: 
+        Fn::Join:
+         - ''
+         - - Ref DomainName
+           - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
         DNSName: !GetAtt CloudFront.DomainName
@@ -163,8 +168,13 @@ Resources:
          - ''
          - - Ref Subdomain
            - Ref DomainName
+           - '.'
       Type: AAAA
-      HostedZoneName: !Ref DomainName
+      HostedZoneName: 
+        Fn::Join:
+         - ''
+         - - Ref DomainName
+           - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
         DNSName: !GetAtt CloudFront.DomainName
