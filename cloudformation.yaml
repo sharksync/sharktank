@@ -17,11 +17,6 @@ Parameters:
     Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate must be in the us-east-1 region.
     AllowedPattern: "arn:aws:acm:.*"
 
-Mappings: 
-  Build: 
-    Version: 
-      Number: v1.2.2
-
 Resources:
 
   S3BucketWeb:
@@ -266,7 +261,7 @@ Resources:
         S3Key: 
           Fn::Join:
           - ''
-          - - !FindInMap [Build, Version, Number]
+          - - 'v0.0.0'
             - '/SharkSync.Web.Api.zip'
       Role:
         Fn::GetAtt:
@@ -374,7 +369,7 @@ Resources:
         S3Key: 
           Fn::Join:
           - ''
-          - - !FindInMap [Build, Version, Number]
+          - - 'v0.0.0'
             - '/SharkSync.Deployment.zip'
       Role:
         Fn::GetAtt:
@@ -393,7 +388,7 @@ Resources:
       zipS3Key: 
         Fn::Join:
         - ''
-        - - !FindInMap [Build, Version, Number]
+        - - 'v0.0.0'
           - '/SharkSync.Web.Html.zip'
       outputS3Bucket: io.sharksync.web
       outputPrefix: ''

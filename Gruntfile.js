@@ -25,8 +25,8 @@
                 options: {
                     replacements: [
                         {
-                            pattern: 'Number: v0.0.0',
-                            replacement: 'Number: ' + buildNumber
+                            pattern: 'v0.0.0',
+                            replacement: buildNumber
                         }
                     ]
                 }
