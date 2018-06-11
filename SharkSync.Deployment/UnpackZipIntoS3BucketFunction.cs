@@ -40,11 +40,10 @@ namespace SharkSync.Deployment
             S3Client = s3Client;
         }
 
-        public async Task<CloudFormationResponse> FunctionHandlerAsync(UnpackZipIntoS3BucketRequest request, ILambdaContext context)
+        public async Task FunctionHandlerAsync(UnpackZipIntoS3BucketRequest request, ILambdaContext context)
         {
             try
             {
-
                 context.Logger.Log("UnpackZipIntoS3BucketFunction invoked: " + JsonConvert.SerializeObject(request));
 
                 if (request.RequestType != "Delete")
@@ -74,11 +73,13 @@ namespace SharkSync.Deployment
                     }
                 }
 
-                return await CloudFormationResponse.CompleteCloudFormationResponse(null, request, context);
+                await CloudFormationResponse.CompleteCloudFormationResponse(null, request, context);
             }
             catch (Exception ex)
             {
-                return await CloudFormationResponse.FailCloudFormationResponse(ex, request, context);
+                await CloudFormationResponse.FailCloudFormationResponse(ex, request, context);
+
+                throw;
             }
         }
     }

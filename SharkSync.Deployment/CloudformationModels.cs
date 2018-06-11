@@ -38,7 +38,8 @@ namespace SharkSync.Deployment
 
         public static async Task<CloudFormationResponse> FailCloudFormationResponse(Exception ex, CloudFormationRequest request, ILambdaContext context)
         {
-            return await ProcessCloudFormationResponse("FAILED", ex.ToString(), request, context);
+            // Limit exceptions strings to 2k
+            return await ProcessCloudFormationResponse("FAILED", ex.ToString().Substring(0, Math.Min(2000, ex.ToString().Length)), request, context);
         }
 
         private static async Task<CloudFormationResponse> ProcessCloudFormationResponse(string status, object data, CloudFormationRequest request, ILambdaContext context)
@@ -56,9 +57,12 @@ namespace SharkSync.Deployment
 
             try
             {
-                HttpClient client = new HttpClient();
+                var jsonPayload = JsonConvert.SerializeObject(responseBody);
 
-                var jsonContent = new StringContent(JsonConvert.SerializeObject(responseBody));
+                context.Logger.Log($"ProcessCloudFormationResponse: {jsonPayload}");
+
+                var client = new HttpClient();
+                var jsonContent = new StringContent(jsonPayload);
 
                 jsonContent.Headers.Remove("Content-Type");
 
@@ -68,7 +72,7 @@ namespace SharkSync.Deployment
             }
             catch (Exception ex)
             {
-                LambdaLogger.Log("Exception: " + ex.ToString());
+                context.Logger.Log("Exception: " + ex.ToString());
 
                 responseBody.Status = "FAILED";
                 responseBody.Data = ex;
