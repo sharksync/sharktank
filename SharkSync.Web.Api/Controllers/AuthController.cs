@@ -44,7 +44,7 @@ namespace SharkSync.Web.Api.Controllers
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
             if (loggedInAccount == null)
-                return new UnauthorizedResult();
+                return Unauthorized();
 
             var vm = new AuthDetailsViewModel()
             {

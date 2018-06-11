@@ -39,7 +39,7 @@ namespace SharkSync.Web.Api.Controllers
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
             if (loggedInAccount == null)
-                return new UnauthorizedResult();
+                return Unauthorized();
 
             var apps = await ApplicationRepository.ListByAccountIdAsync(loggedInAccount.Id);
 
@@ -56,7 +56,7 @@ namespace SharkSync.Web.Api.Controllers
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
             if (loggedInAccount == null)
-                return new UnauthorizedResult();
+                return Unauthorized();
 
             var app = await ApplicationRepository.AddAsync(name, loggedInAccount.Id);
 
@@ -72,15 +72,15 @@ namespace SharkSync.Web.Api.Controllers
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
             if (loggedInAccount == null)
-                return new UnauthorizedResult();
+                return Unauthorized();
 
             var app = await ApplicationRepository.GetByIdAsync(id);
 
             if (app == null)
-                return new NotFoundResult();
+                return NotFound();
 
             if (app.AccountId != loggedInAccount.Id)
-                return new ForbidResult();
+                return Forbid();
             
             await ApplicationRepository.DeleteAsync(id);
 
