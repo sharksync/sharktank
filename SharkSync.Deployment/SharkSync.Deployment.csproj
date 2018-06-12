@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <ApplicationIcon />
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <StartupObject></StartupObject>
   </PropertyGroup>
 
@@ -13,13 +13,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="LambdaEdgeFunctions\origin-request.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Amazon.Lambda.Core" Version="1.0.0" />
     <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.2.0" />
-    <PackageReference Include="AWSSDK.S3" Version="3.3.18.2" />
+    <PackageReference Include="Amazon.Lambda.TestUtilities" Version="1.0.0" />
+    <PackageReference Include="AWSSDK.Lambda" Version="3.3.13.3" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.18.3" />
   </ItemGroup>
 
   <ItemGroup>
     <DotNetCliToolReference Include="Amazon.Lambda.Tools" Version="2.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="LambdaEdgeFunctions\origin-request.js" />
   </ItemGroup>
 
 </Project>

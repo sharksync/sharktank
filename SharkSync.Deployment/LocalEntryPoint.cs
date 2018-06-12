@@ -1,4 +1,5 @@
 using Amazon;
+using Amazon.Lambda.TestUtilities;
 using Amazon.S3;
 using System;
 using System.Collections.Generic;
@@ -15,16 +16,18 @@ namespace SharkSync.Deployment
     {
         public static async Task Main(string[] args)
         {
-            await new UnpackZipIntoS3BucketFunction(null)
-                .FunctionHandlerAsync(new UnpackZipIntoS3BucketRequest
+            await new LambdaEdgeFunction()
+                .FunctionHandlerAsync(new LambdaEdgeRequest
                 {
-                    ResourceProperties = new UnpackZipIntoS3BucketRequest.ResourcePropertiesModel()
+                    RequestType = "Delete",
+                    PhysicalResourceId = "arn:aws:lambda:us-east-1:429810410321:function:shark-sync-origin-request",
+                    ResourceProperties = new LambdaEdgeRequest.ResourcePropertiesModel()
                     {
-                        ZipS3Bucket = "io.sharksync.builds",
-                        ZipS3Key = "v1.0.9/SharkSync.Web.Html.zip",
-                        OutputS3Bucket = "io.sharksync.web"
+                        EmbeddedFileName = "origin-request.js",
+                        FunctionName = "shark-sync-origin-request",
+                        RoleArn = "arn:aws:iam::429810410321:role/lambda-edge-role"
                     }
-                }, null);
+                }, new TestLambdaContext());
         }
     }
 }

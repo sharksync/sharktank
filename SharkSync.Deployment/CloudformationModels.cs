@@ -19,6 +19,7 @@ namespace SharkSync.Deployment
         public string ResourceType { get; set; }
         public string RequestId { get; set; }
         public string LogicalResourceId { get; set; }
+        public string PhysicalResourceId { get; set; }
     }
 
     public class CloudFormationResponse
@@ -31,13 +32,13 @@ namespace SharkSync.Deployment
         public string LogicalResourceId { get; set; }
         public object Data { get; set; }
 
-        public static async Task CompleteCloudFormation(object data, CloudFormationRequest request, ILambdaContext context)
+        public static async Task CompleteCloudFormation(object data, string physicalResourceId, CloudFormationRequest request, ILambdaContext context)
         {
             await ProcessCloudFormationResponse(new CloudFormationResponse
             {
                 Status = "SUCCESS",
                 Reason = "",
-                PhysicalResourceId = context?.LogStreamName,
+                PhysicalResourceId = physicalResourceId ?? context?.LogStreamName,
                 StackId = request.StackId,
                 RequestId = request.RequestId,
                 LogicalResourceId = request.LogicalResourceId,

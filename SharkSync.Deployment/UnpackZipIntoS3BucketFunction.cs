@@ -73,7 +73,7 @@ namespace SharkSync.Deployment
                     }
                 }
 
-                await CloudFormationResponse.CompleteCloudFormation(null, request, context);
+                await CloudFormationResponse.CompleteCloudFormation(null, null, request, context);
             }
             catch (Exception ex)
             {
