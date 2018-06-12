@@ -383,3 +383,17 @@ Resources:
       Runtime: dotnetcore2.0
       MemorySize: 128
       Timeout: 300
+
+  UnpackZipIntoS3BucketFunction:
+    Type: Custom::UnpackZipIntoS3BucketFunction
+    DependsOn: UnpackZipIntoS3BucketFunctionLambda
+    Properties:
+      ServiceToken: !GetAtt UnpackZipIntoS3BucketFunctionLambda.Arn
+      zipS3Bucket: io.sharksync.builds
+      zipS3Key: 
+        Fn::Join:
+        - ''
+        - - 'v0.0.0'
+          - '/SharkSync.Web.Html.zip'
+      outputS3Bucket: !Ref S3BucketWeb
+      outputPrefix: ''
