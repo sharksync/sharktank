@@ -122,7 +122,7 @@ Resources:
             - EventType: origin-request
               LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
         CacheBehaviors:
-          - PathPattern: '/api/*'
+          - PathPattern: '/Api/*'
             AllowedMethods: ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
             CachedMethods: ["GET", "HEAD", "OPTIONS"]
             ForwardedValues:
