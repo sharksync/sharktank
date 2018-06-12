@@ -117,7 +117,7 @@ Resources:
               LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
         PriceClass: PriceClass_All
 
-  DNSARecord:    
+  DNSARecord:
     Type: AWS::Route53::RecordSet
     Properties:
       Name: 
@@ -256,16 +256,37 @@ Resources:
       Name: SharkSync.WebApi
 
   WebApiDomainName:
-    Type: 'AWS::ApiGateway::DomainName'
+    Type: AWS::ApiGateway::DomainName
     Properties:
       CertificateArn: !Ref ApiCertificateArn
       DomainName: !Ref ApiDomain
 
   WebApiMapping:
-    Type: 'AWS::ApiGateway::BasePathMapping'
+    Type: AWS::ApiGateway::BasePathMapping
     Properties:
       DomainName: !Ref WebApiDomainName
       RestApiId: !Ref WebApiGatewayApi
+      Stage: Prod
+
+  ApiCNAMERecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: 
+        Fn::Join:
+         - ''
+         - - !Ref ApiDomain
+           - '.'
+      Type: CNAME
+      TTL: '900'
+      ResourceRecords:
+        - !GetAtt WebApiDomainName.DistributionDomainName
+      HostedZoneName: 
+        Fn::Join:
+          - ''
+          - - !Select [1, !Split [".", !Ref ApiDomain]]
+            - '.'
+            - !Select [2, !Split [".", !Ref ApiDomain]]
+            - '.'
 
   WebApiGatewayResource:
     Type: AWS::ApiGateway::Resource
