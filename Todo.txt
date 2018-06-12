@@ -1,0 +1,3 @@
+JWT tokens for auth
+CSRF checks
+Switch to claims policies

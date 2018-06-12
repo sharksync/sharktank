@@ -47,6 +47,8 @@ namespace SharkSync.Deployment
 
         public static async Task FailCloudFormation(Exception ex, CloudFormationRequest request, ILambdaContext context)
         {
+            context.Logger.Log($"FailCloudFormation with exception: {ex.ToString()}");
+
             await ProcessCloudFormationResponse(new CloudFormationResponse
             {
                 Status = "FAILED",
