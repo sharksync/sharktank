@@ -83,7 +83,7 @@ Resources:
         IPV6Enabled: true
         HttpVersion: http2
         Comment: !Ref 'AWS::StackName'
-        Aliases: !Ref WebsiteDomain
+        Aliases: [!Ref WebsiteDomain]
         ViewerCertificate:
           AcmCertificateArn: !Ref WebsiteCertificateArn
           SslSupportMethod: sni-only
@@ -264,7 +264,7 @@ Resources:
   WebApiMapping:
     Type: 'AWS::ApiGateway::BasePathMapping'
     Properties:
-      DomainName: !Ref ApiDomain
+      DomainName: !Ref WebApiDomainName
       RestApiId: !Ref WebApiGatewayApi
 
   WebApiGatewayResource:
