@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Gruntfile.js = Gruntfile.js
 		package.json = package.json
 		README.md = README.md
+		Todo.txt = Todo.txt
 		upload-binary.sh = upload-binary.sh
 	EndProjectSection
 EndProject

@@ -3,18 +3,25 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: SharkSync Stack
 
 Parameters:
-  DomainName: 
+  WebsiteDomain: 
     Type: String
-    Description: The DNS name of an existing Amazon Route 53 hosted zone e.g. jevsejev.io
+    Default: www.example.com
+    Description: The DNS name of an existing Amazon Route 53 hosted zone domain name e.g. www.example.com
     AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
     ConstraintDescription: must be a valid DNS zone name.
-  Subdomain: 
+  WebsiteCertificateArn:
     Type: String
-    Default: www
-    Description: The sub domain for the hosted website
-  AcmCertificateArn:
+    Description: the ARN of an AWS Certificate Manager certificate for the website domain that must be in the us-east-1 region.
+    AllowedPattern: "arn:aws:acm:.*"
+  ApiDomain: 
     Type: String
-    Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate must be in the us-east-1 region.
+    Default: api.example.com
+    Description: The DNS name of an existing Amazon Route 53 hosted zone domain name e.g. api.example.com
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  ApiCertificateArn:
+    Type: String
+    Description: the ARN of an AWS Certificate Manager certificate for the API domain that must be in the us-east-1 region.
     AllowedPattern: "arn:aws:acm:.*"
 
 Resources:
@@ -76,14 +83,9 @@ Resources:
         IPV6Enabled: true
         HttpVersion: http2
         Comment: !Ref 'AWS::StackName'
-        Aliases: 
-          - Fn::Join:
-              - ''
-              - - Ref: Subdomain
-                - '.'
-                - Ref: DomainName
+        Aliases: !Ref WebsiteDomain
         ViewerCertificate:
-          AcmCertificateArn: !Ref AcmCertificateArn
+          AcmCertificateArn: !Ref WebsiteCertificateArn
           SslSupportMethod: sni-only
         Origins:
         - Id: s3
@@ -94,14 +96,6 @@ Resources:
                - ''
                - - 'origin-access-identity/cloudfront/'
                  - Ref: CloudFrontAccessIdentity
-        - Id: api-gateway
-          DomainName: !Sub
-            - ${apigId}.execute-api.${AWS::Region}.amazonaws.com
-            - { apigId: !Ref WebApiGatewayApi }
-          OriginPath: /Prod
-          CustomOriginConfig:
-            HTTPSPort: 443
-            OriginProtocolPolicy: https-only
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods:
@@ -121,21 +115,6 @@ Resources:
           LambdaFunctionAssociations:
             - EventType: origin-request
               LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
-        CacheBehaviors:
-          - PathPattern: '/Api/*'
-            AllowedMethods: ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-            CachedMethods: ["GET", "HEAD", "OPTIONS"]
-            ForwardedValues:
-              Headers:
-              - Access-Control-Request-Headers
-              - Access-Control-Request-Method
-              - Origin
-              - Authorization
-              QueryString: true
-            TargetOriginId: api-gateway
-            ViewerProtocolPolicy: https-only
-            Compress: true
-            DefaultTTL: 0
         PriceClass: PriceClass_All
 
   DNSARecord:    
@@ -144,15 +123,13 @@ Resources:
       Name: 
         Fn::Join:
          - ''
-         - - !Ref Subdomain
-           - '.'
-           - !Ref DomainName
+         - - !Ref WebsiteDomain
            - '.'
       Type: A
       HostedZoneName: 
         Fn::Join:
          - ''
-         - - !Ref DomainName
+         - - !Select [2, !Split ["/", !Ref WebsiteDomain]]
            - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
@@ -163,15 +140,13 @@ Resources:
       Name: 
         Fn::Join:
          - ''
-         - - !Ref Subdomain
-           - '.'
-           - !Ref DomainName
+         - - !Ref WebsiteDomain
            - '.'
       Type: AAAA
       HostedZoneName: 
         Fn::Join:
          - ''
-         - - !Ref DomainName
+         - - !Select [2, !Split ["/", !Ref WebsiteDomain]]
            - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
@@ -275,6 +250,18 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: SharkSync.WebApi
+
+  WebApiDomainName:
+    Type: 'AWS::ApiGateway::DomainName'
+    Properties:
+      CertificateArn: !Ref ApiCertificateArn
+      DomainName: !Ref ApiDomain
+
+  WebApiMapping:
+    Type: 'AWS::ApiGateway::BasePathMapping'
+    Properties:
+      DomainName: !Ref ApiDomain
+      RestApiId: !Ref WebApiGatewayApi
 
   WebApiGatewayResource:
     Type: AWS::ApiGateway::Resource

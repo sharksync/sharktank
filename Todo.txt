@@ -2,3 +2,5 @@ JWT tokens for auth
 CSRF checks
 Switch to claims policies
 Deploy lambda@edge functions
+In memory end to end tests, TestHost nuget package
+Refactor auth
