@@ -36,7 +36,7 @@ namespace SharkSync.Deployment
             await ProcessCloudFormationResponse(new CloudFormationResponse
             {
                 Status = "SUCCESS",
-                Reason = null,
+                Reason = "",
                 PhysicalResourceId = context?.LogStreamName,
                 StackId = request.StackId,
                 RequestId = request.RequestId,
