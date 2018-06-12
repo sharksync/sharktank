@@ -11,7 +11,7 @@ Parameters:
     ConstraintDescription: must be a valid DNS zone name.
   WebsiteCertificateArn:
     Type: String
-    Description: the ARN of an AWS Certificate Manager certificate for the website domain that must be in the us-east-1 region.
+    Description: the ARN of an ACM certificate for the website domain that must be in the us-east-1 region.
     AllowedPattern: "arn:aws:acm:.*"
   ApiDomain: 
     Type: String
@@ -21,7 +21,7 @@ Parameters:
     ConstraintDescription: must be a valid DNS zone name.
   ApiCertificateArn:
     Type: String
-    Description: the ARN of an AWS Certificate Manager certificate for the API domain that must be in the us-east-1 region.
+    Description: the ARN of an ACM certificate for the API domain that must be in the us-east-1 region.
     AllowedPattern: "arn:aws:acm:.*"
 
 Resources:
@@ -129,7 +129,9 @@ Resources:
       HostedZoneName: 
         Fn::Join:
          - ''
-         - - !Select [2, !Split ["/", !Ref WebsiteDomain]]
+         - - !Select [1, !Split [".", !Ref WebsiteDomain]]
+           - '.'
+           - !Select [2, !Split [".", !Ref WebsiteDomain]]
            - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
@@ -146,7 +148,9 @@ Resources:
       HostedZoneName: 
         Fn::Join:
          - ''
-         - - !Select [2, !Split ["/", !Ref WebsiteDomain]]
+         - - !Select [1, !Split [".", !Ref WebsiteDomain]]
+           - '.'
+           - !Select [2, !Split [".", !Ref WebsiteDomain]]
            - '.'
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
