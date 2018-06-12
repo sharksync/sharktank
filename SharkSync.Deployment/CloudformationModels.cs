@@ -31,33 +31,39 @@ namespace SharkSync.Deployment
         public string LogicalResourceId { get; set; }
         public object Data { get; set; }
 
-        public static async Task<CloudFormationResponse> CompleteCloudFormationResponse(object data, CloudFormationRequest request, ILambdaContext context)
+        public static async Task CompleteCloudFormation(object data, CloudFormationRequest request, ILambdaContext context)
         {
-            return await ProcessCloudFormationResponse("SUCCESS", data, request, context);
-        }
-
-        public static async Task<CloudFormationResponse> FailCloudFormationResponse(Exception ex, CloudFormationRequest request, ILambdaContext context)
-        {
-            // Limit exceptions strings to 2k
-            return await ProcessCloudFormationResponse("FAILED", ex.ToString().Substring(0, Math.Min(2000, ex.ToString().Length)), request, context);
-        }
-
-        private static async Task<CloudFormationResponse> ProcessCloudFormationResponse(string status, object data, CloudFormationRequest request, ILambdaContext context)
-        {
-            var responseBody = new CloudFormationResponse
+            await ProcessCloudFormationResponse(new CloudFormationResponse
             {
-                Status = status,
-                Reason = $"See the details in CloudWatch Log Stream: {context?.LogStreamName}",
+                Status = "SUCCESS",
+                Reason = null,
                 PhysicalResourceId = context?.LogStreamName,
                 StackId = request.StackId,
                 RequestId = request.RequestId,
                 LogicalResourceId = request.LogicalResourceId,
                 Data = data
-            };
+            }, request, context);
+        }
 
+        public static async Task FailCloudFormation(Exception ex, CloudFormationRequest request, ILambdaContext context)
+        {
+            await ProcessCloudFormationResponse(new CloudFormationResponse
+            {
+                Status = "FAILED",
+                Reason = ex.Message,
+                PhysicalResourceId = context?.LogStreamName,
+                StackId = request.StackId,
+                RequestId = request.RequestId,
+                LogicalResourceId = request.LogicalResourceId,
+                Data = null
+            }, request, context);
+        }
+
+        private static async Task ProcessCloudFormationResponse(CloudFormationResponse response, CloudFormationRequest request, ILambdaContext context)
+        {
             try
             {
-                var jsonPayload = JsonConvert.SerializeObject(responseBody);
+                var jsonPayload = JsonConvert.SerializeObject(response);
 
                 context.Logger.Log($"ProcessCloudFormationResponse: {jsonPayload}");
 
@@ -72,13 +78,8 @@ namespace SharkSync.Deployment
             }
             catch (Exception ex)
             {
-                context.Logger.Log("Exception: " + ex.ToString());
-
-                responseBody.Status = "FAILED";
-                responseBody.Data = ex;
+                context.Logger.Log("Exception in ProcessCloudFormationResponse: " + ex.ToString());
             }
-
-            return responseBody;
         }
     }
 }
