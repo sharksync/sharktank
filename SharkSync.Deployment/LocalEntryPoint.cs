@@ -16,12 +16,12 @@ namespace SharkSync.Deployment
     {
         public static async Task Main(string[] args)
         {
-            await new LambdaEdgeFunction()
-                .FunctionHandlerAsync(new LambdaEdgeRequest
+            await new DeployLambdaEdgeFunction()
+                .FunctionHandlerAsync(new DeployLambdaEdgeRequest
                 {
-                    RequestType = "Delete",
+                    RequestType = "Update",
                     PhysicalResourceId = "arn:aws:lambda:us-east-1:429810410321:function:shark-sync-origin-request",
-                    ResourceProperties = new LambdaEdgeRequest.ResourcePropertiesModel()
+                    ResourceProperties = new DeployLambdaEdgeRequest.ResourcePropertiesModel()
                     {
                         EmbeddedFileName = "origin-request.js",
                         FunctionName = "shark-sync-origin-request",

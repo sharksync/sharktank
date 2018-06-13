@@ -394,18 +394,50 @@ Resources:
           - Arn
       Runtime: dotnetcore2.0
       MemorySize: 128
-      Timeout: 300
+      Timeout: 60
+
+  DeployLambdaEdgeFunctionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: SharkSync.Deployment::SharkSync.Deployment.DeployLambdaEdgeFunction::FunctionHandlerAsync
+      Code:
+        S3Bucket: io.sharksync.builds
+        S3Key: 
+          Fn::Join:
+          - ''
+          - - 'v0.0.0'
+            - '/SharkSync.Deployment.zip'
+      Role:
+        Fn::GetAtt:
+          - DeploymentLambdaRole
+          - Arn
+      Runtime: dotnetcore2.0
+      MemorySize: 128
+      Timeout: 60
 
   UnpackZipIntoS3BucketFunction:
     Type: Custom::UnpackZipIntoS3BucketFunction
     DependsOn: UnpackZipIntoS3BucketFunctionLambda
     Properties:
       ServiceToken: !GetAtt UnpackZipIntoS3BucketFunctionLambda.Arn
-      zipS3Bucket: io.sharksync.builds
-      zipS3Key: 
+      ZipS3Bucket: io.sharksync.builds
+      ZipS3Key: 
         Fn::Join:
         - ''
         - - 'v0.0.0'
           - '/SharkSync.Web.Html.zip'
-      outputS3Bucket: !Ref S3BucketWeb
-      outputPrefix: ''
+      OutputS3Bucket: !Ref S3BucketWeb
+      OutputPrefix: ''
+
+  DeployLambdaEdgeFunction:
+    Type: Custom::DeployLambdaEdgeFunction
+    DependsOn: DeployLambdaEdgeFunctionLambda
+    Properties:
+      ServiceToken: !GetAtt DeployLambdaEdgeFunctionLambda.Arn
+      EmbeddedFileName: origin-request.js
+      FunctionName: 
+        Fn::Join:
+        - ''
+        - - !Ref 'AWS::StackName'
+          - '-origin-request'
+      RoleArn: !Ref LambdaEdgeRole
