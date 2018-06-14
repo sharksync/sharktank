@@ -32,13 +32,17 @@ namespace SharkSync.Deployment
         public string LogicalResourceId { get; set; }
         public object Data { get; set; }
 
-        public static async Task CompleteCloudFormation(object data, string physicalResourceId, CloudFormationRequest request, ILambdaContext context)
+        public static async Task CompleteCloudFormation(object data, CloudFormationRequest request, ILambdaContext context)
         {
+            // We must always have a physicalResourceId, if the function did not populate it, make one here
+            if (string.IsNullOrWhiteSpace(request.PhysicalResourceId))
+                request.PhysicalResourceId = Guid.NewGuid().ToString();
+
             await ProcessCloudFormationResponse(new CloudFormationResponse
             {
                 Status = "SUCCESS",
                 Reason = "",
-                PhysicalResourceId = physicalResourceId ?? context?.LogStreamName,
+                PhysicalResourceId = request.PhysicalResourceId,
                 StackId = request.StackId,
                 RequestId = request.RequestId,
                 LogicalResourceId = request.LogicalResourceId,
@@ -49,12 +53,16 @@ namespace SharkSync.Deployment
         public static async Task FailCloudFormation(Exception ex, CloudFormationRequest request, ILambdaContext context)
         {
             context.Logger.Log($"FailCloudFormation with exception: {ex.ToString()}");
+            
+            // We must always have a physicalResourceId, if the function did not populate it, make one here
+            if (string.IsNullOrWhiteSpace(request.PhysicalResourceId))
+                request.PhysicalResourceId = Guid.NewGuid().ToString();
 
             await ProcessCloudFormationResponse(new CloudFormationResponse
             {
                 Status = "FAILED",
                 Reason = ex.Message,
-                PhysicalResourceId = context?.LogStreamName,
+                PhysicalResourceId = request.PhysicalResourceId,
                 StackId = request.StackId,
                 RequestId = request.RequestId,
                 LogicalResourceId = request.LogicalResourceId,

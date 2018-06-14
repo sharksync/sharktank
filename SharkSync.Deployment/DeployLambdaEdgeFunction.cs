@@ -48,8 +48,7 @@ namespace SharkSync.Deployment
 
                 if (string.IsNullOrWhiteSpace(request.RequestType))
                     throw new ArgumentException($"Missing or empty RequestType");
-
-                string physicalResourceId = request.PhysicalResourceId;
+                
                 string lambdaVersionedArn = null;
 
                 if (request.RequestType == "Create" || request.RequestType == "Update")
@@ -78,33 +77,41 @@ namespace SharkSync.Deployment
                             Role = request.ResourceProperties.RoleArn
                         });
 
-                        physicalResourceId = createResponse.FunctionArn;
+                        request.PhysicalResourceId = createResponse.FunctionArn;
                         lambdaVersionedArn = $"{createResponse.FunctionArn}:{createResponse.Version}";
                     }
                     else if (request.RequestType == "Update")
                     {
-                        if (string.IsNullOrWhiteSpace(physicalResourceId))
-                            throw new Exception("Missing physicalResourceId for an update request");
-
-                        var updateResponse = await LambdaClient.UpdateFunctionCodeAsync(new UpdateFunctionCodeRequest
+                        if (!request.PhysicalResourceId.StartsWith("arn:aws:lambda:"))
                         {
-                            FunctionName = $"{physicalResourceId}",
-                            ZipFile = zipFile,
-                            Publish = true,
-                        });
-                        
-                        lambdaVersionedArn = $"{updateResponse.FunctionArn}:{updateResponse.Version}";
+
+                            var updateResponse = await LambdaClient.UpdateFunctionCodeAsync(new UpdateFunctionCodeRequest
+                            {
+                                FunctionName = $"{request.PhysicalResourceId}",
+                                ZipFile = zipFile,
+                                Publish = true,
+                            });
+
+                            lambdaVersionedArn = $"{updateResponse.FunctionArn}:{updateResponse.Version}";
+                        }
+                        else
+                            context.Logger.LogLine("PhysicalResourceId was not a lambda resource on UPDATE, skipping update command");
                     }
                 }
                 else if (request.RequestType == "Delete")
                 {
-                    var updateResponse = await LambdaClient.DeleteFunctionAsync(new DeleteFunctionRequest
+                    if (request.PhysicalResourceId.StartsWith("arn:aws:lambda:"))
                     {
-                        FunctionName = $"{physicalResourceId}"
-                    });
+                        var updateResponse = await LambdaClient.DeleteFunctionAsync(new DeleteFunctionRequest
+                        {
+                            FunctionName = $"{request.PhysicalResourceId}"
+                        });
+                    }
+                    else
+                        context.Logger.LogLine("PhysicalResourceId was not a lambda resource on DELETE, skipping remove command");
                 }
                 
-                await CloudFormationResponse.CompleteCloudFormation(new { LambdaVersionedArn = lambdaVersionedArn }, physicalResourceId, request, context);
+                await CloudFormationResponse.CompleteCloudFormation(new { LambdaVersionedArn = lambdaVersionedArn }, request, context);
             }
             catch (Exception ex)
             {

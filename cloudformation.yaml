@@ -114,7 +114,10 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
           LambdaFunctionAssociations:
             - EventType: origin-request
-              LambdaFunctionARN: arn:aws:lambda:us-east-1:429810410321:function:sharksync-web-origin-request:3
+              LambdaFunctionARN: 
+                Fn::GetAtt:
+                  - LambdaEdgeOriginRequest
+                  - LambdaVersionedArn
         PriceClass: PriceClass_All
 
   DNSARecord:
@@ -438,7 +441,7 @@ Resources:
       OutputS3Bucket: !Ref S3BucketWeb
       OutputPrefix: ''
 
-  DeployLambdaEdgeFunction:
+  LambdaEdgeOriginRequest:
     Type: Custom::DeployLambdaEdgeFunction
     DependsOn: DeployLambdaEdgeFunctionLambda
     Properties:
