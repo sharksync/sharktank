@@ -57,9 +57,4 @@ namespace SharkSync.Web.Api.Services
             return null;
         }
     }
-
-    public class UnauthorizedResponseViewModel
-    {
-        public string ChallengeUrl { get; set; }
-    }
 }

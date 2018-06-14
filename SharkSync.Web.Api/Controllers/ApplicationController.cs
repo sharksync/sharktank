@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace SharkSync.Web.Api.Controllers
 {
+    [Authorize]
     [Route("Api/Apps")]
     public class ApplicationController : Controller
     {

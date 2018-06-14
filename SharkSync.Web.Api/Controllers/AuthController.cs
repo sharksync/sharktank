@@ -6,6 +6,7 @@ using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
 using SharkSync.Interfaces.Entities;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -40,6 +41,7 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Api/Auth/Details")]
+        [Authorize]
         public async Task<IActionResult> Details()
         {
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
@@ -78,6 +80,22 @@ namespace SharkSync.Web.Api.Controllers
             await HttpContext.SignOutAsync();
 
             return Ok();
+        }
+        
+        [HttpGet()]
+        [Route("Api/Auth/Login")]
+        public IActionResult Login()
+        {
+            // Return unauthorized to trigger the login page in the client
+            return Unauthorized();
+        }
+
+        [HttpGet()]
+        [Route("Api/Auth/AccessDenied")]
+        public IActionResult AccessDenied()
+        {
+            // Return Forbidden to inform the user they can't access this page
+            return Forbid();
         }
     }
 }

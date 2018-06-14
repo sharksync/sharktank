@@ -127,13 +127,15 @@ namespace SharkSync.Web.Api
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = "";
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
             .AddCookie(options =>
             {
                 options.Cookie.SecurePolicy = Environment.IsProduction() ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
                 options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.Path = null;
+                options.LoginPath = "/Api/Auth/Login";
+                options.AccessDeniedPath = "/Api/Auth/AccessDenied";
             })
             .AddOAuth("GitHub", options =>
             {
