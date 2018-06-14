@@ -2,7 +2,5 @@ JWT tokens for auth
 Client library for OpenID connect
 CSRF checks
 Switch to claims policies
-Deploy lambda@edge functions
 In memory end to end tests, TestHost nuget package
-Refactor auth - review sample code
 Security headers on lambda response

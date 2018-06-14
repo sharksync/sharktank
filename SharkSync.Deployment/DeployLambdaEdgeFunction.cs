@@ -85,7 +85,7 @@ namespace SharkSync.Deployment
                     }
                     else if (request.RequestType == "Update")
                     {
-                        if (!request.PhysicalResourceId.StartsWith("arn:aws:lambda:"))
+                        if (request.PhysicalResourceId.StartsWith("arn:aws:lambda:"))
                         {
                             var updateResponse = await LambdaClient.UpdateFunctionCodeAsync(new UpdateFunctionCodeRequest
                             {
