@@ -23,3 +23,4 @@ phases:
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Deployment/bin/release/netcoreapp2.0/SharkSync.Deployment.zip
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Html.zip
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./cloudformation.yaml
+      - aws cloudformation deploy --template-file cloudformation.yaml --stack-name sharksync-web --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset
