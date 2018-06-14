@@ -434,7 +434,7 @@ Resources:
       Runtime: dotnetcore2.0
       MemorySize: 128
       Timeout: 60
-	  
+
   InvalidateCloudFrontFunctionLambda:
     Type: AWS::Lambda::Function
     Properties:
