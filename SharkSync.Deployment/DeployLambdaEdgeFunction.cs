@@ -94,7 +94,11 @@ namespace SharkSync.Deployment
                                 Publish = true,
                             });
 
-                            lambdaVersionedArn = $"{updateResponse.FunctionArn}:{updateResponse.Version}";
+                            // The FunctionArn sometimes returns the version in it
+                            if (updateResponse.FunctionArn.EndsWith(updateResponse.Version))
+                                lambdaVersionedArn = $"{updateResponse.FunctionArn}";
+                            else
+                                lambdaVersionedArn = $"{updateResponse.FunctionArn}:{updateResponse.Version}";
                         }
                         else
                             context.Logger.LogLine("PhysicalResourceId was not a lambda resource on UPDATE, skipping update command");
