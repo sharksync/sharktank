@@ -374,6 +374,9 @@ Resources:
                 - !Ref S3BucketWeb
                 - '/*'
             Action: ["s3:PutObject", "s3:GetObject"]
+          - Effect: Allow
+            Resource: *
+            Action: ["lambda:CreateFunction", "lambda:UpdateFunctionCode", "lambda:DeleteFunction"]
       Roles: 
         - Ref: "DeploymentLambdaRole"
 
@@ -440,4 +443,7 @@ Resources:
         - ''
         - - !Ref 'AWS::StackName'
           - '-origin-request'
-      RoleArn: !Ref LambdaEdgeRole
+      RoleArn: 
+        Fn::GetAtt:
+          - LambdaEdgeRole
+          - Arn
