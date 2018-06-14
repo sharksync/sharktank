@@ -142,6 +142,10 @@ namespace SharkSync.Deployment
 
                     // Lock in a fixed date time to ensure the hash always comes out the same
                     jsEntry.LastWriteTime = new DateTime(2000, 1, 1);
+
+                    // Update the file permissions to give it -rw-rw-r--
+                    jsEntry.ExternalAttributes = -2118909952;
+
                     using (Stream entryStream = jsEntry.Open())
                     {
                         fileStream.CopyTo(entryStream);
