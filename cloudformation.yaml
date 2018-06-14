@@ -378,7 +378,12 @@ Resources:
                 - '/*'
             Action: ["s3:PutObject", "s3:GetObject"]
           - Effect: Allow
-            Resource: "*"
+            Resource: 
+              Fn::Join:
+              - ''
+              - - 'arn:aws:lambda:*:*:function:'
+                - !Ref 'AWS::StackName'
+                - '-*'
             Action: ["lambda:CreateFunction", "lambda:UpdateFunctionCode", "lambda:DeleteFunction"]
           - Effect: Allow
             Resource: 
