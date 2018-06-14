@@ -22,6 +22,9 @@ namespace SharkSync.Deployment
             public string FunctionName { get; set; }
             public string EmbeddedFileName { get; set; }
             public string RoleArn { get; set; }
+
+            // This isn't used but we can use it to force Cloudformation to update our resource
+            public string Version { get; set; }
         }
     }
 
@@ -84,7 +87,6 @@ namespace SharkSync.Deployment
                     {
                         if (!request.PhysicalResourceId.StartsWith("arn:aws:lambda:"))
                         {
-
                             var updateResponse = await LambdaClient.UpdateFunctionCodeAsync(new UpdateFunctionCodeRequest
                             {
                                 FunctionName = $"{request.PhysicalResourceId}",
