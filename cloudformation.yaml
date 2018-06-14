@@ -391,6 +391,9 @@ Resources:
                 - LambdaEdgeRole
                 - Arn
             Action: ["iam:PassRole"]
+          - Effect: Allow
+            Resource: "*
+            Action: ["cloudfront:CreateInvalidation"]
       Roles: 
         - Ref: "DeploymentLambdaRole"
 
@@ -417,6 +420,25 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Handler: SharkSync.Deployment::SharkSync.Deployment.DeployLambdaEdgeFunction::FunctionHandlerAsync
+      Code:
+        S3Bucket: io.sharksync.builds
+        S3Key: 
+          Fn::Join:
+          - ''
+          - - 'v0.0.0'
+            - '/SharkSync.Deployment.zip'
+      Role:
+        Fn::GetAtt:
+          - DeploymentLambdaRole
+          - Arn
+      Runtime: dotnetcore2.0
+      MemorySize: 128
+      Timeout: 60
+	  
+  InvalidateCloudFrontFunctionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: SharkSync.Deployment::SharkSync.Deployment.InvalidateCloudFrontFunction::FunctionHandlerAsync
       Code:
         S3Bucket: io.sharksync.builds
         S3Key: 
@@ -461,3 +483,17 @@ Resources:
         Fn::GetAtt:
           - LambdaEdgeRole
           - Arn
+
+  InvalidateCloudFront:
+    Type: Custom::InvalidateCloudFrontFunction
+    DependsOn: 
+      - InvalidateCloudFrontFunctionLambda
+      - UnpackZipIntoS3BucketFunction
+      - CloudFront
+    Properties:
+      ServiceToken: !GetAtt InvalidateCloudFrontFunctionLambda.Arn
+      DistributionId: !Ref CloudFront
+      CallerReference: 'v0.0.0'
+      Paths: 
+        - "/"
+        - "/Console/*"

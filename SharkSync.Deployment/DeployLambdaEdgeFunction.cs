@@ -151,14 +151,5 @@ namespace SharkSync.Deployment
                 return new MemoryStream(zipStream.ToArray());
             }
         }
-        
-        private string GetChecksumForStream(Stream fileStream)
-        {
-            using (SHA256Managed sha = new SHA256Managed())
-            {
-                byte[] checksum = sha.ComputeHash(fileStream);
-                return Convert.ToBase64String(checksum);
-            }
-        }
     }
 }
