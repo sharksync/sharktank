@@ -375,8 +375,14 @@ Resources:
                 - '/*'
             Action: ["s3:PutObject", "s3:GetObject"]
           - Effect: Allow
-            Resource: *
+            Resource: "*"
             Action: ["lambda:CreateFunction", "lambda:UpdateFunctionCode", "lambda:DeleteFunction"]
+          - Effect: Allow
+            Resource: 
+              Fn::GetAtt:
+                - LambdaEdgeRole
+                - Arn
+            Action: ["iam:PassRole"]
       Roles: 
         - Ref: "DeploymentLambdaRole"
 
