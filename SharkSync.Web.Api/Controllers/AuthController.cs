@@ -26,9 +26,9 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Api/Auth/Start")]
-        public IActionResult Start(string provider)
+        public Task Start(string provider)
         {
-            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Complete") }, provider);
+            return HttpContext.ChallengeAsync(provider, new AuthenticationProperties() { RedirectUri = Url.Action("Complete") });
         }
 
         [HttpGet()]

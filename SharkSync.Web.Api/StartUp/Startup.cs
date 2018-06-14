@@ -77,7 +77,7 @@ namespace SharkSync.Web.Api
 
             AddDataProtectionOptions(services);
 
-            AddAuthenticationOptions(services);
+            AddAuthenticationOptions(services, appSettings);
 
             services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
             services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
@@ -111,11 +111,11 @@ namespace SharkSync.Web.Api
             });
         }
 
-        private void AddAuthenticationOptions(IServiceCollection services)
+        private void AddAuthenticationOptions(IServiceCollection services, AppSettings appSettings)
         {
             var awsOptions = Configuration.GetAWSOptions();
             var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
-            var oAuthSecretTask = secretManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = "SharkSync-OAuth" });
+            var oAuthSecretTask = secretManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = appSettings.SecretId });
             oAuthSecretTask.Wait();
 
             if (oAuthSecretTask.Result == null || string.IsNullOrWhiteSpace(oAuthSecretTask.Result.SecretString))
@@ -152,14 +152,7 @@ namespace SharkSync.Web.Api
                 {
                     OnCreatingTicket = async context =>
                     {
-                        var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-                        var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                        response.EnsureSuccessStatusCode();
-
-                        var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+                        JObject user = await RequestUserDetailsFromProvider(context);
 
                         var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
 
@@ -186,14 +179,7 @@ namespace SharkSync.Web.Api
                 {
                     OnCreatingTicket = async context =>
                     {
-                        var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-                        var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                        response.EnsureSuccessStatusCode();
-
-                        var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+                        JObject user = await RequestUserDetailsFromProvider(context);
 
                         var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
 
@@ -226,14 +212,7 @@ namespace SharkSync.Web.Api
                 {
                     OnCreatingTicket = async context =>
                     {
-                        var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-                        var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                        response.EnsureSuccessStatusCode();
-
-                        var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+                        JObject user = await RequestUserDetailsFromProvider(context);
 
                         var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
 
@@ -252,6 +231,19 @@ namespace SharkSync.Web.Api
                     }
                 };
             });
+        }
+
+        private static async Task<JObject> RequestUserDetailsFromProvider(OAuthCreatingTicketContext context)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+
+            var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+            response.EnsureSuccessStatusCode();
+
+            var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+            return user;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
