@@ -1,80 +1,18 @@
 import * as React from 'react';
-import { ApiHandlers } from '../handlers';
 import { Link, NavLink } from 'react-router-dom';
+import { ApiHandlers } from '../handlers';
+import { Auth, LoggedInUser } from '../auth';
 
-interface NavMenuState {
-    loggedInUser: LoggedInUser | null;
-}
+export class NavMenu extends React.Component<{}, {}> {
 
-interface AuthDetailsResponse {
-    LoggedInUser: LoggedInUser;
-    Success: boolean;
-}
-
-export interface LoggedInUser {
-    Id: string;
-    Name: string;
-    EmailAddress: string;
-    AvatarUrl: string;
-    XSRFToken: string;
-}
-
-export class NavMenu extends React.Component<{}, NavMenuState> {
-
-    public updateLoggedInState() {
-
-        var id = localStorage.getItem('loggedInUserId');
-        var name = localStorage.getItem('loggedInUserName');
-        var email = localStorage.getItem('loggedInUserEmail');
-        var avatarUrl = localStorage.getItem('loggedInUserAvatarUrl');
-        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken');
-
-        var currentUrl = window.location.href.toLowerCase();
-        var onSignInOrSignOutPage = currentUrl.indexOf("/console/login") > -1 || currentUrl.indexOf("/console/logout") > -1; 
-
-        if (id && name && email && avatarUrl && xsrfToken && !onSignInOrSignOutPage) {
-
-            this.state = {
-                loggedInUser: {
-                    Id: id,
-                    Name: name,
-                    EmailAddress: email,
-                    AvatarUrl: avatarUrl,
-                    XSRFToken: xsrfToken
-                }
-            };
-        }
-        else {
-
-            if (!onSignInOrSignOutPage) {
-
-                fetch(ApiHandlers.Url + 'Api/Auth/Details', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Cache': 'no-cache'
-                    },
-                    credentials: 'include'
-                })
-                    .then(response => response.json() as Promise<AuthDetailsResponse>)
-                    .then(data => {
-                        this.setState({ loggedInUser: data.LoggedInUser });
-
-                        localStorage.setItem('loggedInUserId', data.LoggedInUser.Id);
-                        localStorage.setItem('loggedInUserName', data.LoggedInUser.Name);
-                        localStorage.setItem('loggedInUserEmail', data.LoggedInUser.EmailAddress);
-                        localStorage.setItem('loggedInUserAvatarUrl', data.LoggedInUser.AvatarUrl);
-                        localStorage.setItem('loggedInUserXSRFToken', data.LoggedInUser.XSRFToken);
-                    });
-            }
-
-            this.state = { loggedInUser: null };
-        }
+    constructor() {
+        super();
 
     }
 
     public render() {
-        this.updateLoggedInState();
+
+        var loggedInUser = Auth.getLoggedInUserFromCache();
 
         return <div className='main-nav'>
             <div className='navbar navbar-inverse'>
@@ -89,11 +27,11 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
                 </div>
                 <div className='clearfix'></div>
                 <div className='navbar-collapse collapse'>
-                    {this.state.loggedInUser ? this.renderLoggedInMenu() : this.renderLoggedOutMenu() }
+                    {loggedInUser ? this.renderLoggedInMenu() : this.renderLoggedOutMenu() }
                 </div>
                 <div className='clearfix'></div>
                 <div className='navbar-profile navbar-collapse collapse'>
-                    {this.state.loggedInUser ? this.renderProfile(this.state.loggedInUser) : null}
+                    {loggedInUser ? this.renderProfile(loggedInUser) : null}
                 </div>
             </div>
         </div>;

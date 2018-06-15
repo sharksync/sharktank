@@ -41,7 +41,7 @@ namespace SharkSync.Web.Api.Controllers
         [Route("Api/Auth/Complete")]
         public IActionResult Complete()
         {
-            return Redirect($"{AppSettings.ClientAppRootUrl}/Console/Apps");
+            return Redirect($"{AppSettings.ClientAppRootUrl}/Console/LoginComplete");
         }
 
         [HttpGet()]
