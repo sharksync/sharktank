@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace SharkSync.Web.Api.Controllers
 {
     [Authorize]
+    [ValidateAntiForgeryToken]
     [Route("Api/Apps")]
     public class ApplicationController : Controller
     {

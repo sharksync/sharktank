@@ -19,6 +19,7 @@ export class Logout extends React.Component<RouteComponentProps<{}>, LogoutState
         localStorage.removeItem('loggedInUserName');
         localStorage.removeItem('loggedInUserEmail');
         localStorage.removeItem('loggedInUserAvatarUrl');
+        localStorage.removeItem('loggedInUserXSRFToken');
 
         fetch(ApiHandlers.Url + 'Api/Auth/Logout', {
             credentials: 'include'

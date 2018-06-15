@@ -1,6 +1,2 @@
-JWT tokens for auth
-Client library for OpenID connect
-CSRF checks
-Switch to claims policies
 In memory end to end tests, TestHost nuget package
 Security headers on lambda response

@@ -7,6 +7,8 @@ using SharkSync.Web.Api.ViewModels;
 using SharkSync.Interfaces.Entities;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Http;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -17,12 +19,15 @@ namespace SharkSync.Web.Api.Controllers
         AuthService AuthService { get; set; }
 
         AppSettings AppSettings { get; set; }
+        
+        IAntiforgery Antiforgery { get; set; }
 
-        public AuthController(ILogger<AuthController> logger, AuthService authService, IOptions<AppSettings> appSettingsOptions)
+        public AuthController(ILogger<AuthController> logger, AuthService authService, IOptions<AppSettings> appSettingsOptions, IAntiforgery antiforgery)
         {
             Logger = logger;
             AuthService = authService;
             AppSettings = appSettingsOptions.Value;
+            Antiforgery = antiforgery;
         }
 
         [HttpGet()]
@@ -47,6 +52,8 @@ namespace SharkSync.Web.Api.Controllers
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
             if (loggedInAccount == null)
                 return Unauthorized();
+            
+            var tokens = Antiforgery.GetAndStoreTokens(HttpContext);
 
             var vm = new AuthDetailsViewModel()
             {
@@ -55,7 +62,8 @@ namespace SharkSync.Web.Api.Controllers
                     Id = loggedInAccount.Id,
                     Name = loggedInAccount.Name,
                     EmailAddress = loggedInAccount.EmailAddress,
-                    AvatarUrl = loggedInAccount.AvatarUrl
+                    AvatarUrl = loggedInAccount.AvatarUrl,
+                    XSRFToken = tokens.RequestToken
                 }
             };
 

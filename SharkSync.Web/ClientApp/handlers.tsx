@@ -14,6 +14,17 @@ export class ApiHandlers {
 
     static Url = WEB_API_URL;
 
+    static GetStandardHeaders() {
+
+        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken') || '';
+
+        return {
+            'Accept': 'application/json',
+            'Cache': 'no-cache',
+            'X-XSRF-TOKEN': xsrfToken
+        };
+    }
+
     static handleErrors(response: Response) {
         if (!response.ok) {
 
@@ -25,6 +36,7 @@ export class ApiHandlers {
                 localStorage.removeItem('loggedInUserName');
                 localStorage.removeItem('loggedInUserEmail');
                 localStorage.removeItem('loggedInUserAvatarUrl');
+                localStorage.removeItem('loggedInUserXSRFToken');
 
                 // Auth required, redirect to location header
                 window.location.href = "/Console/Login";

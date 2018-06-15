@@ -16,6 +16,7 @@ export interface LoggedInUser {
     Name: string;
     EmailAddress: string;
     AvatarUrl: string;
+    XSRFToken: string;
 }
 
 export class NavMenu extends React.Component<{}, NavMenuState> {
@@ -26,18 +27,20 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
         var name = localStorage.getItem('loggedInUserName');
         var email = localStorage.getItem('loggedInUserEmail');
         var avatarUrl = localStorage.getItem('loggedInUserAvatarUrl');
+        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken');
 
         var currentUrl = window.location.href.toLowerCase();
         var onSignInOrSignOutPage = currentUrl.indexOf("/console/login") > -1 || currentUrl.indexOf("/console/logout") > -1; 
 
-        if (id && name && email && avatarUrl && !onSignInOrSignOutPage) {
+        if (id && name && email && avatarUrl && xsrfToken && !onSignInOrSignOutPage) {
 
             this.state = {
                 loggedInUser: {
                     Id: id,
                     Name: name,
                     EmailAddress: email,
-                    AvatarUrl: avatarUrl
+                    AvatarUrl: avatarUrl,
+                    XSRFToken: xsrfToken
                 }
             };
         }
@@ -61,6 +64,7 @@ export class NavMenu extends React.Component<{}, NavMenuState> {
                         localStorage.setItem('loggedInUserName', data.LoggedInUser.Name);
                         localStorage.setItem('loggedInUserEmail', data.LoggedInUser.EmailAddress);
                         localStorage.setItem('loggedInUserAvatarUrl', data.LoggedInUser.AvatarUrl);
+                        localStorage.setItem('loggedInUserXSRFToken', data.LoggedInUser.XSRFToken);
                     });
             }
 

@@ -35,12 +35,11 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         super();
         this.state = { apps: [], loading: true, showNewAppRow: false, newAppName: '', showNewAppValidationError: false };
 
+        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken') || '';
+
         fetch(ApiHandlers.Url + 'Api/Apps', {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Cache': 'no-cache'
-            },
+            headers: ApiHandlers.GetStandardHeaders(),
             credentials: 'include'
         })
             .then(response => ApiHandlers.handleErrors(response))
@@ -124,14 +123,11 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
             const formData = new FormData();
 
             formData.append('name', this.state.newAppName);
-
+            
             fetch(ApiHandlers.Url + 'Api/Apps',
                 {
                     method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Cache': 'no-cache'
-                    },
+                    headers: ApiHandlers.GetStandardHeaders(),
                     credentials: 'include',
                     body: formData
                 })
@@ -154,14 +150,11 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
         const formData = new FormData();
 
         formData.append('id', appId);
-
+        
         fetch(ApiHandlers.Url + 'Api/Apps',
             {
                 method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'Cache': 'no-cache'
-                },
+                headers: ApiHandlers.GetStandardHeaders(),
                 credentials: 'include',
                 body: formData
             })

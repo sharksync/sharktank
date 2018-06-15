@@ -18,5 +18,6 @@ namespace SharkSync.Web.Api.ViewModels
         public string Name { get; set; }
         public string EmailAddress { get; set; }
         public string AvatarUrl { get; set; }
+        public string XSRFToken { get; set; }
     }
 }

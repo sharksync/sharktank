@@ -75,6 +75,8 @@ namespace SharkSync.Web.Api
                 options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
             });
 
+            services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+
             AddDataProtectionOptions(services);
 
             AddAuthenticationOptions(services, appSettings);
@@ -251,6 +253,20 @@ namespace SharkSync.Web.Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            //Registered before static files to always set header
+            //app.UseHsts(hsts => hsts.MaxAge(365).IncludeSubdomains());
+            //app.UseXContentTypeOptions();
+            //app.UseReferrerPolicy(opts => opts.NoReferrer());
+
+            //app.UseCsp(opts => opts
+            //    .BlockAllMixedContent()
+            //    .ScriptSources(s => s.Self()).ScriptSources(s => s.UnsafeEval())
+            //    .StyleSources(s => s.UnsafeInline())
+            //);
+            //app.UseXXssProtection(options => options.EnabledWithBlockMode());
+            //app.UseXfo(xfo => xfo.Deny());
+
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -274,7 +290,7 @@ namespace SharkSync.Web.Api
                     });
                 });
             }
-
+            
             app.UseAuthentication();
 
             app.UseMvc();
