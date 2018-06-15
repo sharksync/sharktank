@@ -118,6 +118,11 @@ Resources:
                 Fn::GetAtt:
                   - LambdaEdgeOriginRequest
                   - LambdaVersionedArn
+            - EventType: origin-response
+              LambdaFunctionARN: 
+                Fn::GetAtt:
+                  - LambdaEdgeOriginResponse
+                  - LambdaVersionedArn
         PriceClass: PriceClass_All
 
   DNSARecord:
@@ -479,6 +484,23 @@ Resources:
         - ''
         - - !Ref 'AWS::StackName'
           - '-origin-request'
+      RoleArn: 
+        Fn::GetAtt:
+          - LambdaEdgeRole
+          - Arn
+      Version: 'v0.0.0'
+	  
+  LambdaEdgeOriginResponse:
+    Type: Custom::DeployLambdaEdgeFunction
+    DependsOn: DeployLambdaEdgeFunctionLambda
+    Properties:
+      ServiceToken: !GetAtt DeployLambdaEdgeFunctionLambda.Arn
+      EmbeddedFileName: origin-response.js
+      FunctionName: 
+        Fn::Join:
+        - ''
+        - - !Ref 'AWS::StackName'
+          - '-origin-response'
       RoleArn: 
         Fn::GetAtt:
           - LambdaEdgeRole
