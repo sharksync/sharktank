@@ -1,2 +1,3 @@
 In memory end to end tests, TestHost nuget package
+Selenium integration tests
 Security headers on lambda response

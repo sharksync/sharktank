@@ -28,7 +28,7 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
     [TestFixture]
     public class SyncControllerIntegrationTests
     {
-        private const string SyncRequestUrl = "https://5j4kepan7c.execute-api.eu-west-1.amazonaws.com/Prod/Api/Sync";
+        private const string SyncRequestUrl = "https://api.testingallthethings.net/Api/Sync";
         //private const string SyncRequestUrl = "http://localhost:57829/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
@@ -39,12 +39,7 @@ namespace SharkSync.Web.Api.Tests.IntegrationTests
         [SetUp]
         public void SetUp()
         {
-            var credentialProfileStoreChain = new CredentialProfileStoreChain();
-            AWSCredentials awsCredentials;
-            if (!credentialProfileStoreChain.TryGetAWSCredentials("silvergames", out awsCredentials))
-                throw new AmazonClientException("Unable to find a profile named silvergames");
-
-            dynamoDBClient = new AmazonDynamoDBClient(awsCredentials, RegionEndpoint.EUWest1);
+            dynamoDBClient = new AmazonDynamoDBClient(RegionEndpoint.EUWest1);
             dynamoDBContext = new DynamoDBContext(dynamoDBClient);
         }
 

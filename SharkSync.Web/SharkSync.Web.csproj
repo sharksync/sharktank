@@ -23,15 +23,10 @@
 
   <ItemGroup>
     <None Remove=".gitignore" />
-    <None Remove="ClientApp\components\DeleteButton.tsx" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SharkSync.Repositories\SharkSync.Interfaces.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <TypeScriptCompile Include="ClientApp\components\DeleteButton.tsx" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">

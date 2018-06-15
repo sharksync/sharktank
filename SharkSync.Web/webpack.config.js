@@ -33,7 +33,7 @@ module.exports = (env) => {
             }),
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': isDevBuild ? '"development"' : '"production"',
-                'WEB_API_URL': isDevBuild ? '"http://localhost:57829/"' : '"https://api.testingallthethings.net/"',
+                'WEB_API_URL': isDevBuild ? '"https://localhost:44325/"' : '"https://api.testingallthethings.net/"',
             })
         ].concat(isDevBuild ? [
             // Plugins that apply in development builds only
