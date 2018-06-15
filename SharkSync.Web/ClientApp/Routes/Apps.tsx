@@ -96,10 +96,10 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 </td>
                 <td colSpan={3}>
                     <div className="btn-toolbar">
-                        <button type="button" className="btn btn-success" onClick={() => this.addApp()}>
+                        <button type="button" className="btn btn-success" disabled={this.state.savingNewApp} onClick={() => this.addApp()}>
                             {this.state.savingNewApp ? <span><FontAwesome name="spinner" spin /> Saving...</span> : 'Save'}
                         </button>
-                        <button type="button" className="btn btn-info" onClick={() => this.setState({ showNewAppRow: false })}>Cancel</button>
+                        <button type="button" className="btn btn-info" disabled={this.state.savingNewApp} onClick={() => this.setState({ showNewAppRow: false })}>Cancel</button>
                     </div>
                 </td>
             </tr>
