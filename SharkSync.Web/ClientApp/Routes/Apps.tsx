@@ -11,6 +11,7 @@ interface AppsState {
     showNewAppRow: boolean;
     newAppName: string;
     showNewAppValidationError: boolean;
+    savingNewApp: boolean;
 }
 
 interface GetListResponse {
@@ -33,10 +34,8 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
 
     constructor() {
         super();
-        this.state = { apps: [], loading: true, showNewAppRow: false, newAppName: '', showNewAppValidationError: false };
-
-        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken') || '';
-
+        this.state = { apps: [], loading: true, showNewAppRow: false, newAppName: '', showNewAppValidationError: false, savingNewApp: false };
+        
         fetch(ApiHandlers.Url + 'Api/Apps', {
             method: 'GET',
             headers: ApiHandlers.GetStandardHeaders(),
@@ -97,7 +96,9 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 </td>
                 <td colSpan={3}>
                     <div className="btn-toolbar">
-                        <button type="button" className="btn btn-success" onClick={() => this.addApp()}>Save</button>
+                        <button type="button" className="btn btn-success" onClick={() => this.addApp()}>
+                            {this.state.savingNewApp ? <span><FontAwesome name="spinner" spin /> Saving...</span> : 'Save'}
+                        </button>
                         <button type="button" className="btn btn-info" onClick={() => this.setState({ showNewAppRow: false })}>Cancel</button>
                     </div>
                 </td>
@@ -118,7 +119,7 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
     private addApp() {
 
         if (this.state.newAppName) {
-            this.setState({ showNewAppValidationError: false });
+            this.setState({ showNewAppValidationError: false, savingNewApp: true });
 
             const formData = new FormData();
 
@@ -135,9 +136,9 @@ export class Apps extends React.Component<RouteComponentProps<{}>, AppsState> {
                 .then(response => response.json() as Promise<AddResponse>)
                 .then(data => {
                     this.state.apps.push(data.Application);
-                    this.setState({ showNewAppRow: false });
+                    this.setState({ showNewAppRow: false, savingNewApp: false });
                 }).catch(error => {
-                    this.setState({ showNewAppRow: false });
+                    this.setState({ showNewAppRow: false, savingNewApp: false });
                 });
         }
         else {

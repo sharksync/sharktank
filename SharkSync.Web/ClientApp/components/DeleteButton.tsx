@@ -55,7 +55,7 @@ export class DeleteButton extends React.Component<DeleteButtonProps, DeleteButto
 
         return <div>
             <button className="btn btn-danger" disabled={isLoading} onClick={this.handleClick}>
-                {isLoading ? <span><FontAwesome name="spinner" spin /> Delete</span> : 'Delete'}
+                {isLoading ? <span><FontAwesome name="spinner" spin /> Deleting...</span> : 'Delete'}
             </button>
         </div>;
     }
