@@ -1,3 +1,4 @@
+import { Auth } from './auth';
 import swal from 'sweetalert2';
 
 interface HttpError extends Error {
@@ -31,13 +32,8 @@ export class ApiHandlers {
             // Need to sign in?
             if (response.status == 401) {
 
-                // Clear stored auth details
-                localStorage.removeItem('loggedInUserId');
-                localStorage.removeItem('loggedInUserName');
-                localStorage.removeItem('loggedInUserEmail');
-                localStorage.removeItem('loggedInUserAvatarUrl');
-                localStorage.removeItem('loggedInUserXSRFToken');
-
+                Auth.clearLoggedInCache();
+                
                 // Auth required, redirect to location header
                 window.location.href = "/Console/Login";
                 throw Error("Unauthorized");

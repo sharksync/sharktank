@@ -62,4 +62,14 @@ export class Auth {
 
     }
 
+    public static clearLoggedInCache() {
+
+        localStorage.removeItem('loggedInUserId');
+        localStorage.removeItem('loggedInUserName');
+        localStorage.removeItem('loggedInUserEmail');
+        localStorage.removeItem('loggedInUserAvatarUrl');
+        localStorage.removeItem('loggedInUserXSRFToken');
+
+    }
+
 }
