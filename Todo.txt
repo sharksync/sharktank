@@ -1,4 +1,5 @@
 Stream profile picture from same origin
 In memory end to end tests, TestHost nuget package
+Add unit tests runs to build process
 Selenium integration tests
 https://aws.amazon.com/blogs/devops/using-aws-codepipeline-aws-codebuild-and-aws-lambda-for-serverless-automated-ui-testing/
