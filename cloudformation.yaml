@@ -489,7 +489,7 @@ Resources:
           - LambdaEdgeRole
           - Arn
       Version: 'v0.0.0'
-	  
+      
   LambdaEdgeOriginResponse:
     Type: Custom::DeployLambdaEdgeFunction
     DependsOn: DeployLambdaEdgeFunctionLambda
