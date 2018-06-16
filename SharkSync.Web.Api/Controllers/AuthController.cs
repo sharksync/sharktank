@@ -91,6 +91,15 @@ namespace SharkSync.Web.Api.Controllers
         }
         
         [HttpGet()]
+        [Route("Api/Auth/ProfilePicture")]
+        public async Task<IActionResult> ProfilePicture()
+        {
+            // TODO: Complete profile streaming            
+
+            return Ok();
+        }
+        
+        [HttpGet()]
         [Route("Api/Auth/Login")]
         public IActionResult Login()
         {
