@@ -9,6 +9,9 @@ phases:
       - dotnet restore
       - dotnet build --configuration release
       - dotnet publish --configuration release
+      - cd SharkSync.Web.Api.Tests
+      - dotnet test
+      - cd ../
       - cd SharkSync.Web.Api
       - dotnet lambda package --configuration release --framework netcoreapp2.0
       - cd ../
@@ -24,3 +27,5 @@ phases:
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Html.zip
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./cloudformation.yaml
       - aws cloudformation deploy --template-file cloudformation.yaml --stack-name sharksync-web --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset
+      - cd SharkSync.IntegrationTests
+      - dotnet test

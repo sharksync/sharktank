@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.Deployment", "SharkSync.Deployment\SharkSync.Deployment.csproj", "{DD5D6B1A-DCA5-4276-B8B2-751CE8DF847D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.IntegrationTests", "SharkSync.IntegrationTests\SharkSync.IntegrationTests.csproj", "{EAC2F9BD-5F95-4CB7-9635-382CBC343117}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{DD5D6B1A-DCA5-4276-B8B2-751CE8DF847D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD5D6B1A-DCA5-4276-B8B2-751CE8DF847D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD5D6B1A-DCA5-4276-B8B2-751CE8DF847D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAC2F9BD-5F95-4CB7-9635-382CBC343117}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAC2F9BD-5F95-4CB7-9635-382CBC343117}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAC2F9BD-5F95-4CB7-9635-382CBC343117}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAC2F9BD-5F95-4CB7-9635-382CBC343117}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,35 +1,24 @@
-using SharkSync.Web.Api.Controllers;
+using Amazon;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
+using Newtonsoft.Json;
+using NUnit.Framework;
+using SharkSync.Repositories.Entities;
 using SharkSync.Web.Api.ViewModels;
-using Microsoft.Extensions.Logging;
-using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using NUnit.Framework;
-using SharkSync.Interfaces.Repositories;
-using SharkSync.Interfaces.Entities;
-using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Net;
-using Newtonsoft.Json;
-using SharkSync.Repositories.Entities;
-using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2;
-using Amazon.Runtime;
-using Amazon.Runtime.CredentialManagement;
-using Amazon;
-using Amazon.DynamoDBv2.Model;
+using System.Threading.Tasks;
 
-namespace SharkSync.Web.Api.Tests.IntegrationTests
+namespace SharkSync.IntegrationTests
 {
     [TestFixture]
-    public class SyncControllerIntegrationTests
+    public class SyncController
     {
         private const string SyncRequestUrl = "https://api.testingallthethings.net/Api/Sync";
-        //private const string SyncRequestUrl = "http://localhost:57829/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
