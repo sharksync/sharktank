@@ -58,9 +58,16 @@ export class NavMenu extends React.Component<{}, {}> {
     }
 
     public renderProfile(loggedInUser: LoggedInUser) {
+
+        var avatarUrl = ApiHandlers.Url + "Api/Auth/ProfilePicture";
+
+        if (loggedInUser != null && !loggedInUser.HasAvatarUrl) {
+            avatarUrl = "/img/profile-icons/" + loggedInUser.AccountType.toLowerCase();
+        }
+
         return <ul className='nav navbar-nav'>
             <li>
-                <img src={loggedInUser.AvatarUrl} height="32px" width="32px" className="avatar" />              
+                <img src={avatarUrl} height="32px" width="32px" className="avatar" />              
                 <span>{loggedInUser.Name}</span>
                 <NavLink to={'/Console/Logout'} exact activeClassName='active' className="logout">
                     <span className='glyphicon glyphicon-log-out'></span> Logout

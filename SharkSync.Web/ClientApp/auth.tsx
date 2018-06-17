@@ -11,7 +11,8 @@ export interface LoggedInUser {
     Id: string;
     Name: string;
     EmailAddress: string;
-    AvatarUrl: string;
+    AccountType: string;
+    HasAvatarUrl: boolean;
     XSRFToken: string;
 }
 
@@ -19,24 +20,13 @@ export class Auth {
 
     public static getLoggedInUserFromCache(): LoggedInUser | null {
 
-        var id = localStorage.getItem('loggedInUserId');
-        var name = localStorage.getItem('loggedInUserName');
-        var email = localStorage.getItem('loggedInUserEmail');
-        var avatarUrl = localStorage.getItem('loggedInUserAvatarUrl');
-        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken');
+        var stringOfUser = localStorage.getItem('loggedInUser');
+        var user = null;
 
-        if (id && name && email && avatarUrl && xsrfToken) {
+        if (stringOfUser)
+            user = JSON.parse(stringOfUser);
 
-            return {
-                Id: id,
-                Name: name,
-                EmailAddress: email,
-                AvatarUrl: avatarUrl,
-                XSRFToken: xsrfToken
-            };
-        }
-
-        return null;
+        return user;
     }
     
     public static putLoggedInUserIntoCache(callback: userDetailsCallback) {
@@ -49,11 +39,7 @@ export class Auth {
             .then(response => response.json() as Promise<AuthDetailsResponse>)
             .then(data => {
 
-                localStorage.setItem('loggedInUserId', data.LoggedInUser.Id);
-                localStorage.setItem('loggedInUserName', data.LoggedInUser.Name);
-                localStorage.setItem('loggedInUserEmail', data.LoggedInUser.EmailAddress);
-                localStorage.setItem('loggedInUserAvatarUrl', data.LoggedInUser.AvatarUrl);
-                localStorage.setItem('loggedInUserXSRFToken', data.LoggedInUser.XSRFToken);
+                localStorage.setItem('loggedInUser', JSON.stringify(data.LoggedInUser));
 
                 callback(data.LoggedInUser);
             }).catch(ex => {
@@ -64,11 +50,7 @@ export class Auth {
 
     public static clearLoggedInCache() {
 
-        localStorage.removeItem('loggedInUserId');
-        localStorage.removeItem('loggedInUserName');
-        localStorage.removeItem('loggedInUserEmail');
-        localStorage.removeItem('loggedInUserAvatarUrl');
-        localStorage.removeItem('loggedInUserXSRFToken');
+        localStorage.removeItem('loggedInUser');
 
     }
 

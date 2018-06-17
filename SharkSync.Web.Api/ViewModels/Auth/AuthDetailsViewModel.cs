@@ -17,7 +17,8 @@ namespace SharkSync.Web.Api.ViewModels
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string EmailAddress { get; set; }
-        public string AvatarUrl { get; set; }
+        public string AccountType { get; set; }
+        public bool HasAvatarUrl { get; set; }
         public string XSRFToken { get; set; }
     }
 }

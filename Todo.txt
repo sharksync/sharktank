@@ -1,4 +1,3 @@
-Stream profile picture from same origin
 In memory end to end tests, TestHost nuget package
 Add unit tests runs to build process
 Selenium integration tests

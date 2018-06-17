@@ -35,7 +35,7 @@ namespace SharkSync.Web
                 .DefaultSources(s => s.Self().CustomSources("data:"))
                 .ScriptSources(s => s.Self())
                 .ConnectSources(s => s.Self().CustomSources("https://localhost:44325"))
-                .ImageSources(s => s.Self().CustomSources("data:"))
+                .ImageSources(s => s.Self().CustomSources("data:", "https://localhost:44325"))
                 .FontSources(s => s.Self().CustomSources("data:"))
                 .StyleSources(s => s.Self().UnsafeInline())
                 .BlockAllMixedContent()
