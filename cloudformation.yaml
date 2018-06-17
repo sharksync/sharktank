@@ -506,6 +506,11 @@ Resources:
           - LambdaEdgeRole
           - Arn
       Version: 'v0.0.0'
+      ReplacementPairs: 
+        - Fn::Join:
+          - ''
+          - - 'ServiceUrl=https://'
+            - !Ref ApiDomain
 
   InvalidateCloudFront:
     Type: Custom::InvalidateCloudFrontFunction

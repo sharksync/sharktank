@@ -23,9 +23,10 @@ namespace SharkSync.Deployment
                     PhysicalResourceId = "arn:aws:lambda:us-east-1:429810410321:function:shark-sync-origin-request",
                     ResourceProperties = new DeployLambdaEdgeRequest.ResourcePropertiesModel()
                     {
-                        EmbeddedFileName = "origin-request.js",
-                        FunctionName = "shark-sync-origin-request",
-                        RoleArn = "arn:aws:iam::429810410321:role/lambda-edge-role"
+                        EmbeddedFileName = "origin-response.js",
+                        FunctionName = "shark-sync-origin-response",
+                        RoleArn = "arn:aws:iam::429810410321:role/lambda-edge-role",
+                        ReplacementPairs = new List<string>() { "ServiceUrl=https://localhost:44325" }
                     }
                 }, new TestLambdaContext());
         }

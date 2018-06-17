@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Lambda;
@@ -22,6 +23,7 @@ namespace SharkSync.Deployment
             public string FunctionName { get; set; }
             public string EmbeddedFileName { get; set; }
             public string RoleArn { get; set; }
+            public List<string> ReplacementPairs { get; set; }
 
             // This isn't used but we can use it to force Cloudformation to update our resource
             public string Version { get; set; }
@@ -134,8 +136,29 @@ namespace SharkSync.Deployment
 
             if (jsResourceStream == null)
                 throw new Exception($"Failed to find an embedded resource at {embeddedResourcePath}");
-            
-            return jsResourceStream;
+
+            string jsText;
+
+            using (StreamReader reader = new StreamReader(jsResourceStream))
+                jsText = reader.ReadToEnd();
+
+            if (request.ResourceProperties.ReplacementPairs != null)
+            {
+                // Allow a list of replacement pairs in the format of key=value
+                // These can replace %%key%% found in file with the value
+                // For example %%domain%% to the live domain used in the stack
+                foreach (var pair in request.ResourceProperties.ReplacementPairs)
+                {
+                    var keyValuePair = pair.Split("=");
+
+                    if (keyValuePair.Length != 2)
+                        throw new Exception($"Found ReplacementPairs \"{pair}\" that did not split into two parts");
+
+                    jsText = jsText.Replace($"%%{keyValuePair[0]}%%", keyValuePair[1]);
+                }
+            }
+
+            return new MemoryStream(Encoding.UTF8.GetBytes(jsText));
         }
 
         private static MemoryStream AddFileStreamToZipAndReturnZipStream(Stream fileStream, string fileName)
