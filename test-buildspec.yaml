@@ -3,5 +3,7 @@
 phases:
   build:
     commands:
+      - yum install rh-dotnet21 -y
+      - scl enable rh-dotnet21 bash
       - cd SharkSync.IntegrationTests
       - dotnet test
