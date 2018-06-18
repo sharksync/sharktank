@@ -29,16 +29,11 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         public void Init()
         {
             string unitTestPath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Tests)).Location);
-            string solutionPath = unitTestPath.Replace("SharkSync.IntegrationTests/bin/Debug/netcoreapp2.0/SharkSync.IntegrationTests.dll", "");
+            //string solutionPath = unitTestPath.Replace("SharkSync.IntegrationTests/bin/Debug/netcoreapp2.0/SharkSync.IntegrationTests.dll", "");
 
             if (browser == "Chrome")
             {
-                string chromePath = null;
-#if !DEBUG 
-                chromePath = Path.Combine(solutionPath, "node_modules/puppeteer/.local-chromium/linux-564778");
-#endif
-                var options = new ChromeOptions() { BinaryLocation = chromePath };
-                driver = new ChromeDriver(unitTestPath, options);
+                driver = new ChromeDriver(unitTestPath);
             }
             else if (browser == "Firefox")
             {
