@@ -104,8 +104,10 @@ namespace SharkSync.Web.Api.Controllers
             {
                 var response = await HttpClient.GetAsync(avatarUrl);
                 response.EnsureSuccessStatusCode();
-                var stream = await response.Content.ReadAsStreamAsync();
-                return File(stream, response.Content.Headers.ContentType.MediaType);
+
+                // Since we are in a lambda, we can't stream the bytes live, copy it into memory first
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                return File(bytes, response.Content.Headers.ContentType.MediaType);
             }
             
             return Ok();
