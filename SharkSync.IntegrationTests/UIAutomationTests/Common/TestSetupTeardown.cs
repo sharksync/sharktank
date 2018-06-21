@@ -28,16 +28,16 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         [SetUp]
         public void Init()
         {
-            string unitTestPath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Tests)).Location);
+            //string unitTestPath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Tests)).Location);
             //string solutionPath = unitTestPath.Replace("SharkSync.IntegrationTests/bin/Debug/netcoreapp2.0/SharkSync.IntegrationTests.dll", "");
 
             if (browser == "Chrome")
             {
-                driver = new ChromeDriver(unitTestPath);
+                driver = new ChromeDriver();
             }
             else if (browser == "Firefox")
             {
-                driver = new FirefoxDriver(unitTestPath);
+                driver = new FirefoxDriver();
             }
             else
             {
