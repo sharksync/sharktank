@@ -33,7 +33,10 @@ export class Auth {
         
         fetch(ApiHandlers.Url + 'Api/Auth/Details', {
             method: 'GET',
-            headers: ApiHandlers.GetStandardHeaders(),
+            headers: {
+                'Accept': 'application/json',
+                'Cache': 'no-cache'
+            },
             credentials: 'include'
         })
             .then(response => response.json() as Promise<AuthDetailsResponse>)

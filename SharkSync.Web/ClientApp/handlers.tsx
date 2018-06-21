@@ -17,7 +17,8 @@ export class ApiHandlers {
 
     static GetStandardHeaders() {
 
-        var xsrfToken = localStorage.getItem('loggedInUserXSRFToken') || '';
+        var loggedInUser = Auth.getLoggedInUserFromCache();
+        var xsrfToken = loggedInUser ? loggedInUser.XSRFToken : '';
 
         return {
             'Accept': 'application/json',
