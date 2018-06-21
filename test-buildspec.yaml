@@ -3,11 +3,20 @@
 phases:
   build:
     commands:
-      - sudo apt-get update
-      - sudo apt-get -y install apt-transport-https
+      - apt-get update
+      - apt-get -y upgrade
+      - apt-get install xvfb python python-pip build-essential apt-transport-https -y
+      - pip install --upgrade pip
+      - pip install selenium
+      - pip install awscli
+      - pip install requests
+      - pip install boto3
+      - cp xvfb.init /etc/init.d/xvfb
+      - chmod +x /etc/init.d/xvfb
+      - update-rc.d xvfb defaults
+      - service xvfb start
       - wget -q https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb
       - sudo dpkg -i packages-microsoft-prod.deb
-      - sudo apt-get update
       - sudo apt-get -y install dotnet-sdk-2.1
       - cd SharkSync.IntegrationTests
       - dotnet test
