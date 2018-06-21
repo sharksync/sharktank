@@ -48,7 +48,8 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         [TearDown]
         public void CleanUp()
         {
-            driver.Quit();
+            if (driver != null)
+                driver.Quit();
         }
     }
 }
