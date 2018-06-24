@@ -107,6 +107,7 @@ namespace SharkSync.Web.Api.Controllers
 
                 // Since we are in a lambda, we can't stream the bytes live, copy it into memory first
                 var bytes = await response.Content.ReadAsByteArrayAsync();
+                Logger.LogInformation($"Read profile image into byte[] at size: {bytes.Length}");
                 return File(bytes, response.Content.Headers.ContentType.MediaType);
             }
             
