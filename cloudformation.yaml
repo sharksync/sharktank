@@ -262,6 +262,9 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: SharkSync.WebApi
+      MinimumCompressionSize: 0
+      BinaryMediaTypes:  
+        - "*/*"
 
   WebApiDomainName:
     Type: AWS::ApiGateway::DomainName
@@ -313,6 +316,7 @@ Resources:
       Integration:
         IntegrationHttpMethod: ANY
         Type: AWS_PROXY
+        ContentHandling: CONVERT_TO_BINARY
         Uri: !Sub
         - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Arn}/invocations
         - Arn:
@@ -326,7 +330,7 @@ Resources:
   WebApiGatewayDeployment:
     DependsOn:
       - WebApiGatewayProxyMethod
-    Type: 'AWS::ApiGateway::Deployment'
+    Type: AWS::ApiGateway::Deployment
     Properties:
       RestApiId: !Ref WebApiGatewayApi
       StageName: Prod
