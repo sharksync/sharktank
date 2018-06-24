@@ -5,9 +5,10 @@ phases:
     commands:
       - apt-get update
       - apt-get -y upgrade
-      - apt-get install xvfb python python-pip build-essential apt-transport-https curl -y
+      - apt-get install xvfb python python-pip build-essential apt-transport-https curl zip -y
       - pip install --upgrade pip
       - pip install selenium
+      - pip install awscli
       - cp xvfb.init /etc/init.d/xvfb
       - chmod +x /etc/init.d/xvfb
       - update-rc.d xvfb defaults
