@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace SharkSync.IntegrationTests.UIAutomationTests
 {
     [TestFixture("Chrome")]
-    //[TestFixture("Firefox")]
+    [TestFixture("Firefox")]
     public partial class Tests
     {
         protected IWebDriver driver;
@@ -29,13 +29,15 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         public void Init()
         {
             string unitTestPath = null;
+            string firefoxInstallPath = null;
 #if DEBUG
             unitTestPath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Tests)).Location);
+            firefoxInstallPath = @"C:\Program Files\Mozilla Firefox\firefox.exe";
 #endif
             if (browser == "Chrome")
                 driver = new ChromeDriver(unitTestPath);
             else if (browser == "Firefox")
-                driver = new FirefoxDriver(unitTestPath);
+                driver = new FirefoxDriver(unitTestPath, new FirefoxOptions { BrowserExecutableLocation = firefoxInstallPath });
             else
                 throw new Exception("Unsupported browser driver");
         }
