@@ -24,7 +24,6 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             driver.FindElement(By.Id("login_field")).SendKeys(Secrets.GithubUsername);
             driver.FindElement(By.Id("password")).SendKeys(Secrets.GithubPassword);
             driver.FindElement(By.CssSelector("input[type=submit]")).Click();
-            wait.Until(ExpectedConditions.UrlToBe(LoginCompleteUrl));
             
             wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
         }
@@ -46,9 +45,7 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
             driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.GooglePassword);
             driver.FindElement(By.Id("passwordNext")).Click();
-            // For some reason LoginComplete has a # at the end for google
-            wait.Until(ExpectedConditions.UrlContains(LoginCompleteUrl));
-            
+
             wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
         }
 
@@ -69,8 +66,6 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
             driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.MicrosoftPassword);
             driver.FindElement(By.CssSelector("input[type=submit]")).Click();
-            // For some reason LoginComplete has a # at the end for google
-            wait.Until(ExpectedConditions.UrlContains(LoginCompleteUrl));
             
             wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
         }

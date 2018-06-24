@@ -50,7 +50,7 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             else
                 throw new Exception("Unsupported browser driver");
             
-            wait = new WebDriverWait(driver, new TimeSpan(hours: 0, minutes: 0, seconds: 10));
+            wait = new WebDriverWait(driver, new TimeSpan(hours: 0, minutes: 0, seconds: 20));
         }
 
         [TearDown]
