@@ -45,8 +45,15 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
             driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.GooglePassword);
             driver.FindElement(By.Id("passwordNext")).Click();
-
-            wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+            
+            try
+            {
+                wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ended on URL: " + driver.Url, ex);
+            }
         }
 
         [Test]
@@ -66,8 +73,15 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
             driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.MicrosoftPassword);
             driver.FindElement(By.CssSelector("input[type=submit]")).Click();
-            
-            wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+
+            try
+            {
+                wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ended on URL: " + driver.Url, ex);
+            }
         }
     }
 }
