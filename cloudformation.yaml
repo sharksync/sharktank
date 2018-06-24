@@ -87,6 +87,7 @@ Resources:
         ViewerCertificate:
           AcmCertificateArn: !Ref WebsiteCertificateArn
           SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2018
         Origins:
         - Id: s3
           DomainName: !GetAtt S3BucketWeb.DomainName
