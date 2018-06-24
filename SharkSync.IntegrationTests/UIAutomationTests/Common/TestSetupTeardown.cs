@@ -28,21 +28,16 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         [SetUp]
         public void Init()
         {
-            //string unitTestPath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Tests)).Location);
-            //string solutionPath = unitTestPath.Replace("SharkSync.IntegrationTests/bin/Debug/netcoreapp2.0/SharkSync.IntegrationTests.dll", "");
-
+            string unitTestPath = null;
+#if DEBUG
+            unitTestPath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Tests)).Location);
+#endif
             if (browser == "Chrome")
-            {
-                driver = new ChromeDriver();
-            }
+                driver = new ChromeDriver(unitTestPath);
             else if (browser == "Firefox")
-            {
-                driver = new FirefoxDriver();
-            }
+                driver = new FirefoxDriver(unitTestPath);
             else
-            {
-                throw new Exception("Unsupported browser driver for local");
-            }
+                throw new Exception("Unsupported browser driver");
         }
 
         [TearDown]
