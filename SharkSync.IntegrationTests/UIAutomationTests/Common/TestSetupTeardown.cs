@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace SharkSync.IntegrationTests.UIAutomationTests
 {
     [TestFixture("Chrome")]
-    [TestFixture("Firefox")]
+    //[TestFixture("Firefox")]
     public partial class Tests
     {
         protected IWebDriver driver;
