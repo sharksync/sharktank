@@ -46,7 +46,8 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
             driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.GooglePassword);
             driver.FindElement(By.Id("passwordNext")).Click();
-            wait.Until(ExpectedConditions.UrlToBe(LoginCompleteUrl));
+            // For some reason LoginComplete has a # at the end for google
+            wait.Until(ExpectedConditions.UrlContains(LoginCompleteUrl));
             
             wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
         }
