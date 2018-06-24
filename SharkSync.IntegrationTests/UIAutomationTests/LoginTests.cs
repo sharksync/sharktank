@@ -51,5 +51,28 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             
             wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
         }
+
+        [Test]
+        public void LoginTests_Microsoft()
+        {
+            driver.Navigate().GoToUrl(TestingUrl);
+
+            driver.FindElement(By.CssSelector(".navbar-nav")).Click();
+            wait.Until(ExpectedConditions.UrlToBe(LoginUrl));
+
+            driver.FindElement(By.CssSelector(".microsoft-login")).Click();
+            wait.Until(ExpectedConditions.UrlContains("https://login.microsoftonline.com"));
+            
+            driver.FindElement(By.CssSelector("input[type=email]")).SendKeys(Secrets.MicrosoftUsername);
+            driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+            
+            wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
+            driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.MicrosoftPassword);
+            driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+            // For some reason LoginComplete has a # at the end for google
+            wait.Until(ExpectedConditions.UrlContains(LoginCompleteUrl));
+            
+            wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+        }
     }
 }
