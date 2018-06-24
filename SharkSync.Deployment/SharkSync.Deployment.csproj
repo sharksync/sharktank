@@ -18,9 +18,9 @@
     <PackageReference Include="Amazon.Lambda.Core" Version="1.0.0" />
     <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.2.0" />
     <PackageReference Include="Amazon.Lambda.TestUtilities" Version="1.0.0" />
-    <PackageReference Include="AWSSDK.CloudFront" Version="3.3.7.3" />
-    <PackageReference Include="AWSSDK.Lambda" Version="3.3.13.3" />
-    <PackageReference Include="AWSSDK.S3" Version="3.3.18.3" />
+    <PackageReference Include="AWSSDK.CloudFront" Version="3.3.7.5" />
+    <PackageReference Include="AWSSDK.Lambda" Version="3.3.13.5" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.18.5" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.10" />
-    <PackageReference Include="AWSSDK.SecretsManager" Version="3.3.0.10" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.10.2" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="3.3.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.3.6" />
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="2.0.4" />

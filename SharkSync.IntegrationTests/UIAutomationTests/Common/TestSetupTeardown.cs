@@ -9,6 +9,10 @@ using OpenQA.Selenium.Support.UI;
 using System.Reflection;
 using System.Drawing;
 using System.Collections.Generic;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
+using Newtonsoft.Json;
+using Amazon;
 
 namespace SharkSync.IntegrationTests.UIAutomationTests
 {
@@ -16,9 +20,14 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
     //[TestFixture("Firefox")]
     public partial class Tests
     {
-        protected IWebDriver driver;
+        private const string TestingUrl = "https://www.testingallthethings.net";
+        private const string LoginUrl = TestingUrl + "/Console/Login";
+        private const string LoginCompleteUrl = TestingUrl + "/Console/LoginComplete";
+        private const string AppsUrl = TestingUrl + "/Console/Apps";
 
-        private string browser;
+        protected string browser;
+        protected IWebDriver driver;
+        protected WebDriverWait wait;
 
         public Tests(string browser)
         {
@@ -40,6 +49,8 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
                 driver = new FirefoxDriver(unitTestPath, new FirefoxOptions { BrowserExecutableLocation = firefoxInstallPath });
             else
                 throw new Exception("Unsupported browser driver");
+            
+            wait = new WebDriverWait(driver, new TimeSpan(hours: 0, minutes: 0, seconds: 10));
         }
 
         [TearDown]
@@ -48,5 +59,34 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             if (driver != null)
                 driver.Quit();
         }
+        
+        private SecretsViewModel _secrets;
+        protected SecretsViewModel Secrets
+        {
+            get
+            {
+                if (_secrets == null)
+                {
+                    var secretsManager = new AmazonSecretsManagerClient(RegionEndpoint.EUWest1);
+                    var secretTask = secretsManager.GetSecretValueAsync(new GetSecretValueRequest() { SecretId = "arn:aws:secretsmanager:eu-west-1:429810410321:secret:SharkSync-Testing-z8gBv1" });
+                    secretTask.Wait();
+
+                    if (secretTask.Result == null || string.IsNullOrWhiteSpace(secretTask.Result.SecretString))
+                        throw new Exception("Missing AWS SecretsManager value for \"SharkSync-Testing\" secret");
+
+                    _secrets = JsonConvert.DeserializeObject<SecretsViewModel>(secretTask.Result.SecretString);
+                }
+
+                return _secrets;
+            }
+        }
+    }
+
+    public class SecretsViewModel
+    {
+        public string GithubUsername { get; set; }
+        public string GithubPassword { get; set; }
+        public string GoogleUsername { get; set; }
+        public string GooglePassword { get; set; }
     }
 }
