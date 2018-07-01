@@ -24,6 +24,24 @@ Parameters:
     Description: the ARN of an ACM certificate for the API domain that must be in the us-east-1 region.
     AllowedPattern: "arn:aws:acm:.*"
 
+  DatabaseVpc:
+    Description: "Select the VPC to use for the database"
+    Type: "AWS::EC2::VPC::Id"
+  DatabaseUser:
+    Type: "String"
+    Description: "Database admin account name"
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: "Name must begin with a letter and contain only alphanumeric characters."
+  DatabasePassword:
+    Type: "String"
+    Description: "Database admin account password"
+    MinLength: '6'
+    MaxLength: '41'
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: "Password must contain only alphanumeric characters."
+
 Resources:
 
   S3BucketWeb:
@@ -165,51 +183,36 @@ Resources:
         HostedZoneId: Z2FDTNDATAQYW2
         DNSName: !GetAtt CloudFront.DomainName
 
-  AccountTable:
-    Type: AWS::DynamoDB::Table
+  Database:
+    Type: "AWS::RDS::DBInstance"
     Properties:
-      TableName: Account
-      AttributeDefinitions:
-      - AttributeName: Id
-        AttributeType: S
-      KeySchema:
-      - AttributeName: Id
-        KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      VPCSecurityGroups:
+      - Ref: "PMRDSSG"
+      Engine: postgres
+      EngineVersion: 10.3
+      DBName: SharkSync
+      MasterUsername: !Ref "DatabaseUser"
+      MasterUserPassword: !Ref "DatabasePassword"
+      DBInstanceClass: db.t2.micro
+      AllocatedStorage: 20
+      StorageType: gp2
+      MultiAZ: false
 
-  ApplicationTable:
-    Type: AWS::DynamoDB::Table
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      TableName: Application
-      AttributeDefinitions:
-      - AttributeName: Id
-        AttributeType: S
-      KeySchema:
-      - AttributeName: Id
-        KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
-
-  DeviceTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: Device
-      AttributeDefinitions:
-      - AttributeName: ApplicationId
-        AttributeType: S
-      - AttributeName: Id
-        AttributeType: S
-      KeySchema:
-      - AttributeName: ApplicationId
-        KeyType: HASH
-      - AttributeName: Id
-        KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      GroupDescription: Postgres security group
+      VpcId: !Ref DatabaseVpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        CidrIp: 0.0.0.0/0
 
   WebApiLambdaRole:
     Type: AWS::IAM::Role
