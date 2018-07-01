@@ -153,7 +153,7 @@ namespace SharkSync.Web.Api.Controllers
                             {
                                 Modified = r.Modified,
                                 Value = r.Value,
-                                Path = r.Path
+                                Path = r.RecordId.ToString() + "/" + r.Path
                             }).ToList()
                         });
                     }

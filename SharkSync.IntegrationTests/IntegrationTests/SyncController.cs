@@ -218,7 +218,7 @@ namespace SharkSync.IntegrationTests
             Assert.AreEqual(value, dynamoRows[0].Value);
 
             Assert.AreEqual(dynamoRows[0].Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual($"{recordId}/{propertyName}", syncResponse.Groups[0].Changes[0].Path);
             Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
         }
 
@@ -310,11 +310,11 @@ namespace SharkSync.IntegrationTests
             Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
 
             Assert.AreEqual(dynamoRows[0].Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual($"{recordId}/{propertyName}", syncResponse.Groups[0].Changes[0].Path);
             Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
 
             Assert.AreEqual(dynamoRows[1].Modified, syncResponse.Groups[0].Changes[1].Modified);
-            Assert.AreEqual(propertyName2, syncResponse.Groups[0].Changes[1].Path);
+            Assert.AreEqual($"{recordId}/{propertyName2}", syncResponse.Groups[0].Changes[1].Path);
             Assert.AreEqual(value2, syncResponse.Groups[0].Changes[1].Value);
         }
 

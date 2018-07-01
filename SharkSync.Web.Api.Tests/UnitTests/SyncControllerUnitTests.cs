@@ -431,7 +431,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(1, syncResponse.Groups[0].Changes.Count);
 
             Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual(changeObject.Path, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual($"{changeObject.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[0].Path);
             Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -483,11 +483,11 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
 
             Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual(changeObject.Path, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual($"{changeObject.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[0].Path);
             Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
 
             Assert.AreEqual(changeObject2.Modified, syncResponse.Groups[0].Changes[1].Modified);
-            Assert.AreEqual(changeObject2.Path, syncResponse.Groups[0].Changes[1].Path);
+            Assert.AreEqual($"{changeObject2.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[1].Path);
             Assert.AreEqual(changeObject2.Value, syncResponse.Groups[0].Changes[1].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -557,11 +557,11 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(1, syncResponse.Groups[1].Changes.Count);
 
             Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual(changeObject.Path, syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual($"{changeObject.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[0].Path);
             Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
 
             Assert.AreEqual(changeObject2.Modified, syncResponse.Groups[1].Changes[0].Modified);
-            Assert.AreEqual(changeObject2.Path, syncResponse.Groups[1].Changes[0].Path);
+            Assert.AreEqual($"{changeObject2.RecordId}/{changeObject2.Path}", syncResponse.Groups[1].Changes[0].Path);
             Assert.AreEqual(changeObject2.Value, syncResponse.Groups[1].Changes[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
