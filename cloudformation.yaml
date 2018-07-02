@@ -33,14 +33,14 @@ Parameters:
     MinLength: '5'
     MaxLength: '16'
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
-    ConstraintDescription: "Name must begin with a letter and contain only alphanumeric characters."
+    ConstraintDescription: "Name must begin with a letter and contain only alphanumeric characters between 5 - 16 characters."
   DatabasePassword:
     Type: "String"
     Description: "Database admin account password"
     MinLength: '6'
     MaxLength: '41'
     AllowedPattern: "[a-zA-Z0-9]*"
-    ConstraintDescription: "Password must contain only alphanumeric characters."
+    ConstraintDescription: "Password must contain only alphanumeric characters between 6 and 41 characeters."
 
 Resources:
 
