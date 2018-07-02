@@ -184,21 +184,21 @@ Resources:
         DNSName: !GetAtt CloudFront.DomainName
 
   Database:
-    Type: "AWS::RDS::DBInstance"
+    Type: AWS::RDS::DBInstance
     Properties:
       VPCSecurityGroups:
-      - Ref: "PMRDSSG"
+      - Ref: DatabaseSecurityGroup
       Engine: postgres
       EngineVersion: 10.3
       DBName: SharkSync
-      MasterUsername: !Ref "DatabaseUser"
-      MasterUserPassword: !Ref "DatabasePassword"
+      MasterUsername: !Ref DatabaseUser
+      MasterUserPassword: !Ref DatabasePassword
       DBInstanceClass: db.t2.micro
       AllocatedStorage: 20
       StorageType: gp2
       MultiAZ: false
 
-  InstanceSecurityGroup:
+  DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Postgres security group
