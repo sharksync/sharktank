@@ -1,12 +1,16 @@
-using Amazon;
-using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
+using Amazon.SecretsManager;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using SharkSync.Repositories.Entities;
+using SharkSync.PostgreSQL;
+using SharkSync.PostgreSQL.Entities;
+using SharkSync.Web.Api;
 using SharkSync.Web.Api.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -18,18 +22,41 @@ namespace SharkSync.IntegrationTests
     [TestFixture]
     public class SyncController
     {
-        private const string SyncRequestUrl = "https://api.testingallthethings.net/Api/Sync";
+        //private const string SyncRequestUrl = "https://api.testingallthethings.net/Api/Sync";
+        private const string SyncRequestUrl = "https://localhost:44325/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
-        private AmazonDynamoDBClient dynamoDBClient = null;
-        private DynamoDBContext dynamoDBContext = null;
+        private readonly IServiceProvider serviceProvider;
+        private DataContext db;
+
+        public SyncController()
+        {
+            var services = new ServiceCollection();
+ 
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", false)
+                .Build();
+            services.AddOptions();
+            
+            var appSettings = new AppSettings();
+            var appSettingSection = configuration.GetSection(nameof(AppSettings));
+            services.Configure<AppSettings>(appSettingSection);
+            appSettingSection.Bind(appSettings);
+            
+            var awsOptions = configuration.GetAWSOptions();
+            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
+            var connectionStringSecret = Startup.GetSecret<ConnectionStringSecret>(secretManager, appSettings.ConnectionSecretId);
+
+            services.AddEntityFrameworkNpgsql().AddDbContext<DataContext>(options => options.UseNpgsql(connectionStringSecret.GetConnectionString()));
+            serviceProvider = services.BuildServiceProvider();
+        }
 
         [SetUp]
         public void SetUp()
         {
-            dynamoDBClient = new AmazonDynamoDBClient(RegionEndpoint.EUWest1);
-            dynamoDBContext = new DynamoDBContext(dynamoDBClient);
+            db = serviceProvider.GetService<DataContext>();
         }
 
         [Test]
@@ -159,6 +186,7 @@ namespace SharkSync.IntegrationTests
 
             string propertyName = "name";
             string group = "group";
+            string entity = "Person";
             Guid recordId = Guid.NewGuid();
             int modifiedSecondsAgo = 10;
             string value = "Neil";
@@ -174,7 +202,9 @@ namespace SharkSync.IntegrationTests
                     new SyncRequestViewModel.ChangeViewModel
                     {
                         Group = group,
-                        Path = $"{recordId}/{propertyName}",
+                        RecordId = recordId,
+                        Entity = entity,
+                        Property = propertyName,
                         SecondsAgo = modifiedSecondsAgo,
                         Value = value
                     }
@@ -208,17 +238,19 @@ namespace SharkSync.IntegrationTests
             Assert.NotNull(syncResponse.Groups[0].Changes);
             Assert.AreEqual(1, syncResponse.Groups[0].Changes.Count);
 
-            var dynamoRows = await GetChangeRows(testApp.Id, group);
+            var dbRows = await GetChangeRows(testApp.Id, group);
 
-            Assert.NotNull(dynamoRows);
-            Assert.AreEqual(1, dynamoRows.Count);
-            Assert.AreEqual(group, dynamoRows[0].Group);
-            Assert.AreEqual(propertyName, dynamoRows[0].Path);
-            Assert.AreEqual(recordId, dynamoRows[0].RecordId);
-            Assert.AreEqual(value, dynamoRows[0].Value);
+            Assert.NotNull(dbRows);
+            Assert.AreEqual(1, dbRows.Count);
+            Assert.AreEqual(group, dbRows[0].GroupId);
+            Assert.AreEqual(propertyName, dbRows[0].Property);
+            Assert.AreEqual(recordId, dbRows[0].RecordId);
+            Assert.AreEqual(value, dbRows[0].RecordValue);
 
-            Assert.AreEqual(dynamoRows[0].Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual($"{recordId}/{propertyName}", syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual(dbRows[0].ClientModified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Property);
+            Assert.AreEqual(recordId, syncResponse.Groups[0].Changes[0].RecordId);
+            Assert.AreEqual(entity, syncResponse.Groups[0].Changes[0].Entity);
             Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
         }
 
@@ -236,6 +268,7 @@ namespace SharkSync.IntegrationTests
             string propertyName = "name";
             string propertyName2 = "age";
             string group = "group";
+            string entity = "Person";
             Guid recordId = Guid.NewGuid();
             int modifiedSecondsAgo = 10;
             string value = "Neil";
@@ -252,14 +285,18 @@ namespace SharkSync.IntegrationTests
                     new SyncRequestViewModel.ChangeViewModel
                     {
                         Group = group,
-                        Path = $"{recordId}/{propertyName}",
+                        Entity = entity,
+                        Property = propertyName,
+                        RecordId = recordId,
                         SecondsAgo = modifiedSecondsAgo,
                         Value = value
                     },
                     new SyncRequestViewModel.ChangeViewModel
                     {
                         Group = group,
-                        Path = $"{recordId}/{propertyName2}",
+                        Entity = entity,
+                        Property = propertyName2,
+                        RecordId = recordId,
                         SecondsAgo = modifiedSecondsAgo,
                         Value = value2
                     }
@@ -288,58 +325,56 @@ namespace SharkSync.IntegrationTests
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
 
-            var dynamoRows = await GetChangeRows(testApp.Id, group);
+            var dbRows = await GetChangeRows(testApp.Id, group);
 
-            Assert.NotNull(dynamoRows);
-            Assert.AreEqual(2, dynamoRows.Count);
-            Assert.AreEqual(group, dynamoRows[0].Group);
-            Assert.AreEqual(propertyName, dynamoRows[0].Path);
-            Assert.AreEqual(recordId, dynamoRows[0].RecordId);
-            Assert.AreEqual(value, dynamoRows[0].Value);
-            Assert.AreEqual(group, dynamoRows[1].Group);
-            Assert.AreEqual(propertyName2, dynamoRows[1].Path);
-            Assert.AreEqual(recordId, dynamoRows[1].RecordId);
-            Assert.AreEqual(value2, dynamoRows[1].Value);
+            Assert.NotNull(dbRows);
+            Assert.AreEqual(2, dbRows.Count);
+            Assert.AreEqual(group, dbRows[0].GroupId);
+            Assert.AreEqual(recordId, dbRows[0].RecordId);
+            Assert.AreEqual(entity, dbRows[0].Entity);
+            Assert.AreEqual(propertyName, dbRows[0].Property);
+            Assert.AreEqual(recordId, dbRows[0].RecordId);
+            Assert.AreEqual(value, dbRows[0].RecordValue);
+
+            Assert.AreEqual(group, dbRows[1].GroupId);
+            Assert.AreEqual(entity, dbRows[1].Entity);
+            Assert.AreEqual(propertyName2, dbRows[1].Property);
+            Assert.AreEqual(recordId, dbRows[1].RecordId);
+            Assert.AreEqual(value2, dbRows[1].RecordValue);
 
             Assert.NotNull(syncResponse.Groups);
             Assert.AreEqual(1, syncResponse.Groups.Count);
-            Assert.AreEqual(dynamoRows.Last().Tidemark, syncResponse.Groups[0].Tidemark);
+            Assert.AreEqual(dbRows.Last().Id, syncResponse.Groups[0].Tidemark);
             Assert.AreEqual(group, syncResponse.Groups[0].Group);
 
             Assert.NotNull(syncResponse.Groups[0].Changes);
             Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
 
-            Assert.AreEqual(dynamoRows[0].Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual($"{recordId}/{propertyName}", syncResponse.Groups[0].Changes[0].Path);
+            Assert.AreEqual(dbRows[0].ClientModified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(entity, syncResponse.Groups[0].Changes[0].Entity);
+            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Property);
+            Assert.AreEqual(recordId, syncResponse.Groups[0].Changes[0].RecordId);
             Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
 
-            Assert.AreEqual(dynamoRows[1].Modified, syncResponse.Groups[0].Changes[1].Modified);
-            Assert.AreEqual($"{recordId}/{propertyName2}", syncResponse.Groups[0].Changes[1].Path);
+            Assert.AreEqual(dbRows[1].ClientModified, syncResponse.Groups[0].Changes[1].Modified);
+            Assert.AreEqual(entity, syncResponse.Groups[0].Changes[1].Entity);
+            Assert.AreEqual(propertyName2, syncResponse.Groups[0].Changes[1].Property);
+            Assert.AreEqual(recordId, syncResponse.Groups[0].Changes[1].RecordId);
             Assert.AreEqual(value2, syncResponse.Groups[0].Changes[1].Value);
         }
 
         public async Task<List<Change>> GetChangeRows(Guid appId, string group)
         {
-            var appConfig = GetConfig(appId);
-
-            var query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
-            var storedChanges = await query.GetNextSetAsync();
-            return storedChanges;
+            return await db.Changes.Where(c => c.ApplicationId == appId && c.GroupId == group).ToListAsync();
         }
 
         public async Task DeleteChangeRows(Guid appId, string group)
         {
-            var appConfig = GetConfig(appId);
+            var changes = await db.Changes.Where(c => c.ApplicationId == appId && c.GroupId == group).ToListAsync();
 
-            var query = dynamoDBContext.QueryAsync<Change>(group, appConfig);
-            var storedChanges = await query.GetNextSetAsync();
-            foreach (var change in storedChanges)
-                await dynamoDBContext.DeleteAsync(change, appConfig);
-        }
+            db.Changes.RemoveRange(changes);
 
-        private DynamoDBOperationConfig GetConfig(Guid appId)
-        {
-            return new DynamoDBOperationConfig { OverrideTableName = $"{appId}-Change" };
+            await db.SaveChangesAsync();
         }
     }
 }

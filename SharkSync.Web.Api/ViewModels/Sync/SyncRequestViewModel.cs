@@ -32,8 +32,14 @@ namespace SharkSync.Web.Api.ViewModels
 
         public class ChangeViewModel
         {
-            [JsonProperty("path")]
-            public string Path { get; set; }
+            [JsonProperty("record_id")]
+            public Guid RecordId { get; set; }
+
+            [JsonProperty("entity")]
+            public string Entity { get; set; }
+
+            [JsonProperty("group")]
+            public string Group { get; set; }
 
             [JsonProperty("value")]
             public string Value { get; set; }
@@ -44,8 +50,9 @@ namespace SharkSync.Web.Api.ViewModels
             [JsonProperty("operation")]
             public int Operation { get; set; }
 
-            [JsonProperty("group")]
-            public string Group { get; set; }
+            [JsonProperty("property")]
+            public string Property { get; set; }
+
         }
     }
 }

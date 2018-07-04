@@ -7,10 +7,8 @@ namespace SharkSync.Interfaces.Repositories
 {
     public interface IChangeRepository
     {
-        IChange CreateChange(Guid recordId, string group, string path, DateTime modifiedDateTime, string value);
+        IChange CreateChange(Guid accountId, Guid appId, Guid recordId, string groupId, string entity, DateTime modifiedDateTime, string value);
         Task UpsertChangesAsync(Guid appId, IEnumerable<IChange> changes);
-        Task<List<IChange>> ListChangesAsync(Guid appId, string group, long? tidemark);
-        Task CreateChangeTableForApp(Guid appId);
-        Task DeleteChangeTableForApp(Guid appId);
+        Task<List<IChange>> ListChangesAsync(Guid appId, string groupId, long? tidemark);
     }
 }

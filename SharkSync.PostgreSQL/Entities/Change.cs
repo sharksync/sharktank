@@ -1,20 +1,37 @@
 ﻿using SharkSync.Interfaces.Entities;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SharkSync.PostgreSQL.Entities
 {
+    [Table("change")]
     public class Change : IChange
     {
-        public string Group { get; set; }
+        [Column("id")]
+        public long Id { get; set; }
 
-        public long Tidemark { get; set; }
+        [Column("accountid")]
+        public Guid AccountId { get; set; }
 
+        [Column("applicationid")]
+        public Guid ApplicationId { get; set; }
+
+        [Column("groupid")]
+        public string GroupId { get; set; }
+
+        [Column("entity")]
+        public string Entity { get; set; }
+
+        [Column("recordid")]
         public Guid RecordId { get; set; }
 
-        public string Path { get; set; }
+        [Column("property")]
+        public string Property { get; set; }
 
-        public DateTime Modified { get; set; }
+        [Column("clientmodified")]
+        public long ClientModified { get; set; }
 
-        public string Value { get; set; }
+        [Column("recordvalue")]
+        public string RecordValue { get; set; }
     }
 }

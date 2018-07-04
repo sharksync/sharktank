@@ -62,8 +62,6 @@ namespace SharkSync.Web.Api.Controllers
 
             var app = await ApplicationRepository.AddAsync(name, loggedInAccount.Id);
 
-            await ChangeRepository.CreateChangeTableForApp(app.Id);
-
             var vm = new ApplicationGetResponseViewModel() { Application = new ApplicationViewModel(app) };
 
             return ModelState.GetJsonResultWithValidationErrors(vm);
@@ -85,8 +83,6 @@ namespace SharkSync.Web.Api.Controllers
                 return Forbid();
             
             await ApplicationRepository.DeleteAsync(id);
-
-            await ChangeRepository.DeleteChangeTableForApp(id);
 
             return ModelState.GetJsonResultWithValidationErrors();
         }

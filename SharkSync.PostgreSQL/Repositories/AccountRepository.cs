@@ -2,9 +2,10 @@
 using SharkSync.Interfaces.Entities;
 using SharkSync.Interfaces.Repositories;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using SharkSync.PostgreSQL.Entities;
 
 namespace SharkSync.PostgreSQL.Repositories
 {
@@ -22,48 +23,41 @@ namespace SharkSync.PostgreSQL.Repositories
 
         public async Task<IAccount> GetByIdAsync(Guid id)
         {
-            //return await DynamoDBContext.LoadAsync<Account>(id);
+            return await DataContext.Accounts.SingleOrDefaultAsync(a => a.Id == id);
         }
 
         public async Task<IAccount> AddOrGetAsync(string name, string emailAddress, string avatarUrl, string gitHubId = null, string googleId = null, string microsoftId = null)
         {
-            //if (gitHubId == null && googleId == null && microsoftId == null)
-            //    throw new Exception("GitHubId, GoogleId or MicrosoftId required for new accounts");
+            if (gitHubId == null && googleId == null && microsoftId == null)
+                throw new Exception("GitHubId, GoogleId or MicrosoftId required for new accounts");
 
-            //ScanCondition scanCondition = null;
+            Account account = null;
 
-            //if (gitHubId != null)
-            //    scanCondition = new ScanCondition(nameof(Account.GitHubId), ScanOperator.Equal, gitHubId);
-            //else if (googleId != null)
-            //    scanCondition = new ScanCondition(nameof(Account.GoogleId), ScanOperator.Equal, googleId);
-            //else if (microsoftId != null)
-            //    scanCondition = new ScanCondition(nameof(Account.MicrosoftId), ScanOperator.Equal, microsoftId);
+            if (gitHubId != null)
+                account = await DataContext.Accounts.SingleOrDefaultAsync(a => a.GitHubId == gitHubId);
+            else if (googleId != null)
+                account = await DataContext.Accounts.SingleOrDefaultAsync(a => a.GoogleId == googleId);
+            else if (microsoftId != null)
+                account = await DataContext.Accounts.SingleOrDefaultAsync(a => a.MicrosoftId == microsoftId);
 
-            //var query = DynamoDBContext.ScanAsync<Account>(new[] { scanCondition });
-            //var accounts = await query.GetNextSetAsync();
+            if (account == null)
+            {
+                account = new Account()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = name,
+                    EmailAddress = emailAddress,
+                    AvatarUrl = avatarUrl,
+                    GitHubId = gitHubId,
+                    GoogleId = googleId,
+                    MicrosoftId = microsoftId
+                };
 
-            //Account account = null;
-
-            //if (!accounts.Any())
-            //{
-            //    account = new Account()
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = name,
-            //        EmailAddress = emailAddress,
-            //        AvatarUrl = avatarUrl,
-            //        GitHubId = gitHubId,
-            //        GoogleId = googleId,
-            //        MicrosoftId = microsoftId
-            //    };
-            //    await DynamoDBContext.SaveAsync(account);
-            //}
-            //else
-            //{
-            //    account = accounts.First();
-            //}
-
-            //return account;
+                DataContext.Add(account);
+                await DataContext.SaveChangesAsync();
+            }
+            
+            return account;
         }
     }
 }

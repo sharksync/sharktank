@@ -8,6 +8,7 @@ namespace SharkSync.Web.Api
     public class AppSettings
     {
         public string ClientAppRootUrl { get; set; }
-        public string SecretId { get; set; }
+        public string AuthSecretId { get; set; }
+        public string ConnectionSecretId { get; set; }
     }
 }

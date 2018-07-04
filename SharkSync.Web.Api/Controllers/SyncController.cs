@@ -101,20 +101,10 @@ namespace SharkSync.Web.Api.Controllers
                 {
                     if (change != null)
                     {
-                        // Path should contain a / in format <guid>/property.name
-                        if (!string.IsNullOrWhiteSpace(change.Path) && change.Path.IndexOf("/") > -1)
-                        {
-                            Guid recordId = Guid.Parse(change.Path.Substring(0, change.Path.IndexOf("/")));
-                            string path = change.Path.Substring(change.Path.IndexOf("/") + 1);
-                            DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
+                        DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
 
-                            var dbChange = ChangeRepository.CreateChange(recordId, change.Group, path, modifiedUTC, change.Value);
-                            dbChanges.Add(dbChange);
-                        }
-                        else
-                        {
-                            ModelState.AddModelError("Path", "Path is incorrectly formatted, should be formatted <guid>/property.name");
-                        }
+                        var dbChange = ChangeRepository.CreateChange(app.AccountId, app.Id, change.RecordId, change.Group, change.Property, modifiedUTC, change.Value);
+                        dbChanges.Add(dbChange);
                     }
                 }
 
@@ -148,12 +138,13 @@ namespace SharkSync.Web.Api.Controllers
                         response.Groups.Add(new SyncResponseViewModel.GroupViewModel()
                         {
                             Group = group.Group,
-                            Tidemark = results.Last().Tidemark,
+                            Tidemark = results.Last().Id,
                             Changes = results.Select(r => new SyncResponseViewModel.ChangeViewModel()
                             {
-                                Modified = r.Modified,
-                                Value = r.Value,
-                                Path = r.RecordId.ToString() + "/" + r.Path
+                                Modified = r.ClientModified,
+                                Value = r.RecordValue,
+                                RecordId = r.RecordId,
+                                Property = r.Property
                             }).ToList()
                         });
                     }

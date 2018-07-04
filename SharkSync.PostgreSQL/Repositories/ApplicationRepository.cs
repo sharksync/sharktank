@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SharkSync.Interfaces.Entities;
 using SharkSync.Interfaces.Repositories;
+using SharkSync.PostgreSQL.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SharkSync.PostgreSQL.Repositories
@@ -10,29 +13,23 @@ namespace SharkSync.PostgreSQL.Repositories
     public class ApplicationRepository : IApplicationRepository
     {
         ILogger Logger { get; set; }
-
-        IAmazonDynamoDB DynamoDBClient { get; set; }
-
-        DynamoDBContext DynamoDBContext { get; set; }
-
-        public ApplicationRepository(ILogger<ApplicationRepository> logger, IAmazonDynamoDB dynamoDBClient)
+        
+        DataContext DataContext { get; set; }
+        
+        public ApplicationRepository(ILogger<ApplicationRepository> logger, DataContext dataContext)
         {
             Logger = logger;
-            DynamoDBClient = dynamoDBClient;
-            DynamoDBContext = new DynamoDBContext(dynamoDBClient);
+            DataContext = dataContext;
         }
 
         public async Task<IEnumerable<IApplication>> ListByAccountIdAsync(Guid accountId)
         {
-            var scanCondition = new ScanCondition(nameof(Application.AccountId), ScanOperator.Equal, accountId);
-            var query = DynamoDBContext.ScanAsync<Application>(new[] { scanCondition });
-            var apps = await query.GetNextSetAsync();
-            return apps;
+            return await DataContext.Applications.Where(a => a.AccountId == accountId).ToListAsync();
         }
 
         public async Task<IApplication> GetByIdAsync(Guid id)
         {
-            return await DynamoDBContext.LoadAsync<Application>(id);
+            return await DataContext.Applications.SingleOrDefaultAsync(a => a.Id == id);
         }
 
         public async Task<IApplication> AddAsync(string name, Guid accountId)
@@ -40,14 +37,21 @@ namespace SharkSync.PostgreSQL.Repositories
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("You must provide a value for name", nameof(name));
 
-            Application newApp = new Application() { Id = Guid.NewGuid(), Name = name, AccessKey = Guid.NewGuid(), AccountId = accountId };
-            await DynamoDBContext.SaveAsync(newApp);
-            return newApp;
+            Application app = new Application() { Id = Guid.NewGuid(), Name = name, AccessKey = Guid.NewGuid(), AccountId = accountId };
+            DataContext.Add(app);
+            await DataContext.SaveChangesAsync();
+
+            return app;
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            await DynamoDBContext.DeleteAsync<Application>(id);
+            var app = await DataContext.Applications.SingleOrDefaultAsync(a => a.Id == id);
+            if (app != null)
+            {
+                DataContext.Remove(app);
+                await DataContext.SaveChangesAsync();
+            }
         }
     }
 }
