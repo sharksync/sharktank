@@ -44,11 +44,8 @@ namespace SharkSync.Web.Api.ViewModels
             [JsonProperty("value")]
             public string Value { get; set; }
 
-            [JsonProperty("secondsAgo")]
-            public double SecondsAgo { get; set; }
-
-            [JsonProperty("operation")]
-            public int Operation { get; set; }
+            [JsonProperty("millisecondsAgo")]
+            public double MillisecondsAgo { get; set; }
 
             [JsonProperty("property")]
             public string Property { get; set; }

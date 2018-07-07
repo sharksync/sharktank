@@ -23,7 +23,7 @@ namespace SharkSync.Web.Api.ViewModels
             public string Entity { get; set; }
             public string Property { get; set; }
             public string Value { get; set; }
-            public DateTime Modified { get; set; }
+            public long Modified { get; set; }
         }
     }
 }

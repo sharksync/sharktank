@@ -188,7 +188,7 @@ namespace SharkSync.IntegrationTests
             string group = "group";
             string entity = "Person";
             Guid recordId = Guid.NewGuid();
-            int modifiedSecondsAgo = 10;
+            long modifiedMillisecondsAgo = 10000;
             string value = "Neil";
 
             await DeleteChangeRows(testApp.Id, group);
@@ -205,7 +205,7 @@ namespace SharkSync.IntegrationTests
                         RecordId = recordId,
                         Entity = entity,
                         Property = propertyName,
-                        SecondsAgo = modifiedSecondsAgo,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value
                     }
                 },
@@ -224,7 +224,7 @@ namespace SharkSync.IntegrationTests
             var response = await HttpClient.PostAsync(SyncRequestUrl, requestContent);
 
             var responsePayload = await response.Content?.ReadAsStringAsync();
-            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, $"Status: {response.StatusCode} Body: {await response.Content.ReadAsStringAsync()}");
             Assert.NotNull(responsePayload);
 
             var syncResponse = JsonConvert.DeserializeObject<SyncResponseViewModel>(responsePayload);
@@ -270,7 +270,7 @@ namespace SharkSync.IntegrationTests
             string group = "group";
             string entity = "Person";
             Guid recordId = Guid.NewGuid();
-            int modifiedSecondsAgo = 10;
+            int modifiedMillisecondsAgo = 10000;
             string value = "Neil";
             string value2 = "10";
 
@@ -288,7 +288,7 @@ namespace SharkSync.IntegrationTests
                         Entity = entity,
                         Property = propertyName,
                         RecordId = recordId,
-                        SecondsAgo = modifiedSecondsAgo,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value
                     },
                     new SyncRequestViewModel.ChangeViewModel
@@ -297,7 +297,7 @@ namespace SharkSync.IntegrationTests
                         Entity = entity,
                         Property = propertyName2,
                         RecordId = recordId,
-                        SecondsAgo = modifiedSecondsAgo,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value2
                     }
                 }, 

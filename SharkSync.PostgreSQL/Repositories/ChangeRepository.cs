@@ -23,7 +23,7 @@ namespace SharkSync.PostgreSQL.Repositories
             DataContext = dataContext;
         }
 
-        public IChange CreateChange(Guid accountId, Guid appId, Guid recordId, string groupId, string entity, DateTime modifiedDateTime, string value)
+        public IChange CreateChange(Guid accountId, Guid appId, Guid recordId, string groupId, string entity, string property, long modified, string value)
         {
             return new Change
             {
@@ -32,7 +32,8 @@ namespace SharkSync.PostgreSQL.Repositories
                 RecordId = recordId,
                 GroupId = groupId,
                 Entity = entity,
-                ClientModified = modifiedDateTime.Ticks,
+                Property = property,
+                ClientModified = modified,
                 RecordValue = value
             };
         }

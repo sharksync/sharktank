@@ -11,7 +11,7 @@ namespace SharkSync.Interfaces.Entities
         string Entity { get; set; }
         Guid RecordId { get; set; }
         string Property { get; set; }
-        DateTime ClientModified { get; set; }
+        long ClientModified { get; set; }
         string RecordValue { get; set; }
     }
 }

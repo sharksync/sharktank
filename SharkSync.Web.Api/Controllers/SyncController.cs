@@ -101,9 +101,9 @@ namespace SharkSync.Web.Api.Controllers
                 {
                     if (change != null)
                     {
-                        DateTime modifiedUTC = requestStartTimeUTC.AddSeconds(-change.SecondsAgo);
+                        DateTime modifiedUTC = requestStartTimeUTC.AddMilliseconds(-change.MillisecondsAgo);
 
-                        var dbChange = ChangeRepository.CreateChange(app.AccountId, app.Id, change.RecordId, change.Group, change.Property, modifiedUTC, change.Value);
+                        var dbChange = ChangeRepository.CreateChange(app.AccountId, app.Id, change.RecordId, change.Group, change.Entity, change.Property, modifiedUTC.Ticks, change.Value);
                         dbChanges.Add(dbChange);
                     }
                 }
@@ -143,6 +143,7 @@ namespace SharkSync.Web.Api.Controllers
                             {
                                 Modified = r.ClientModified,
                                 Value = r.RecordValue,
+                                Entity = r.Entity,
                                 RecordId = r.RecordId,
                                 Property = r.Property
                             }).ToList()
