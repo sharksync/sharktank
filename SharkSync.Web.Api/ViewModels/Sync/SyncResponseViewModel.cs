@@ -19,9 +19,11 @@ namespace SharkSync.Web.Api.ViewModels
 
         public class ChangeViewModel
         {
-            public string Path { get; set; }
+            public Guid RecordId { get; set; }
+            public string Entity { get; set; }
+            public string Property { get; set; }
             public string Value { get; set; }
-            public DateTime Modified { get; set; }
+            public long Modified { get; set; }
         }
     }
 }

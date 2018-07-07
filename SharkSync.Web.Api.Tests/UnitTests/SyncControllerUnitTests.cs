@@ -42,25 +42,27 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(app.Object);
 
             changeRepository = new Mock<IChangeRepository>();
-            changeRepository.Setup(x => x.CreateChange(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<string>()))
-                .Returns(delegate (Guid recordId, string group, string path, DateTime modified, string value)
+            changeRepository.Setup(x => x.CreateChange(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<string>()))
+                .Returns(delegate (Guid accountId, Guid appId, Guid recordId, string group, string entity, string property, long modified, string value)
                 {
                     if (change.Object.RecordId == Guid.Empty)
                     {
                         change.Setup(c => c.RecordId).Returns(recordId);
-                        change.Setup(c => c.Group).Returns(group);
-                        change.Setup(c => c.Path).Returns(path);
-                        change.Setup(c => c.Value).Returns(value);
-                        change.Setup(c => c.Modified).Returns(modified);
+                        change.Setup(c => c.GroupId).Returns(group);
+                        change.Setup(c => c.Entity).Returns(entity);
+                        change.Setup(c => c.Property).Returns(property);
+                        change.Setup(c => c.RecordValue).Returns(value);
+                        change.Setup(c => c.ClientModified).Returns(modified);
                         return change.Object;
                     }
                     else
                     {
                         change2.Setup(c => c.RecordId).Returns(recordId);
-                        change2.Setup(c => c.Group).Returns(group);
-                        change2.Setup(c => c.Path).Returns(path);
-                        change2.Setup(c => c.Value).Returns(value);
-                        change2.Setup(c => c.Modified).Returns(modified);
+                        change2.Setup(c => c.GroupId).Returns(group);
+                        change2.Setup(c => c.Entity).Returns(entity);
+                        change2.Setup(c => c.Property).Returns(property);
+                        change2.Setup(c => c.RecordValue).Returns(value);
+                        change2.Setup(c => c.ClientModified).Returns(modified);
                         return change2.Object;
                     }
                 });
@@ -195,42 +197,13 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         }
 
         [Test]
-        public async Task SyncController_Post_Fail_Single_Change_Badly_Formatted_Path()
-        {
-            var request = new SyncRequestViewModel()
-            {
-                AppId = app.Object.Id,
-                AppApiAccessKey = app.Object.AccessKey,
-                Changes = new List<SyncRequestViewModel.ChangeViewModel>
-                {
-                    new SyncRequestViewModel.ChangeViewModel
-                    {
-                        Group = "Group",
-                        Path = "bad format"
-                    }
-                }
-            };
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
-            var response = await controller.Post(request) as JsonResult;
-
-            var syncResponse = response.Value as SyncResponseViewModel;
-
-            Assert.NotNull(syncResponse.Errors);
-            Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("Path is incorrectly formatted, should be formatted <guid>/property.name", syncResponse.Errors.First());
-            Assert.False(syncResponse.Success);
-
-            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
-            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
-        }
-
-        [Test]
         public async Task SyncController_Post_Success_Single_Change()
         {
             string propertyName = "name";
             string group = "group";
+            string entity = "person";
             Guid recordId = Guid.NewGuid();
-            int modifiedSecondsAgo = 10;
+            long modifiedMillisecondsAgo = 10000;
             string value = "Neil";
             List<IChange> returnChanges = null;
 
@@ -251,8 +224,10 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                     new SyncRequestViewModel.ChangeViewModel
                     {
                         Group = group,
-                        Path = $"{recordId}/{propertyName}",
-                        SecondsAgo = modifiedSecondsAgo,
+                        RecordId = recordId,
+                        Entity = entity,
+                        Property = propertyName,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value
                     }
                 }
@@ -270,10 +245,11 @@ namespace SharkSync.Web.Api.Tests.UnitTests
 
             Assert.NotNull(returnChanges);
             Assert.AreEqual(1, returnChanges.Count);
-            Assert.AreEqual(group, returnChanges[0].Group);
-            Assert.AreEqual(propertyName, returnChanges[0].Path);
+            Assert.AreEqual(group, returnChanges[0].GroupId);
+            Assert.AreEqual(propertyName, returnChanges[0].Property);
+            Assert.AreEqual(entity, returnChanges[0].Entity);
             Assert.AreEqual(recordId, returnChanges[0].RecordId);
-            Assert.AreEqual(value, returnChanges[0].Value);
+            Assert.AreEqual(value, returnChanges[0].RecordValue);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
@@ -285,8 +261,9 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             string propertyName = "name";
             string propertyName2 = "age";
             string group = "group";
+            string entity = "person";
             Guid recordId = Guid.NewGuid();
-            int modifiedSecondsAgo = 10;
+            long modifiedMillisecondsAgo = 10000;
             string value = "Neil";
             string value2 = "10";
             List<IChange> returnChanges = null;
@@ -308,15 +285,19 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                     new SyncRequestViewModel.ChangeViewModel
                     {
                         Group = group,
-                        Path = $"{recordId}/{propertyName}",
-                        SecondsAgo = modifiedSecondsAgo,
+                        RecordId = recordId,
+                        Entity = entity,
+                        Property = propertyName,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value
                     },
                     new SyncRequestViewModel.ChangeViewModel
                     {
                         Group = group,
-                        Path = $"{recordId}/{propertyName2}",
-                        SecondsAgo = modifiedSecondsAgo,
+                        RecordId = recordId,
+                        Entity = entity,
+                        Property = propertyName2,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value2
                     }
                 }
@@ -334,14 +315,16 @@ namespace SharkSync.Web.Api.Tests.UnitTests
 
             Assert.NotNull(returnChanges);
             Assert.AreEqual(2, returnChanges.Count);
-            Assert.AreEqual(group, returnChanges[0].Group);
-            Assert.AreEqual(propertyName, returnChanges[0].Path);
+            Assert.AreEqual(group, returnChanges[0].GroupId);
+            Assert.AreEqual(propertyName, returnChanges[0].Property);
+            Assert.AreEqual(entity, returnChanges[0].Entity);
             Assert.AreEqual(recordId, returnChanges[0].RecordId);
-            Assert.AreEqual(value, returnChanges[0].Value);
-            Assert.AreEqual(group, returnChanges[1].Group);
-            Assert.AreEqual(propertyName2, returnChanges[1].Path);
+            Assert.AreEqual(value, returnChanges[0].RecordValue);
+            Assert.AreEqual(group, returnChanges[1].GroupId);
+            Assert.AreEqual(propertyName2, returnChanges[1].Property);
+            Assert.AreEqual(entity, returnChanges[1].Entity);
             Assert.AreEqual(recordId, returnChanges[1].RecordId);
-            Assert.AreEqual(value2, returnChanges[1].Value);
+            Assert.AreEqual(value2, returnChanges[1].RecordValue);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
         }
@@ -410,8 +393,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                 {
                     new SyncRequestViewModel.GroupViewModel
                     {
-                        Group = changeObject.Group,
-                        Tidemark = changeObject.Tidemark
+                        Group = changeObject.GroupId,
+                        Tidemark = changeObject.Id
                     }
                 }
             }) as JsonResult;
@@ -424,15 +407,17 @@ namespace SharkSync.Web.Api.Tests.UnitTests
 
             Assert.NotNull(syncResponse.Groups);
             Assert.AreEqual(1, syncResponse.Groups.Count);
-            Assert.AreEqual(changeObject.Tidemark, syncResponse.Groups[0].Tidemark);
-            Assert.AreEqual(changeObject.Group, syncResponse.Groups[0].Group);
+            Assert.AreEqual(changeObject.Id, syncResponse.Groups[0].Tidemark);
+            Assert.AreEqual(changeObject.GroupId, syncResponse.Groups[0].Group);
 
             Assert.NotNull(syncResponse.Groups[0].Changes);
             Assert.AreEqual(1, syncResponse.Groups[0].Changes.Count);
 
-            Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual($"{changeObject.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[0].Path);
-            Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
+            Assert.AreEqual(changeObject.ClientModified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(changeObject.RecordId, syncResponse.Groups[0].Changes[0].RecordId);
+            Assert.AreEqual(changeObject.Entity, syncResponse.Groups[0].Changes[0].Entity);
+            Assert.AreEqual(changeObject.Property, syncResponse.Groups[0].Changes[0].Property);
+            Assert.AreEqual(changeObject.RecordValue, syncResponse.Groups[0].Changes[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Once);
@@ -445,11 +430,11 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             string group = "group";
 
             var changeObject = change.Object;
-            change.Setup(c => c.Tidemark).Returns(tidemark);
+            change.Setup(c => c.Id).Returns(tidemark);
             changes.Add(changeObject);
 
             var change2 = new Mock<IChange>();
-            change2.Setup(c => c.Tidemark).Returns(tidemark);
+            change2.Setup(c => c.Id).Returns(tidemark);
             var changeObject2 = change2.Object;
             changes.Add(changeObject2);
 
@@ -482,13 +467,17 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.NotNull(syncResponse.Groups[0].Changes);
             Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
 
-            Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual($"{changeObject.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[0].Path);
-            Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
+            Assert.AreEqual(changeObject.ClientModified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(changeObject.RecordId, syncResponse.Groups[0].Changes[0].RecordId);
+            Assert.AreEqual(changeObject.Entity, syncResponse.Groups[0].Changes[0].Entity);
+            Assert.AreEqual(changeObject.Property, syncResponse.Groups[0].Changes[0].Property);
+            Assert.AreEqual(changeObject.RecordValue, syncResponse.Groups[0].Changes[0].Value);
 
-            Assert.AreEqual(changeObject2.Modified, syncResponse.Groups[0].Changes[1].Modified);
-            Assert.AreEqual($"{changeObject2.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[1].Path);
-            Assert.AreEqual(changeObject2.Value, syncResponse.Groups[0].Changes[1].Value);
+            Assert.AreEqual(changeObject2.ClientModified, syncResponse.Groups[0].Changes[1].Modified);
+            Assert.AreEqual(changeObject2.RecordId, syncResponse.Groups[0].Changes[1].RecordId);
+            Assert.AreEqual(changeObject2.Entity, syncResponse.Groups[0].Changes[1].Entity);
+            Assert.AreEqual(changeObject2.Property, syncResponse.Groups[0].Changes[1].Property);
+            Assert.AreEqual(changeObject2.RecordValue, syncResponse.Groups[0].Changes[1].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Once);
@@ -502,11 +491,11 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             string group2 = "group2";
 
             var changeObject = change.Object;
-            change.Setup(c => c.Tidemark).Returns(tidemark);
+            change.Setup(c => c.Id).Returns(tidemark);
 
             var change2 = new Mock<IChange>();
-            change2.Setup(c => c.Tidemark).Returns(tidemark);
-            change2.Setup(c => c.Group).Returns(group2);
+            change2.Setup(c => c.Id).Returns(tidemark);
+            change2.Setup(c => c.GroupId).Returns(group2);
             var changeObject2 = change2.Object;
 
             changeRepository.Setup(x => x.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()))
@@ -555,14 +544,18 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(group2, syncResponse.Groups[1].Group);
             Assert.NotNull(syncResponse.Groups[1].Changes);
             Assert.AreEqual(1, syncResponse.Groups[1].Changes.Count);
+            
+            Assert.AreEqual(changeObject.ClientModified, syncResponse.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(changeObject.RecordId, syncResponse.Groups[0].Changes[0].RecordId);
+            Assert.AreEqual(changeObject.Entity, syncResponse.Groups[0].Changes[0].Entity);
+            Assert.AreEqual(changeObject.Property, syncResponse.Groups[0].Changes[0].Property);
+            Assert.AreEqual(changeObject.RecordValue, syncResponse.Groups[0].Changes[0].Value);
 
-            Assert.AreEqual(changeObject.Modified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual($"{changeObject.RecordId}/{changeObject.Path}", syncResponse.Groups[0].Changes[0].Path);
-            Assert.AreEqual(changeObject.Value, syncResponse.Groups[0].Changes[0].Value);
-
-            Assert.AreEqual(changeObject2.Modified, syncResponse.Groups[1].Changes[0].Modified);
-            Assert.AreEqual($"{changeObject2.RecordId}/{changeObject2.Path}", syncResponse.Groups[1].Changes[0].Path);
-            Assert.AreEqual(changeObject2.Value, syncResponse.Groups[1].Changes[0].Value);
+            Assert.AreEqual(changeObject2.ClientModified, syncResponse.Groups[1].Changes[0].Modified);
+            Assert.AreEqual(changeObject2.RecordId, syncResponse.Groups[1].Changes[0].RecordId);
+            Assert.AreEqual(changeObject2.Entity, syncResponse.Groups[1].Changes[0].Entity);
+            Assert.AreEqual(changeObject2.Property, syncResponse.Groups[1].Changes[0].Property);
+            Assert.AreEqual(changeObject2.RecordValue, syncResponse.Groups[1].Changes[0].Value);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Exactly(2));

@@ -1,13 +1,6 @@
-﻿using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
-using Amazon.DynamoDBv2.Model;
-using Microsoft.Extensions.Logging;
-using SharkSync.DynamoDB.Utilities;
+﻿using Microsoft.Extensions.Logging;
 using SharkSync.Interfaces.Entities;
 using SharkSync.Interfaces.Repositories;
-using SharkSync.Repositories;
-using SharkSync.Repositories.Entities;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;

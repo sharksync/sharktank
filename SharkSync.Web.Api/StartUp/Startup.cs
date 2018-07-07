@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.AspNetCore.Authentication;
@@ -27,9 +26,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
-using SharkSync.DynamoDB.Repositories;
+using SharkSync.PostgreSQL.Repositories;
 using SharkSync.Interfaces.Repositories;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using SharkSync.PostgreSQL;
+using Microsoft.EntityFrameworkCore;
 
 namespace SharkSync.Web.Api
 {
@@ -52,9 +53,14 @@ namespace SharkSync.Web.Api
 
             var appSettings = new AppSettings();
             var appSettingSection = Configuration.GetSection(nameof(AppSettings));
-
             services.Configure<AppSettings>(appSettingSection);
             appSettingSection.Bind(appSettings);
+            
+            var awsOptions = Configuration.GetAWSOptions();
+            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
+            var connectionStringSecret = GetSecret<ConnectionStringSecret>(secretManager, appSettings.ConnectionSecretId);
+
+            services.AddEntityFrameworkNpgsql().AddDbContext<DataContext>(options => options.UseNpgsql(connectionStringSecret.GetConnectionString()));
 
             // Only add CORS if the client is on another domain
             if (appSettings.ClientAppRootUrl != "~")
@@ -79,7 +85,7 @@ namespace SharkSync.Web.Api
 
             AddDataProtectionOptions(services);
 
-            AddAuthenticationOptions(services, appSettings);
+            AddAuthenticationOptions(secretManager, services, appSettings);
 
             services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
             services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
@@ -87,7 +93,6 @@ namespace SharkSync.Web.Api
 
             services.AddScoped(typeof(AuthService));
 
-            services.AddAWSService<IAmazonDynamoDB>();
             services.AddAWSService<IAmazonSecretsManager>();
         }
 
@@ -113,17 +118,9 @@ namespace SharkSync.Web.Api
             });
         }
 
-        private void AddAuthenticationOptions(IServiceCollection services, AppSettings appSettings)
+        private void AddAuthenticationOptions(IAmazonSecretsManager secretManager, IServiceCollection services, AppSettings appSettings)
         {
-            var awsOptions = Configuration.GetAWSOptions();
-            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
-            var oAuthSecretTask = secretManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = appSettings.SecretId });
-            oAuthSecretTask.Wait();
-
-            if (oAuthSecretTask.Result == null || string.IsNullOrWhiteSpace(oAuthSecretTask.Result.SecretString))
-                throw new Exception("Missing AWS SecretsManager value for \"SharkSync-OAuth\" secret");
-
-            var oAuthSecret = JsonConvert.DeserializeObject<OAuthSecret>(oAuthSecretTask.Result.SecretString);
+            OAuthSecret oAuthSecret = GetSecret<OAuthSecret>(secretManager, appSettings.AuthSecretId);
 
             services.AddAuthentication(options =>
             {
@@ -235,6 +232,18 @@ namespace SharkSync.Web.Api
                     }
                 };
             });
+        }
+
+        public static T GetSecret<T>(IAmazonSecretsManager secretManager, string secretId)
+        {
+            var oAuthSecretTask = secretManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = secretId });
+            oAuthSecretTask.Wait();
+
+            if (oAuthSecretTask.Result == null || string.IsNullOrWhiteSpace(oAuthSecretTask.Result.SecretString))
+                throw new Exception($"Missing AWS SecretsManager value for \"{secretId}\" secret");
+
+            var oAuthSecret = JsonConvert.DeserializeObject<T>(oAuthSecretTask.Result.SecretString);
+            return oAuthSecret;
         }
 
         private static async Task<JObject> RequestUserDetailsFromProvider(OAuthCreatingTicketContext context)

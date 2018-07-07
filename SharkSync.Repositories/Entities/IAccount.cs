@@ -11,5 +11,6 @@ namespace SharkSync.Interfaces.Entities
         string GitHubId { get; set; }
         string GoogleId { get; set; }
         string MicrosoftId { get; set; }
+        int Balance { get; set; }
     }
 }

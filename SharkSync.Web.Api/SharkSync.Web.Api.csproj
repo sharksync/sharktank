@@ -6,9 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.10.2" />
-    <PackageReference Include="AWSSDK.SecretsManager" Version="3.3.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="3.3.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.8" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.3.6" />
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="2.0.4" />
     <PackageReference Include="NWebsec.AspNetCore.Middleware" Version="2.0.0" />
@@ -20,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SharkSync.PostgreSQL\SharkSync.PostgreSQL.csproj" />
     <ProjectReference Include="..\SharkSync.Repositories\SharkSync.Interfaces.csproj" />
-    <ProjectReference Include="..\SharkSync.DynamoDB\SharkSync.DynamoDB.csproj" />
   </ItemGroup>
 
 </Project>
