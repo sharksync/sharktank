@@ -22,8 +22,8 @@ namespace SharkSync.IntegrationTests
     [TestFixture]
     public class SyncController
     {
-        //private const string SyncRequestUrl = "https://api.testingallthethings.net/Api/Sync";
-        private const string SyncRequestUrl = "https://localhost:44325/Api/Sync";
+        private const string SyncRequestUrl = "https://api.testingallthethings.net/Api/Sync";
+        //private const string SyncRequestUrl = "https://localhost:44325/Api/Sync";
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
