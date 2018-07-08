@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using SharkSync.Interfaces.Entities;
+using SharkSync.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;

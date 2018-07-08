@@ -1,8 +1,7 @@
-﻿using SharkSync.Interfaces.Entities;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
-namespace SharkSync.Interfaces.Repositories
+namespace SharkSync.Interfaces
 {
     public interface IAccountRepository
     {

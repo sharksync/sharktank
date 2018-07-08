@@ -8,8 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using SharkSync.Interfaces.Repositories;
-using SharkSync.Interfaces.Entities;
+using SharkSync.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SharkSync.Web.Api.Tests.UnitTests
@@ -24,6 +23,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
 
         Mock<IApplicationRepository> applicationRepository;
         Mock<IChangeRepository> changeRepository;
+        Mock<ITimeService> timeService;
 
         Mock<ILogger<SyncController>> logger;
 
@@ -37,6 +37,9 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             change = new Mock<IChange>();
             change2 = new Mock<IChange>();
             changes = new List<IChange>();
+
+            timeService = new Mock<ITimeService>();
+            timeService.Setup(x => x.GetUtcNow()).Returns(DateTime.UtcNow);
 
             applicationRepository = new Mock<IApplicationRepository>();
             applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(app.Object);
@@ -72,10 +75,16 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             logger = new Mock<ILogger<SyncController>>();
         }
 
+        private SyncController CreateSyncController()
+        {
+            return new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object, timeService.Object);
+        }
+
+
         [Test]
         public async Task SyncController_Post_Fail_Empty_Request()
         {
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(null) as JsonResult;
 
             var syncResponse = response.Value as SyncResponseViewModel;
@@ -93,7 +102,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         [Test]
         public async Task SyncController_Post_Fail_Missing_AppId()
         {
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
             }) as JsonResult;
@@ -114,8 +123,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         public async Task SyncController_Post_Fail_Incorrect_AppId()
         {
             applicationRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((IApplication)null);
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = Guid.NewGuid()
@@ -136,7 +145,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         [Test]
         public async Task SyncController_Post_Fail_Missing_AppApiAccessKey()
         {
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id
@@ -157,7 +166,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         [Test]
         public async Task SyncController_Post_Fail_Invalid_AppApiAccessKey()
         {
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id,
@@ -179,7 +188,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         [Test]
         public async Task SyncController_Post_Success_Basic_NoChanges_NoGroups()
         {
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id,
@@ -197,7 +206,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         }
 
         [Test]
-        public async Task SyncController_Post_Success_Single_Change()
+        public async Task SyncController_Post_Success_Send_Single_Change()
         {
             string propertyName = "name";
             string group = "group";
@@ -206,6 +215,10 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             long modifiedMillisecondsAgo = 10000;
             string value = "Neil";
             List<IChange> returnChanges = null;
+            
+            DateTime requestStart = DateTime.UtcNow;
+            timeService = new Mock<ITimeService>();
+            timeService.Setup(x => x.GetUtcNow()).Returns(requestStart);
 
             changeRepository
                 .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<IChange>>()))
@@ -232,8 +245,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                     }
                 }
             };
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(request) as JsonResult;
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -251,12 +264,15 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(recordId, returnChanges[0].RecordId);
             Assert.AreEqual(value, returnChanges[0].RecordValue);
 
-            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
+            IEnumerable<IChange> changes = new List<IChange>() { change.Object };
+
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, changes), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value), Times.Once);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
-
+        
         [Test]
-        public async Task SyncController_Post_Success_Two_Changes()
+        public async Task SyncController_Post_Success_Send_Two_Changes()
         {
             string propertyName = "name";
             string propertyName2 = "age";
@@ -267,6 +283,10 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             string value = "Neil";
             string value2 = "10";
             List<IChange> returnChanges = null;
+            
+            DateTime requestStart = DateTime.UtcNow;
+            timeService = new Mock<ITimeService>();
+            timeService.Setup(x => x.GetUtcNow()).Returns(requestStart);
 
             changeRepository
                 .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<IChange>>()))
@@ -302,8 +322,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                     }
                 }
             };
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(request) as JsonResult;
             var syncResponse = response.Value as SyncResponseViewModel;
 
@@ -325,8 +345,90 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(entity, returnChanges[1].Entity);
             Assert.AreEqual(recordId, returnChanges[1].RecordId);
             Assert.AreEqual(value2, returnChanges[1].RecordValue);
+            
+            IEnumerable<IChange> changes = new List<IChange>() { change.Object, change2.Object };
 
-            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Once);
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, changes), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName2, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks,value2), Times.Once);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
+        }
+        
+        [Test]
+        public async Task SyncController_Post_Success_Send_Two_Changes_FilterOutChangesForTheSameRecordEntityAndProperty()
+        {
+            string propertyName = "name";
+            string group = "group";
+            string entity = "person";
+            Guid recordId = Guid.NewGuid();
+            long modifiedMillisecondsAgo = 10000;
+            long modifiedMillisecondsAgo2 = 20000;
+            string value = "Neil";
+            string value2 = "Adrian";
+            List<IChange> returnChanges = null;
+            
+            DateTime requestStart = DateTime.UtcNow;
+            timeService = new Mock<ITimeService>();
+            timeService.Setup(x => x.GetUtcNow()).Returns(requestStart);
+
+            changeRepository
+                .Setup(x => x.UpsertChangesAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<IChange>>()))
+                .Returns(() => Task.FromResult((string)null))
+                .Callback<Guid, IEnumerable<IChange>>((a, l) =>
+                {
+                    returnChanges = l.ToList();
+                });
+
+            var request = new SyncRequestViewModel()
+            {
+                AppId = app.Object.Id,
+                AppApiAccessKey = app.Object.AccessKey,
+                Changes = new List<SyncRequestViewModel.ChangeViewModel>
+                {
+                    new SyncRequestViewModel.ChangeViewModel
+                    {
+                        Group = group,
+                        RecordId = recordId,
+                        Entity = entity,
+                        Property = propertyName,
+                        MillisecondsAgo = modifiedMillisecondsAgo,
+                        Value = value
+                    },
+                    new SyncRequestViewModel.ChangeViewModel
+                    {
+                        Group = group,
+                        RecordId = recordId,
+                        Entity = entity,
+                        Property = propertyName,
+                        MillisecondsAgo = modifiedMillisecondsAgo2,
+                        Value = value2
+                    }
+                }
+            };
+            
+            SyncController controller = CreateSyncController();
+            var response = await controller.Post(request) as JsonResult;
+            var syncResponse = response.Value as SyncResponseViewModel;
+
+            Assert.NotNull(syncResponse);
+            Assert.Null(syncResponse.Errors);
+            Assert.True(syncResponse.Success);
+            Assert.NotNull(syncResponse.Groups);
+            Assert.AreEqual(0, syncResponse.Groups.Count);
+
+            Assert.NotNull(returnChanges);
+            Assert.AreEqual(1, returnChanges.Count);
+            Assert.AreEqual(group, returnChanges[0].GroupId);
+            Assert.AreEqual(propertyName, returnChanges[0].Property);
+            Assert.AreEqual(entity, returnChanges[0].Entity);
+            Assert.AreEqual(recordId, returnChanges[0].RecordId);
+            Assert.AreEqual(value, returnChanges[0].RecordValue);
+            
+            IEnumerable<IChange> changes = new List<IChange>() { change.Object };
+
+            changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, changes), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value), Times.Once);
+            changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
         [Test]
@@ -348,8 +450,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                     listReturnGroup = g;
                     listReturnTidemark = t;
                 });
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id,
@@ -379,12 +481,12 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         }
 
         [Test]
-        public async Task SyncController_Post_Success_Tidemark_With_Single_Change()
+        public async Task SyncController_Post_Success_Tidemark_With_Single_Group()
         {
             var changeObject = change.Object;
             changes.Add(changeObject);
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id,
@@ -424,9 +526,9 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         }
 
         [Test]
-        public async Task SyncController_Post_Success_Single_Group_With_Two_Changes()
+        public async Task SyncController_Post_Success_Tidemark_With_Single_Group2()
         {
-            long tidemark = new DateTime().Ticks;
+            long tidemark = DateTime.UtcNow.Ticks;
             string group = "group";
 
             var changeObject = change.Object;
@@ -437,8 +539,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             change2.Setup(c => c.Id).Returns(tidemark);
             var changeObject2 = change2.Object;
             changes.Add(changeObject2);
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id,
@@ -484,9 +586,9 @@ namespace SharkSync.Web.Api.Tests.UnitTests
         }
 
         [Test]
-        public async Task SyncController_Post_Success_Two_Groups_With_Two_Changes()
+        public async Task SyncController_Post_Success_Tidemark_With_Two_Groups()
         {
-            long tidemark = new DateTime().Ticks;
+            long tidemark = DateTime.UtcNow.Ticks;
             string group = "group";
             string group2 = "group2";
 
@@ -506,8 +608,8 @@ namespace SharkSync.Web.Api.Tests.UnitTests
                     else
                         return new List<IChange>() { changeObject2 };
                 });
-
-            var controller = new SyncController(logger.Object, applicationRepository.Object, changeRepository.Object);
+            
+            SyncController controller = CreateSyncController();
             var response = await controller.Post(new SyncRequestViewModel()
             {
                 AppId = app.Object.Id,

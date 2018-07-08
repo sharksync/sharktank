@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SharkSync.Interfaces.Entities
+namespace SharkSync.Interfaces
 {
     public interface IApplication
     {
