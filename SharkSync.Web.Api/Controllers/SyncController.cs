@@ -103,7 +103,7 @@ namespace SharkSync.Web.Api.Controllers
                     string key = $"{change.RecordId}-{change.Entity}-{change.Property}";
                     if (uniqueChanges.TryGetValue(key, out var existingChange))
                     {
-                        if (existingChange.MillisecondsAgo < change.MillisecondsAgo)
+                        if (change.MillisecondsAgo < existingChange.MillisecondsAgo)
                             uniqueChanges[key] = change;
                     }
                     else
