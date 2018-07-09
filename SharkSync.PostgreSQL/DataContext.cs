@@ -53,6 +53,14 @@ namespace SharkSync.PostgreSQL
                 AccessKey = new Guid("03172495-6158-44ae-b5b4-6ea5163f02d8"),
                 AccountId = testAccount.Id
             });
+            
+            modelBuilder.Entity<Application>().HasData(new Application
+            {
+                Id = new Guid("19d8856c-a439-46ae-9932-c81fd0fe5556"),
+                Name = "Integration Test App 4",
+                AccessKey = new Guid("0f458ce8-1a0e-450c-a2c4-2b50b3c4f41d"),
+                AccountId = testAccount.Id
+            });
         }
     }
 }
