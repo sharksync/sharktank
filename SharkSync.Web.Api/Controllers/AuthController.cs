@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
-using SharkSync.Interfaces.Entities;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Antiforgery;

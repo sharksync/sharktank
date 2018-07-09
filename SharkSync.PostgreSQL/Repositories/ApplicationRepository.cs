@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SharkSync.Interfaces.Entities;
-using SharkSync.Interfaces.Repositories;
+using SharkSync.Interfaces;
 using SharkSync.PostgreSQL.Entities;
 using System;
 using System.Collections.Generic;

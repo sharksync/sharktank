@@ -7,8 +7,7 @@ using SharkSync.Web.Api.ViewModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using SharkSync.Interfaces.Repositories;
-using SharkSync.Interfaces.Entities;
+using SharkSync.Interfaces;
 using System.Net;
 
 namespace SharkSync.Web.Api.Controllers
@@ -24,17 +23,17 @@ namespace SharkSync.Web.Api.Controllers
 
         DateTime requestStartTimeUTC { get; set; }
 
-        public SyncController(ILogger<SyncController> logger, IApplicationRepository appRepository, IChangeRepository changeRepository)
+        public SyncController(ILogger<SyncController> logger, IApplicationRepository appRepository, IChangeRepository changeRepository, ITimeService timeService)
         {
             Logger = logger;
             ApplicationRepository = appRepository;
             ChangeRepository = changeRepository;
+            requestStartTimeUTC = timeService.GetUtcNow();
         }
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]SyncRequestViewModel request)
         {
-            requestStartTimeUTC = DateTime.UtcNow;
             var response = new SyncResponseViewModel();
 
             if (!ModelState.IsValid)
@@ -97,7 +96,25 @@ namespace SharkSync.Web.Api.Controllers
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                foreach (var change in request.Changes)
+                // Dedup any changes with the same Record, Entity and Property
+                var uniqueChanges = new Dictionary<string, SyncRequestViewModel.ChangeViewModel>();
+                foreach(var change in request.Changes)
+                {
+                    string key = $"{change.RecordId}-{change.Entity}-{change.Property}";
+                    if (uniqueChanges.TryGetValue(key, out var existingChange))
+                    {
+                        if (change.MillisecondsAgo < existingChange.MillisecondsAgo)
+                            uniqueChanges[key] = change;
+                    }
+                    else
+                        uniqueChanges.Add(key, change);
+                }
+
+                
+                Logger.LogInformation($"Deduped changes in {sw.ElapsedMilliseconds}ms count: {dbChanges.Count}");
+                sw.Restart();
+
+                foreach (var change in uniqueChanges.Values)
                 {
                     if (change != null)
                     {
@@ -109,6 +126,7 @@ namespace SharkSync.Web.Api.Controllers
                 }
 
                 Logger.LogInformation($"Generated changes in {sw.ElapsedMilliseconds}ms count: {dbChanges.Count}");
+                sw.Restart();
 
                 if (dbChanges.Any())
                 {

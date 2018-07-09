@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using SharkSync.Interfaces.Entities;
-using SharkSync.Interfaces.Repositories;
+using SharkSync.Interfaces;
 using System;
 using System.Linq;
 using System.Threading.Tasks;

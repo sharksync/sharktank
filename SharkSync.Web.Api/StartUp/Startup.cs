@@ -27,10 +27,11 @@ using Newtonsoft.Json.Linq;
 using SharkSync.Web.Api.Services;
 using SharkSync.Web.Api.ViewModels;
 using SharkSync.PostgreSQL.Repositories;
-using SharkSync.Interfaces.Repositories;
+using SharkSync.Interfaces;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using SharkSync.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
+using SharkSync.PostgreSQL.Services;
 
 namespace SharkSync.Web.Api
 {
@@ -92,6 +93,7 @@ namespace SharkSync.Web.Api
             services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
 
             services.AddScoped(typeof(AuthService));
+            services.AddSingleton(typeof(ITimeService), new TimeService());
 
             services.AddAWSService<IAmazonSecretsManager>();
         }

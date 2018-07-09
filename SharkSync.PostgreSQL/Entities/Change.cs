@@ -1,4 +1,4 @@
-﻿using SharkSync.Interfaces.Entities;
+﻿using SharkSync.Interfaces;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
