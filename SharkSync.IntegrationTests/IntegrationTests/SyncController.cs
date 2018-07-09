@@ -255,28 +255,28 @@ namespace SharkSync.IntegrationTests
         }
 
         [Test]
-        public async Task SyncController_Post_Success_Single_Group_With_Two_Changes()
+        public async Task SyncController_Post_Success_TwoChangesToSamePropertyOverTwoRequests_EnsureOnlyLatestIsReturned()
         {
             var testApp = new Application
             {
-                Id = new Guid("b858ceb1-00d0-4427-b45d-e9890b77da36"),
+                Id = new Guid("19d8856c-a439-46ae-9932-c81fd0fe5556"),
                 AccountId = new Guid("250c6f28-4611-4c28-902c-8464fabc510b"),
-                AccessKey = new Guid("03172495-6158-44ae-b5b4-6ea5163f02d8"),
-                Name = "Integration Test App 3"
+                AccessKey = new Guid("0f458ce8-1a0e-450c-a2c4-2b50b3c4f41d"),
+                Name = "Integration Test App 4"
             };
 
             string propertyName = "name";
-            string propertyName2 = "age";
             string group = "group";
             string entity = "Person";
             Guid recordId = Guid.NewGuid();
             int modifiedMillisecondsAgo = 10000;
+            int modifiedMillisecondsAgo2 = 20000;
             string value = "Neil";
-            string value2 = "10";
+            string value2 = "Adrian";
 
             await DeleteChangeRows(testApp.Id, group);
 
-            SyncRequestViewModel request = new SyncRequestViewModel()
+            var request = new SyncRequestViewModel()
             {
                 AppId = testApp.Id,
                 AppApiAccessKey = testApp.AccessKey,
@@ -290,23 +290,6 @@ namespace SharkSync.IntegrationTests
                         RecordId = recordId,
                         MillisecondsAgo = modifiedMillisecondsAgo,
                         Value = value
-                    },
-                    new SyncRequestViewModel.ChangeViewModel
-                    {
-                        Group = group,
-                        Entity = entity,
-                        Property = propertyName2,
-                        RecordId = recordId,
-                        MillisecondsAgo = modifiedMillisecondsAgo,
-                        Value = value2
-                    }
-                }, 
-                Groups = new List<SyncRequestViewModel.GroupViewModel>
-                {
-                    new SyncRequestViewModel.GroupViewModel
-                    {
-                        Group = group,
-                        Tidemark = null
                     }
                 }
             };
@@ -325,10 +308,50 @@ namespace SharkSync.IntegrationTests
             Assert.Null(syncResponse.Errors);
             Assert.True(syncResponse.Success);
 
+            var request2 = new SyncRequestViewModel()
+            {
+                AppId = testApp.Id,
+                AppApiAccessKey = testApp.AccessKey,
+                Changes = new List<SyncRequestViewModel.ChangeViewModel>
+                {
+                    new SyncRequestViewModel.ChangeViewModel
+                    {
+                        Group = group,
+                        Entity = entity,
+                        Property = propertyName,
+                        RecordId = recordId,
+                        MillisecondsAgo = modifiedMillisecondsAgo2,
+                        Value = value2
+                    }
+                },
+                Groups = new List<SyncRequestViewModel.GroupViewModel>
+                {
+                    new SyncRequestViewModel.GroupViewModel
+                    {
+                        Group = group,
+                        Tidemark = null
+                    }
+                }
+            };
+
+            var jsonPayload2 = JsonConvert.SerializeObject(request2);
+            var requestContent2 = new StringContent(jsonPayload2, Encoding.UTF8, "application/json");
+            var response2 = await HttpClient.PostAsync(SyncRequestUrl, requestContent2);
+
+            var responsePayload2 = await response2.Content?.ReadAsStringAsync();
+            Assert.AreEqual(HttpStatusCode.OK, response2.StatusCode);
+            Assert.NotNull(responsePayload2);
+
+            var syncResponse2 = JsonConvert.DeserializeObject<SyncResponseViewModel>(responsePayload2);
+
+            Assert.NotNull(syncResponse2);
+            Assert.Null(syncResponse2.Errors);
+            Assert.True(syncResponse2.Success);
+
             var dbRows = await GetChangeRows(testApp.Id, group);
 
             Assert.NotNull(dbRows);
-            Assert.AreEqual(2, dbRows.Count);
+            Assert.AreEqual(1, dbRows.Count);
             Assert.AreEqual(group, dbRows[0].GroupId);
             Assert.AreEqual(recordId, dbRows[0].RecordId);
             Assert.AreEqual(entity, dbRows[0].Entity);
@@ -336,31 +359,19 @@ namespace SharkSync.IntegrationTests
             Assert.AreEqual(recordId, dbRows[0].RecordId);
             Assert.AreEqual(value, dbRows[0].RecordValue);
 
-            Assert.AreEqual(group, dbRows[1].GroupId);
-            Assert.AreEqual(entity, dbRows[1].Entity);
-            Assert.AreEqual(propertyName2, dbRows[1].Property);
-            Assert.AreEqual(recordId, dbRows[1].RecordId);
-            Assert.AreEqual(value2, dbRows[1].RecordValue);
+            Assert.NotNull(syncResponse2.Groups);
+            Assert.AreEqual(1, syncResponse2.Groups.Count);
+            Assert.AreEqual(dbRows.Last().Id, syncResponse2.Groups[0].Tidemark);
+            Assert.AreEqual(group, syncResponse2.Groups[0].Group);
 
-            Assert.NotNull(syncResponse.Groups);
-            Assert.AreEqual(1, syncResponse.Groups.Count);
-            Assert.AreEqual(dbRows.Last().Id, syncResponse.Groups[0].Tidemark);
-            Assert.AreEqual(group, syncResponse.Groups[0].Group);
+            Assert.NotNull(syncResponse2.Groups[0].Changes);
+            Assert.AreEqual(1, syncResponse2.Groups[0].Changes.Count);
 
-            Assert.NotNull(syncResponse.Groups[0].Changes);
-            Assert.AreEqual(2, syncResponse.Groups[0].Changes.Count);
-
-            Assert.AreEqual(dbRows[0].ClientModified, syncResponse.Groups[0].Changes[0].Modified);
-            Assert.AreEqual(entity, syncResponse.Groups[0].Changes[0].Entity);
-            Assert.AreEqual(propertyName, syncResponse.Groups[0].Changes[0].Property);
-            Assert.AreEqual(recordId, syncResponse.Groups[0].Changes[0].RecordId);
-            Assert.AreEqual(value, syncResponse.Groups[0].Changes[0].Value);
-
-            Assert.AreEqual(dbRows[1].ClientModified, syncResponse.Groups[0].Changes[1].Modified);
-            Assert.AreEqual(entity, syncResponse.Groups[0].Changes[1].Entity);
-            Assert.AreEqual(propertyName2, syncResponse.Groups[0].Changes[1].Property);
-            Assert.AreEqual(recordId, syncResponse.Groups[0].Changes[1].RecordId);
-            Assert.AreEqual(value2, syncResponse.Groups[0].Changes[1].Value);
+            Assert.AreEqual(dbRows[0].ClientModified, syncResponse2.Groups[0].Changes[0].Modified);
+            Assert.AreEqual(entity, syncResponse2.Groups[0].Changes[0].Entity);
+            Assert.AreEqual(propertyName, syncResponse2.Groups[0].Changes[0].Property);
+            Assert.AreEqual(recordId, syncResponse2.Groups[0].Changes[0].RecordId);
+            Assert.AreEqual(value, syncResponse2.Groups[0].Changes[0].Value);
         }
 
         public async Task<List<Change>> GetChangeRows(Guid appId, string group)
