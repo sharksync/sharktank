@@ -394,6 +394,12 @@ Resources:
             Resource: 
               Fn::Join:
               - ''
+              - - 'arn:aws:s3:::io.sharksync.builds/*'
+            Action: ["s3:GetObject"]
+          - Effect: Allow
+            Resource: 
+              Fn::Join:
+              - ''
               - - 'arn:aws:lambda:*:*:function:'
                 - !Ref 'AWS::StackName'
                 - '-*'
