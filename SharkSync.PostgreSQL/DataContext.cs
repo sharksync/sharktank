@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using SharkSync.Interfaces;
 using SharkSync.PostgreSQL.Entities;
 using System;
 using System.Collections.Generic;
@@ -9,9 +10,23 @@ namespace SharkSync.PostgreSQL
 {
     public class DataContext : DbContext
     {
-        public DataContext(DbContextOptions<DataContext> options)
+        public DataContext(DbContextOptions<DataContext> options, ISettingsService settingsService)
             : base(options)
-        { }
+        {
+            var task = settingsService.Get<ConnectionStringSettings>();
+            task.Wait();
+            Settings = task.Result;
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (Settings == null)
+                throw new Exception("No ConnectionStringSettings to configure DataContext with");
+
+            optionsBuilder.UseNpgsql(Settings.GetConnectionString());
+        }
+
+        public ConnectionStringSettings Settings { get; set; }
 
         public DbSet<Account> Accounts { get; set; }
 
@@ -29,7 +44,7 @@ namespace SharkSync.PostgreSQL
             };
 
             modelBuilder.Entity<Account>().HasData(testAccount);
-            
+
             modelBuilder.Entity<Application>().HasData(new Application
             {
                 Id = new Guid("afd8db1e-73b8-4d5f-9cb1-6b49d205555a"),
@@ -45,7 +60,7 @@ namespace SharkSync.PostgreSQL
                 AccessKey = new Guid("e7b40cf0-2781-4dc7-9545-91fd812fc506"),
                 AccountId = testAccount.Id
             });
-            
+
             modelBuilder.Entity<Application>().HasData(new Application
             {
                 Id = new Guid("b858ceb1-00d0-4427-b45d-e9890b77da36"),
@@ -53,7 +68,7 @@ namespace SharkSync.PostgreSQL
                 AccessKey = new Guid("03172495-6158-44ae-b5b4-6ea5163f02d8"),
                 AccountId = testAccount.Id
             });
-            
+
             modelBuilder.Entity<Application>().HasData(new Application
             {
                 Id = new Guid("19d8856c-a439-46ae-9932-c81fd0fe5556"),

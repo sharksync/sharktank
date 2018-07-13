@@ -18,17 +18,14 @@ namespace SharkSync.Web.Api.Controllers
 
         AuthService AuthService { get; set; }
 
-        AppSettings AppSettings { get; set; }
-        
         IAntiforgery Antiforgery { get; set; }
-        
+
         HttpClient HttpClient { get; set; }
 
-        public AuthController(ILogger<AuthController> logger, AuthService authService, IOptions<AppSettings> appSettingsOptions, IAntiforgery antiforgery)
+        public AuthController(ILogger<AuthController> logger, AuthService authService, IAntiforgery antiforgery)
         {
             Logger = logger;
             AuthService = authService;
-            AppSettings = appSettingsOptions.Value;
             Antiforgery = antiforgery;
 
             //TODO: Upgrade to IHttpClient once 2.1 is out
@@ -46,7 +43,8 @@ namespace SharkSync.Web.Api.Controllers
         [Route("Api/Auth/Complete")]
         public IActionResult Complete()
         {
-            return Redirect($"{AppSettings.ClientAppRootUrl}/Console/LoginComplete");
+            //return Redirect($"{AppSettings.ClientAppRootUrl}/Console/LoginComplete");
+            return Redirect($"/Console/LoginComplete");
         }
 
         [HttpGet()]
@@ -57,7 +55,7 @@ namespace SharkSync.Web.Api.Controllers
             var loggedInAccount = await AuthService.GetLoggedInAccountAsync(User);
             if (loggedInAccount == null)
                 return Unauthorized();
-            
+
             var tokens = Antiforgery.GetAndStoreTokens(HttpContext);
 
             var vm = new AuthDetailsViewModel()
@@ -88,7 +86,7 @@ namespace SharkSync.Web.Api.Controllers
 
             return Ok();
         }
-        
+
         [HttpGet()]
         [Route("Api/Auth/ProfilePicture")]
         public async Task<IActionResult> ProfilePicture()
@@ -109,10 +107,10 @@ namespace SharkSync.Web.Api.Controllers
                 Logger.LogInformation($"Read profile image into byte[] at size: {bytes.Length}");
                 return File(bytes, response.Content.Headers.ContentType.MediaType);
             }
-            
+
             return Ok();
         }
-        
+
         [HttpGet()]
         [Route("Api/Auth/Login")]
         public IActionResult Login()

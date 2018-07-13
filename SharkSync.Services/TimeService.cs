@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SharkSync.PostgreSQL.Services
+namespace SharkSync.Services
 {
     public class TimeService : ITimeService
     {

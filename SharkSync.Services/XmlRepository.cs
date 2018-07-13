@@ -1,6 +1,9 @@
 ﻿using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.AspNetCore.DataProtection.Repositories;
+using Microsoft.Extensions.Options;
+using SharkSync.Interfaces;
+using SharkSync.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +14,7 @@ using System.Xml.Linq;
 
 namespace SharkSync.Web.Api.Services
 {
-    public class SecretsManagerXmlRepository : IXmlRepository
+    public class XmlRepository : IXmlRepository
     {
         private static readonly XName RepositoryElementName = "repository";
         private readonly IAmazonSecretsManager _secretsManager;
@@ -23,10 +26,13 @@ namespace SharkSync.Web.Api.Services
         /// </summary>
         /// <param name="secretsManager">An instance of the AWS IAmazonSecretsManager</param>
         /// <param name="key">The <see cref="RedisKey"/> used to store key list.</param>
-        public SecretsManagerXmlRepository(IAmazonSecretsManager secretsManager, string key)
+        public XmlRepository(IAmazonSecretsManager secretsManager, IOptions<AppSettings> appSettingsOptions)
         {
             _secretsManager = secretsManager;
-            _key = key;
+            _key = appSettingsOptions?.Value?.DataProtectionSecretId;
+
+            if (string.IsNullOrWhiteSpace(_key))
+                throw new Exception("Missing DataProtectionSecretId in appsettings");
         }
 
         /// <inheritdoc />
@@ -86,7 +92,7 @@ namespace SharkSync.Web.Api.Services
                 var secretValue = await _secretsManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = _key });
                 return secretValue?.SecretBinary;
             }
-            catch(ResourceNotFoundException)
+            catch (ResourceNotFoundException)
             {
                 // Key has not been created yet
 

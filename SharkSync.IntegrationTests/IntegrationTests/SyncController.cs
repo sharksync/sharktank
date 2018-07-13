@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using SharkSync.Interfaces;
 using SharkSync.PostgreSQL;
 using SharkSync.PostgreSQL.Entities;
+using SharkSync.Services;
 using SharkSync.Web.Api;
 using SharkSync.Web.Api.ViewModels;
 using System;
@@ -33,23 +35,20 @@ namespace SharkSync.IntegrationTests
         public SyncController()
         {
             var services = new ServiceCollection();
- 
+
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", false)
                 .Build();
-            services.AddOptions();
-            
-            var appSettings = new AppSettings();
-            var appSettingSection = configuration.GetSection(nameof(AppSettings));
-            services.Configure<AppSettings>(appSettingSection);
-            appSettingSection.Bind(appSettings);
-            
-            var awsOptions = configuration.GetAWSOptions();
-            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
-            var connectionStringSecret = Startup.GetSecret<ConnectionStringSecret>(secretManager, appSettings.ConnectionSecretId);
+            services.Configure<AppSettings>(options => configuration.GetSection("AppSettings").Bind(options));
 
-            services.AddEntityFrameworkNpgsql().AddDbContext<DataContext>(options => options.UseNpgsql(connectionStringSecret.GetConnectionString()));
+            services.AddDefaultAWSOptions(configuration.GetAWSOptions());
+
+            services.AddAWSService<IAmazonSecretsManager>();
+            services.AddSingleton<ISettingsService, SettingsService>();
+
+            services.AddDbContext<DataContext>();
+
             serviceProvider = services.BuildServiceProvider();
         }
 

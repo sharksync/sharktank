@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SharkSync.PostgreSQL\SharkSync.PostgreSQL.csproj" />
     <ProjectReference Include="..\SharkSync.Repositories\SharkSync.Interfaces.csproj" />
+    <ProjectReference Include="..\SharkSync.Services\SharkSync.Services.csproj" />
   </ItemGroup>
 
 </Project>

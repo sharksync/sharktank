@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.IntegrationTests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharkSync.PostgreSQL", "SharkSync.PostgreSQL\SharkSync.PostgreSQL.csproj", "{3531DB1D-ECB7-4FC0-8190-7231C94BDB93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharkSync.Services", "SharkSync.Services\SharkSync.Services.csproj", "{A41AA171-65A8-46C9-9013-6180540777FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{3531DB1D-ECB7-4FC0-8190-7231C94BDB93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3531DB1D-ECB7-4FC0-8190-7231C94BDB93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3531DB1D-ECB7-4FC0-8190-7231C94BDB93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A41AA171-65A8-46C9-9013-6180540777FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A41AA171-65A8-46C9-9013-6180540777FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A41AA171-65A8-46C9-9013-6180540777FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A41AA171-65A8-46C9-9013-6180540777FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

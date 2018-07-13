@@ -7,6 +7,5 @@ namespace SharkSync.Interfaces
     public interface ITimeService
     {
         DateTime GetUtcNow();
-
     }
 }

@@ -31,7 +31,8 @@ using SharkSync.Interfaces;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using SharkSync.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
-using SharkSync.PostgreSQL.Services;
+using SharkSync.Services;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 
 namespace SharkSync.Web.Api
 {
@@ -50,79 +51,34 @@ namespace SharkSync.Web.Api
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<AppSettings>(options => Configuration.GetSection("AppSettings").Bind(options));
+
             services.AddMvc();
 
-            var appSettings = new AppSettings();
-            var appSettingSection = Configuration.GetSection(nameof(AppSettings));
-            services.Configure<AppSettings>(appSettingSection);
-            appSettingSection.Bind(appSettings);
-            
-            var awsOptions = Configuration.GetAWSOptions();
-            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
-            var connectionStringSecret = GetSecret<ConnectionStringSecret>(secretManager, appSettings.ConnectionSecretId);
+            services.AddAWSService<IAmazonSecretsManager>();
+            services.AddSingleton<ISettingsService, SettingsService>();
 
-            services.AddEntityFrameworkNpgsql().AddDbContext<DataContext>(options => options.UseNpgsql(connectionStringSecret.GetConnectionString()));
-
-            // Only add CORS if the client is on another domain
-            if (appSettings.ClientAppRootUrl != "~")
-            {
-                services.AddCors(options =>
-                {
-                    options.AddPolicy("AllowSpecificOrigin",
-                        builder => builder
-                            .WithOrigins(appSettings.ClientAppRootUrl)
-                            .AllowCredentials()
-                            .AllowAnyHeader()
-                            .AllowAnyMethod());
-                });
-            }
-
-            services.Configure<MvcOptions>(options =>
-            {
-                options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
-            });
+            services.AddDataProtection();
+            services.AddCors();
+            services.AddDbContext<DataContext>();
 
             services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
-            AddDataProtectionOptions(services);
+            AddAuthenticationOptions(services);
 
-            AddAuthenticationOptions(secretManager, services, appSettings);
+            services.AddTransient<IAccountRepository, AccountRepository>();
+            services.AddTransient<IApplicationRepository, ApplicationRepository>();
+            services.AddTransient<IChangeRepository, ChangeRepository>();
 
-            services.AddTransient(typeof(IAccountRepository), typeof(AccountRepository));
-            services.AddTransient(typeof(IApplicationRepository), typeof(ApplicationRepository));
-            services.AddTransient(typeof(IChangeRepository), typeof(ChangeRepository));
-
-            services.AddScoped(typeof(AuthService));
-            services.AddSingleton(typeof(ITimeService), new TimeService());
-
-            services.AddAWSService<IAmazonSecretsManager>();
+            services.AddScoped<AuthService, AuthService>();
+            services.AddSingleton<ITimeService, TimeService>();
+            services.AddSingleton<IXmlRepository, XmlRepository>();
         }
 
-        private class OAuthSecret
+        private void AddAuthenticationOptions(IServiceCollection services)
         {
-            public string GitHubClientId { get; set; }
-            public string GitHubClientSecret { get; set; }
-            public string GoogleClientId { get; set; }
-            public string GoogleClientSecret { get; set; }
-            public string MicrosoftApplicationId { get; set; }
-            public string MicrosoftPassword { get; set; }
-        }
-
-        private void AddDataProtectionOptions(IServiceCollection services)
-        {
-            var awsOptions = Configuration.GetAWSOptions();
-            var secretManager = awsOptions.CreateServiceClient<IAmazonSecretsManager>();
-
-            services.AddDataProtection();
-            services.Configure<KeyManagementOptions>(o =>
-            {
-                o.XmlRepository = new SecretsManagerXmlRepository(secretManager, "SharkSync-DataProtection");
-            });
-        }
-
-        private void AddAuthenticationOptions(IAmazonSecretsManager secretManager, IServiceCollection services, AppSettings appSettings)
-        {
-            OAuthSecret oAuthSecret = GetSecret<OAuthSecret>(secretManager, appSettings.AuthSecretId);
+            var settings = services.BuildServiceProvider().GetService<ISettingsService>();
+            var oAuthSettings = settings.Get<OAuthSettings>().Result;
 
             services.AddAuthentication(options =>
             {
@@ -140,8 +96,8 @@ namespace SharkSync.Web.Api
             })
             .AddOAuth("GitHub", options =>
             {
-                options.ClientId = oAuthSecret.GitHubClientId;
-                options.ClientSecret = oAuthSecret.GitHubClientSecret;
+                options.ClientId = oAuthSettings.GitHubClientId;
+                options.ClientSecret = oAuthSettings.GitHubClientSecret;
                 options.CallbackPath = new PathString("/signin-github");
 
                 // Include the users email address in the scope
@@ -173,8 +129,8 @@ namespace SharkSync.Web.Api
             })
             .AddGoogle(options =>
             {
-                options.ClientId = oAuthSecret.GoogleClientId;
-                options.ClientSecret = oAuthSecret.GoogleClientSecret;
+                options.ClientId = oAuthSettings.GoogleClientId;
+                options.ClientSecret = oAuthSettings.GoogleClientSecret;
 
                 options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
 
@@ -206,8 +162,8 @@ namespace SharkSync.Web.Api
             })
             .AddMicrosoftAccount(options =>
             {
-                options.ClientId = oAuthSecret.MicrosoftApplicationId;
-                options.ClientSecret = oAuthSecret.MicrosoftPassword;
+                options.ClientId = oAuthSettings.MicrosoftApplicationId;
+                options.ClientSecret = oAuthSettings.MicrosoftPassword;
 
                 options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
 
@@ -236,18 +192,6 @@ namespace SharkSync.Web.Api
             });
         }
 
-        public static T GetSecret<T>(IAmazonSecretsManager secretManager, string secretId)
-        {
-            var oAuthSecretTask = secretManager.GetSecretValueAsync(new GetSecretValueRequest { SecretId = secretId });
-            oAuthSecretTask.Wait();
-
-            if (oAuthSecretTask.Result == null || string.IsNullOrWhiteSpace(oAuthSecretTask.Result.SecretString))
-                throw new Exception($"Missing AWS SecretsManager value for \"{secretId}\" secret");
-
-            var oAuthSecret = JsonConvert.DeserializeObject<T>(oAuthSecretTask.Result.SecretString);
-            return oAuthSecret;
-        }
-
         private static async Task<JObject> RequestUserDetailsFromProvider(OAuthCreatingTicketContext context)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
@@ -274,6 +218,18 @@ namespace SharkSync.Web.Api
             app.UseXXssProtection(options => options.EnabledWithBlockMode());
             app.UseXfo(xfo => xfo.Deny());
 
+            app.UseCors(builder =>
+                //builder.WithOrigins(oAuthSecret.ClientAppRootUrl)
+                builder.WithOrigins("")
+                        .AllowCredentials()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+
+            //services.Configure<MvcOptions>(options =>
+            //{
+            //    options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
+            //});
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -297,7 +253,7 @@ namespace SharkSync.Web.Api
                     });
                 });
             }
-            
+
             app.UseAuthentication();
 
             app.UseMvc();
