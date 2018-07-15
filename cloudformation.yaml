@@ -258,7 +258,7 @@ Resources:
         Fn::GetAtt:
           - WebApiLambdaRole
           - Arn
-      Runtime: dotnetcore2.0
+      Runtime: dotnetcore2.1
       MemorySize: 256
       Timeout: 300
 
@@ -431,7 +431,7 @@ Resources:
         Fn::GetAtt:
           - DeploymentLambdaRole
           - Arn
-      Runtime: dotnetcore2.0
+      Runtime: dotnetcore2.1
       MemorySize: 128
       Timeout: 60
 
@@ -450,7 +450,7 @@ Resources:
         Fn::GetAtt:
           - DeploymentLambdaRole
           - Arn
-      Runtime: dotnetcore2.0
+      Runtime: dotnetcore2.1
       MemorySize: 128
       Timeout: 60
 
@@ -469,7 +469,7 @@ Resources:
         Fn::GetAtt:
           - DeploymentLambdaRole
           - Arn
-      Runtime: dotnetcore2.0
+      Runtime: dotnetcore2.1
       MemorySize: 128
       Timeout: 60
 
