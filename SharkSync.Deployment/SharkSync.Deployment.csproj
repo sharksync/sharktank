@@ -1,12 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    <ApplicationIcon />
-    <OutputType>Library</OutputType>
-    <StartupObject></StartupObject>
     <LangVersion>latest</LangVersion>
+    <AWSProjectType>Lambda</AWSProjectType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,12 +17,12 @@
     <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.3.0" />
     <PackageReference Include="Amazon.Lambda.TestUtilities" Version="1.0.0" />
     <PackageReference Include="AWSSDK.CloudFront" Version="3.3.8.1" />
-    <PackageReference Include="AWSSDK.Lambda" Version="3.3.14.1" />
-    <PackageReference Include="AWSSDK.S3" Version="3.3.18.6" />
+    <PackageReference Include="AWSSDK.Lambda" Version="3.3.15" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.19" />
   </ItemGroup>
 
   <ItemGroup>
-    <DotNetCliToolReference Include="Amazon.Lambda.Tools" Version="2.1.3" />
+    <DotNetCliToolReference Include="Amazon.Lambda.Tools" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>

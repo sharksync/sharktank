@@ -61,6 +61,7 @@ namespace SharkSync.Web.Api
             services.AddDataProtection();
             services.AddCors();
             services.AddDbContext<DataContext>();
+            services.AddHttpClient();
 
             services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 

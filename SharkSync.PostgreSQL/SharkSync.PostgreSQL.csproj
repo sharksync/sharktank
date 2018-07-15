@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,10 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SharkSync.Repositories\SharkSync.Interfaces.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="2.0.0" />
   </ItemGroup>
 
 </Project>

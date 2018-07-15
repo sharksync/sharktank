@@ -20,16 +20,14 @@ namespace SharkSync.Web.Api.Controllers
 
         IAntiforgery Antiforgery { get; set; }
 
-        HttpClient HttpClient { get; set; }
+        IHttpClientFactory HttpClientFactory { get; set; }
 
-        public AuthController(ILogger<AuthController> logger, AuthService authService, IAntiforgery antiforgery)
+        public AuthController(ILogger<AuthController> logger, AuthService authService, IAntiforgery antiforgery, IHttpClientFactory httpClientFactory)
         {
             Logger = logger;
             AuthService = authService;
             Antiforgery = antiforgery;
-
-            //TODO: Upgrade to IHttpClient once 2.1 is out
-            HttpClient = new HttpClient();
+            HttpClientFactory = httpClientFactory;
         }
 
         [HttpGet()]
@@ -99,7 +97,8 @@ namespace SharkSync.Web.Api.Controllers
 
             if (!string.IsNullOrWhiteSpace(avatarUrl))
             {
-                var response = await HttpClient.GetAsync(avatarUrl);
+                var client = HttpClientFactory.CreateClient();
+                var response = await client.GetAsync(avatarUrl);
                 response.EnsureSuccessStatusCode();
 
                 // Since we are in a lambda, we can't stream the bytes live, copy it into memory first

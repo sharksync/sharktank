@@ -31,17 +31,17 @@ phases:
       - dotnet test
       - cd ../
       - cd SharkSync.Web.Api
-      - dotnet lambda package --configuration release --framework netcoreapp2.0
+      - dotnet lambda package --configuration release --framework netcoreapp2.1
       - cd ../
       - cd SharkSync.Deployment
-      - dotnet lambda package --configuration release --framework netcoreapp2.0
+      - dotnet lambda package --configuration release --framework netcoreapp2.1
       - cd ../
       - bash create-github-release.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank
-      - cd SharkSync.Web/bin/Release/netcoreapp2.0/publish/wwwroot
+      - cd SharkSync.Web/bin/Release/netcoreapp2.1/publish/wwwroot
       - zip -r ../../../../../../SharkSync.Web.Html.zip .
       - cd ../../../../../../
-      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Api/bin/release/netcoreapp2.0/SharkSync.Web.Api.zip
-      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Deployment/bin/release/netcoreapp2.0/SharkSync.Deployment.zip
+      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Api/bin/release/netcoreapp2.1/SharkSync.Web.Api.zip
+      - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Deployment/bin/release/netcoreapp2.1/SharkSync.Deployment.zip
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./SharkSync.Web.Html.zip
       - bash upload-binary.sh github_api_token=${GITHUB_TOKEN} owner=sharksync repo=sharktank tag=LATEST filename=./cloudformation.yaml
       - aws cloudformation deploy --template-file cloudformation.yaml --stack-name sharksync-web --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset

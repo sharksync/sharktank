@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <IsPackable>false</IsPackable>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,8 +21,8 @@
     <PackageReference Include="AWSSDK.SecretsManager" Version="3.3.1.2" />
     <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.2" />
-    <PackageReference Include="Moq" Version="4.8.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
+    <PackageReference Include="Moq" Version="4.9.0" />
     <PackageReference Include="NUnit" Version="3.10.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
     <PackageReference Include="Selenium.WebDriver" Version="3.13.1" />
