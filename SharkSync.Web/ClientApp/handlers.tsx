@@ -9,11 +9,9 @@ interface UnauthorizedResponse {
     ChallengeUrl: string;
 }
 
-declare var WEB_API_URL: string;
-
 export class ApiHandlers {
 
-    static Url = WEB_API_URL;
+    static Url = '';
 
     static GetStandardHeaders() {
 
@@ -34,7 +32,7 @@ export class ApiHandlers {
             if (response.status == 401) {
 
                 Auth.clearLoggedInCache();
-                
+
                 // Auth required, redirect to location header
                 window.location.href = "/Console/Login";
                 throw Error("Unauthorized");

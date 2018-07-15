@@ -11,6 +11,7 @@ exports.handler = function (event, context, callback) {
     headers['Strict-Transport-Security'] = [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }];
     headers['Expect-CT'] = [{ key: 'Expect-CT', value: 'enforce; max-age=86400;' }];
     headers['Content-Security-Policy'] = [{ key: 'Content-Security-Policy', value: "default-src 'self' data:;script-src 'self';style-src 'self' 'unsafe-inline';img-src 'self' data: %%ServiceUrl%%;font-src 'self' data:;connect-src 'self' %%ServiceUrl%%;block-all-mixed-content" }];
+    headers['Api-Uri'] = [{ key: 'Api-Uri', value: '%%ServiceUrl%%/' }];
 
     callback(null, response);
 };

@@ -44,6 +44,16 @@ namespace SharkSync.Web
             app.UseXXssProtection(options => options.EnabledWithBlockMode());
             app.UseXfo(xfo => xfo.Deny());
 
+            app.Use(async (context, nextMiddleware) =>
+            {
+                context.Response.OnStarting(() =>
+                {
+                    context.Response.Headers.Add("Api-Uri", "https://localhost:44325/");
+                    return Task.FromResult(0);
+                });
+                await nextMiddleware();
+            });
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
