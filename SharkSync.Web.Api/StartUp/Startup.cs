@@ -44,19 +44,24 @@ namespace SharkSync.Web.Api
             Environment = env;
         }
 
-        public static IConfiguration Configuration { get; private set; }
+        public IConfiguration Configuration { get; private set; }
 
-        public static IHostingEnvironment Environment { get; private set; }
+        public IHostingEnvironment Environment { get; private set; }
+
+        public ApplicationSettings ApplicationSettings { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<AppSettings>(options => Configuration.GetSection("AppSettings").Bind(options));
 
-            services.AddMvc();
-
             services.AddAWSService<IAmazonSecretsManager>();
             services.AddSingleton<ISettingsService, SettingsService>();
+
+            var settings = services.BuildServiceProvider().GetService<ISettingsService>();
+            ApplicationSettings = settings.Get<ApplicationSettings>().Result;
+
+            services.AddMvc();
 
             services.AddDataProtection();
             services.AddCors();
@@ -78,10 +83,7 @@ namespace SharkSync.Web.Api
 
         private void AddAuthenticationOptions(IServiceCollection services)
         {
-            var settings = services.BuildServiceProvider().GetService<ISettingsService>();
-            var oAuthSettings = settings.Get<OAuthSettings>().Result;
-
-            services.AddAuthentication(options =>
+            var authBuilder = services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -94,103 +96,110 @@ namespace SharkSync.Web.Api
                 options.Cookie.Path = null;
                 options.LoginPath = "/Api/Auth/Login";
                 options.AccessDeniedPath = "/Api/Auth/AccessDenied";
-            })
-            .AddOAuth("GitHub", options =>
-            {
-                options.ClientId = oAuthSettings.GitHubClientId;
-                options.ClientSecret = oAuthSettings.GitHubClientSecret;
-                options.CallbackPath = new PathString("/signin-github");
-
-                // Include the users email address in the scope
-                options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize?scope=user:email";
-                options.TokenEndpoint = "https://github.com/login/oauth/access_token";
-                options.UserInformationEndpoint = "https://api.github.com/user";
-
-                options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
-
-                options.Events = new OAuthEvents
-                {
-                    OnCreatingTicket = async context =>
-                    {
-                        JObject user = await RequestUserDetailsFromProvider(context);
-
-                        var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
-
-                        var gitHubId = (string)user["id"];
-                        var name = (string)user["name"];
-                        var email = (string)user["email"];
-                        var avatarUrl = (string)user["avatar_url"];
-
-                        var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, gitHubId: gitHubId);
-
-                        user["accountId"] = account.Id.ToString();
-                        context.RunClaimActions(user);
-                    }
-                };
-            })
-            .AddGoogle(options =>
-            {
-                options.ClientId = oAuthSettings.GoogleClientId;
-                options.ClientSecret = oAuthSettings.GoogleClientSecret;
-
-                options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
-
-                options.Events = new OAuthEvents
-                {
-                    OnCreatingTicket = async context =>
-                    {
-                        JObject user = await RequestUserDetailsFromProvider(context);
-
-                        var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
-
-                        var googleId = (string)user["id"];
-                        var name = (string)user["displayName"];
-                        var imageObject = (JObject)user["image"];
-                        string avatarUrl = null;
-                        if (imageObject != null)
-                            avatarUrl = (string)imageObject["url"];
-                        var emailsObject = (JArray)user["emails"];
-                        string email = null;
-                        if (emailsObject != null && emailsObject.Any())
-                            email = (string)emailsObject.First()["value"];
-
-                        var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, googleId: googleId);
-
-                        user["accountId"] = account.Id.ToString();
-                        context.RunClaimActions(user);
-                    }
-                };
-            })
-            .AddMicrosoftAccount(options =>
-            {
-                options.ClientId = oAuthSettings.MicrosoftApplicationId;
-                options.ClientSecret = oAuthSettings.MicrosoftPassword;
-
-                options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
-
-                options.Events = new OAuthEvents
-                {
-                    OnCreatingTicket = async context =>
-                    {
-                        JObject user = await RequestUserDetailsFromProvider(context);
-
-                        var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
-
-                        var microsoftId = (string)user["id"];
-                        var name = (string)user["displayName"];
-                        var email = (string)user["userPrincipalName"];
-
-                        // userPrincipalName might not be an email, depending on the account type
-                        if (!email.Contains("@"))
-                            email = null;
-
-                        var account = await accountRepository.AddOrGetAsync(name, email, null, microsoftId: microsoftId);
-
-                        user["accountId"] = account.Id.ToString();
-                        context.RunClaimActions(user);
-                    }
-                };
             });
+
+            if (!string.IsNullOrEmpty(ApplicationSettings.GitHubClientId))
+                authBuilder = authBuilder.AddOAuth("GitHub", options =>
+                {
+                    options.ClientId = ApplicationSettings.GitHubClientId;
+                    options.ClientSecret = ApplicationSettings.GitHubClientSecret;
+                    options.CallbackPath = new PathString("/signin-github");
+
+                    // Include the users email address in the scope
+                    options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize?scope=user:email";
+                    options.TokenEndpoint = "https://github.com/login/oauth/access_token";
+                    options.UserInformationEndpoint = "https://api.github.com/user";
+
+                    options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
+
+                    options.Events = new OAuthEvents
+                    {
+                        OnCreatingTicket = async context =>
+                        {
+                            JObject user = await RequestUserDetailsFromProvider(context);
+
+                            var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
+
+                            var gitHubId = (string)user["id"];
+                            var name = (string)user["name"];
+                            var email = (string)user["email"];
+                            var avatarUrl = (string)user["avatar_url"];
+
+                            var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, gitHubId: gitHubId);
+
+                            user["accountId"] = account.Id.ToString();
+                            context.RunClaimActions(user);
+                        }
+                    };
+                });
+
+
+            if (!string.IsNullOrEmpty(ApplicationSettings.GoogleClientId))
+                authBuilder = authBuilder.AddGoogle(options =>
+                {
+                    options.ClientId = ApplicationSettings.GoogleClientId;
+                    options.ClientSecret = ApplicationSettings.GoogleClientSecret;
+
+                    options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
+
+                    options.Events = new OAuthEvents
+                    {
+                        OnCreatingTicket = async context =>
+                        {
+                            JObject user = await RequestUserDetailsFromProvider(context);
+
+                            var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
+
+                            var googleId = (string)user["id"];
+                            var name = (string)user["displayName"];
+                            var imageObject = (JObject)user["image"];
+                            string avatarUrl = null;
+                            if (imageObject != null)
+                                avatarUrl = (string)imageObject["url"];
+                            var emailsObject = (JArray)user["emails"];
+                            string email = null;
+                            if (emailsObject != null && emailsObject.Any())
+                                email = (string)emailsObject.First()["value"];
+
+                            var account = await accountRepository.AddOrGetAsync(name, email, avatarUrl, googleId: googleId);
+
+                            user["accountId"] = account.Id.ToString();
+                            context.RunClaimActions(user);
+                        }
+                    };
+                });
+
+            if (!string.IsNullOrEmpty(ApplicationSettings.MicrosoftApplicationId))
+                authBuilder = authBuilder.AddMicrosoftAccount(options =>
+                {
+                    options.ClientId = ApplicationSettings.MicrosoftApplicationId;
+                    options.ClientSecret = ApplicationSettings.MicrosoftPassword;
+
+                    options.ClaimActions.MapJsonKey(ClaimTypes.PrimarySid, "accountId");
+
+                    options.Events = new OAuthEvents
+                    {
+                        OnCreatingTicket = async context =>
+                        {
+                            JObject user = await RequestUserDetailsFromProvider(context);
+
+                            var accountRepository = context.HttpContext.RequestServices.GetRequiredService<IAccountRepository>();
+
+                            var microsoftId = (string)user["id"];
+                            var name = (string)user["displayName"];
+                            var email = (string)user["userPrincipalName"];
+
+                            // userPrincipalName might not be an email, depending on the account type
+                            if (!email.Contains("@"))
+                                email = null;
+
+                            var account = await accountRepository.AddOrGetAsync(name, email, null, microsoftId: microsoftId);
+
+                            user["accountId"] = account.Id.ToString();
+                            context.RunClaimActions(user);
+                        }
+                    };
+                });
         }
 
         private static async Task<JObject> RequestUserDetailsFromProvider(OAuthCreatingTicketContext context)
@@ -219,17 +228,12 @@ namespace SharkSync.Web.Api
             app.UseXXssProtection(options => options.EnabledWithBlockMode());
             app.UseXfo(xfo => xfo.Deny());
 
-            app.UseCors(builder =>
-                //builder.WithOrigins(oAuthSecret.ClientAppRootUrl)
-                builder.WithOrigins("")
-                        .AllowCredentials()
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
-
-            //services.Configure<MvcOptions>(options =>
-            //{
-            //    options.Filters.Add(new CorsAuthorizationFilterFactory("AllowSpecificOrigin"));
-            //});
+            if (!string.IsNullOrWhiteSpace(ApplicationSettings.ClientAppRootUrl))
+                app.UseCors(builder =>
+                    builder.WithOrigins(ApplicationSettings.ClientAppRootUrl)
+                            .AllowCredentials()
+                            .AllowAnyHeader()
+                            .AllowAnyMethod());
 
             if (env.IsDevelopment())
             {

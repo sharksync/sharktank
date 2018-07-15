@@ -26,8 +26,8 @@ namespace SharkSync.Services
 
             if (typeof(T) == typeof(ConnectionStringSettings))
                 secretId = AppSettings.ConnectionSecretId;
-            else if (typeof(T) == typeof(OAuthSettings))
-                secretId = AppSettings.AuthSecretId;
+            else if (typeof(T) == typeof(ApplicationSettings))
+                secretId = AppSettings.AppSecretId;
             else
                 throw new Exception($"Unknown settings class of type: {typeof(T).Name}");
 
@@ -43,7 +43,7 @@ namespace SharkSync.Services
 
     public class AppSettings
     {
-        public string AuthSecretId { get; set; }
+        public string AppSecretId { get; set; }
         public string ConnectionSecretId { get; set; }
         public string DataProtectionSecretId { get; set; }
     }

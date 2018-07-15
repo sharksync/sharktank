@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http;
+using SharkSync.Interfaces;
 
 namespace SharkSync.Web.Api.Controllers
 {
@@ -18,14 +19,17 @@ namespace SharkSync.Web.Api.Controllers
 
         AuthService AuthService { get; set; }
 
+        ISettingsService SettingsService { get; set; }
+
         IAntiforgery Antiforgery { get; set; }
 
         IHttpClientFactory HttpClientFactory { get; set; }
 
-        public AuthController(ILogger<AuthController> logger, AuthService authService, IAntiforgery antiforgery, IHttpClientFactory httpClientFactory)
+        public AuthController(ILogger<AuthController> logger, AuthService authService, ISettingsService settingsService, IAntiforgery antiforgery, IHttpClientFactory httpClientFactory)
         {
             Logger = logger;
             AuthService = authService;
+            SettingsService = settingsService;
             Antiforgery = antiforgery;
             HttpClientFactory = httpClientFactory;
         }
@@ -39,10 +43,10 @@ namespace SharkSync.Web.Api.Controllers
 
         [HttpGet()]
         [Route("Api/Auth/Complete")]
-        public IActionResult Complete()
+        public async Task<IActionResult> Complete()
         {
-            //return Redirect($"{AppSettings.ClientAppRootUrl}/Console/LoginComplete");
-            return Redirect($"/Console/LoginComplete");
+            var applicationSettings = await SettingsService.Get<ApplicationSettings>();
+            return Redirect($"{applicationSettings.ClientAppRootUrl}/Console/LoginComplete");
         }
 
         [HttpGet()]

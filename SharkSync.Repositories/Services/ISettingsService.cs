@@ -24,7 +24,7 @@ namespace SharkSync.Interfaces
         }
     }
 
-    public class OAuthSettings
+    public class ApplicationSettings
     {
         public string GitHubClientId { get; set; }
         public string GitHubClientSecret { get; set; }
@@ -32,7 +32,6 @@ namespace SharkSync.Interfaces
         public string GoogleClientSecret { get; set; }
         public string MicrosoftApplicationId { get; set; }
         public string MicrosoftPassword { get; set; }
-
         public string ClientAppRootUrl { get; set; }
     }
 

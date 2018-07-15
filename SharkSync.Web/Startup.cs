@@ -28,6 +28,7 @@ namespace SharkSync.Web
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // This is only used locally, Cloudfront lambda@edge jobs deliver the real headers
             app.UseHsts(hsts => hsts.MaxAge(days: 365).IncludeSubdomains().Preload());
             app.UseXContentTypeOptions();
             app.UseReferrerPolicy(opts => opts.NoReferrer());
