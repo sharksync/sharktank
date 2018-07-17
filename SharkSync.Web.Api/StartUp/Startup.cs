@@ -58,7 +58,8 @@ namespace SharkSync.Web.Api
             services.AddAWSService<IAmazonSecretsManager>();
             services.AddSingleton<ISettingsService, SettingsService>();
 
-            var settings = services.BuildServiceProvider().GetService<ISettingsService>();
+            var serviceProvider = services.BuildServiceProvider();
+            var settings = serviceProvider.GetService<ISettingsService>();
             ApplicationSettings = settings.Get<ApplicationSettings>().Result;
 
             services.AddMvc();
@@ -78,7 +79,12 @@ namespace SharkSync.Web.Api
 
             services.AddScoped<AuthService, AuthService>();
             services.AddSingleton<ITimeService, TimeService>();
-            services.AddSingleton<IXmlRepository, XmlRepository>();
+
+            services.AddDataProtection();
+            services.Configure<KeyManagementOptions>(o =>
+            {
+                o.XmlRepository = new XmlRepository(serviceProvider.GetService<IAmazonSecretsManager>(), serviceProvider.GetService<IOptions<AppSettings>>());
+            });
         }
 
         private void AddAuthenticationOptions(IServiceCollection services)

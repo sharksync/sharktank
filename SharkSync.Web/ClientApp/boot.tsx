@@ -18,14 +18,14 @@ function renderApp() {
     }).then(response => {
         ApiHandlers.Url = response.headers.get('Api-Uri') as string;
         console.log("Api Url: " + ApiHandlers.Url);
-    });
 
-    ReactDOM.render(
-        <AppContainer>
-            <BrowserRouter children={routes} basename={baseUrl} />
-        </AppContainer>,
-        document.getElementById('react-app')
-    );
+        ReactDOM.render(
+            <AppContainer>
+                <BrowserRouter children={routes} basename={baseUrl} />
+            </AppContainer>,
+            document.getElementById('react-app')
+        );
+    });
 }
 
 renderApp();

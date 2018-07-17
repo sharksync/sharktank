@@ -345,7 +345,7 @@ Resources:
       FunctionName: !GetAtt 
         - WebApiLambda
         - Arn
-      Action: 'lambda:InvokeFunction'
+      Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceAccount: !Ref AWS::AccountId
       SourceArn:
