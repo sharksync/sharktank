@@ -37,6 +37,6 @@ nextVersion=$(echo $version | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(leng
 echo "Next version: $nextVersion"
 
 # Create a new release
-curl -sH "$AUTH" --data "{\"tag_name\":\"$nextVersion\",\"target_commitish\":\"master\",\"name\":\"$nextVersion\",\"body\":\"Release of version $nextVersion\",\"draft\":false,\"prerelease\":false}" $GH_RELEASES
+curl -sH "$AUTH" --data "{\"tag_name\":\"$nextVersion\",\"target_commitish\":\"master\",\"name\":\"$nextVersion\",\"body\":\"Release of version $nextVersion. You can deploy this version using https://s3-eu-west-1.amazonaws.com/io.sharksync.builds/$nextVersion/cloudformation.yaml\",\"draft\":false,\"prerelease\":false}" $GH_RELEASES
 
 npm run-script grunt postBuild:$nextVersion
