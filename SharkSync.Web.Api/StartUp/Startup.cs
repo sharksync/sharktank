@@ -64,10 +64,10 @@ namespace SharkSync.Web.Api
 
             services.AddMvc();
 
-            services.AddDataProtection();
             services.AddCors();
-            services.AddDbContext<DataContext>();
             services.AddHttpClient();
+
+            services.AddDbContext<DataContext>();
 
             services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
@@ -268,6 +268,16 @@ namespace SharkSync.Web.Api
             app.UseAuthentication();
 
             app.UseMvc();
+        }
+
+        public static void ApplyMigrations(IWebHost host)
+        {
+            using (var scope = host.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+                context.Database.Migrate(); // apply all migrations
+            }
+
         }
     }
 }
