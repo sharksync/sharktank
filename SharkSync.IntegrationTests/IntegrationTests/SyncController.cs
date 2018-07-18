@@ -92,7 +92,7 @@ namespace SharkSync.IntegrationTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("app_id missing or invalid request", syncResponse.Errors.First());
+            Assert.AreEqual("AppId missing or invalid request", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
         }
 
@@ -115,7 +115,7 @@ namespace SharkSync.IntegrationTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("No application found for app_id", syncResponse.Errors.First());
+            Assert.AreEqual("No application found for AppId", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
         }
 
@@ -138,7 +138,7 @@ namespace SharkSync.IntegrationTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("app_api_access_key incorrect for app_id", syncResponse.Errors.First());
+            Assert.AreEqual("AppApiAccessKey incorrect for AppId", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
         }
 

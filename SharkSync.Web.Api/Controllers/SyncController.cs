@@ -71,15 +71,15 @@ namespace SharkSync.Web.Api.Controllers
         private async Task<IApplication> ValidateApplication(SyncRequestViewModel request)
         {
             if (request == null || request.AppId == Guid.Empty)
-                ModelState.AddModelError("app_id", "app_id missing or invalid request");
+                ModelState.AddModelError("AppId", "AppId missing or invalid request");
             else
             {
                 var app = await ApplicationRepository.GetByIdAsync(request.AppId);
 
                 if (app == null)
-                    ModelState.AddModelError("app_id", "No application found for app_id");
+                    ModelState.AddModelError("AppId", "No application found for AppId");
                 else if (app.AccessKey != request.AppApiAccessKey)
-                    ModelState.AddModelError("app_api_access_key", "app_api_access_key incorrect for app_id");
+                    ModelState.AddModelError("AppApiAccessKey", "AppApiAccessKey incorrect for AppId");
 
                 return app;
             }
@@ -98,7 +98,7 @@ namespace SharkSync.Web.Api.Controllers
 
                 // Dedup any changes with the same Record, Entity and Property
                 var uniqueChanges = new Dictionary<string, SyncRequestViewModel.ChangeViewModel>();
-                foreach(var change in request.Changes)
+                foreach (var change in request.Changes)
                 {
                     string key = $"{change.RecordId}-{change.Entity}-{change.Property}";
                     if (uniqueChanges.TryGetValue(key, out var existingChange))
@@ -110,7 +110,7 @@ namespace SharkSync.Web.Api.Controllers
                         uniqueChanges.Add(key, change);
                 }
 
-                
+
                 Logger.LogInformation($"Deduped changes in {sw.ElapsedMilliseconds}ms count: {dbChanges.Count}");
                 sw.Restart();
 
