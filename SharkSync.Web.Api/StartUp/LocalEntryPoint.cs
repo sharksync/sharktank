@@ -21,11 +21,11 @@ namespace SharkSync.Web.Api
         {
             var host = BuildWebHost(args).Build();
 
-            Startup.ApplyMigrations(host);
-
             host.Run();
         }
 
-        public static IWebHostBuilder BuildWebHost(string[] args) => WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        public static IWebHostBuilder BuildWebHost(string[] args)
+            => WebHost.CreateDefaultBuilder(args)
+                        .UseStartup<Startup>();
     }
 }

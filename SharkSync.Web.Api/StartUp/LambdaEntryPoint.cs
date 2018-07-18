@@ -24,8 +24,8 @@ namespace SharkSync.Web.Api
         protected override void Init(IWebHostBuilder builder)
         {
             var host = builder.UseStartup<Startup>().Build();
-
-            Startup.ApplyMigrations(host);
         }
+
+
     }
 }
