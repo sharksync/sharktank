@@ -110,7 +110,6 @@ namespace SharkSync.Web.Api.Controllers
                         uniqueChanges.Add(key, change);
                 }
 
-
                 Logger.LogInformation($"Deduped changes in {sw.ElapsedMilliseconds}ms count: {dbChanges.Count}");
                 sw.Restart();
 
@@ -119,8 +118,9 @@ namespace SharkSync.Web.Api.Controllers
                     if (change != null)
                     {
                         DateTime modifiedUTC = requestStartTimeUTC.AddMilliseconds(-change.MillisecondsAgo);
+                        var millisecondsSinceEpoch = new DateTimeOffset(modifiedUTC).ToUnixTimeMilliseconds();
 
-                        var dbChange = ChangeRepository.CreateChange(app.AccountId, app.Id, change.RecordId, change.Group, change.Entity, change.Property, modifiedUTC.Ticks, change.Value);
+                        var dbChange = ChangeRepository.CreateChange(app.AccountId, app.Id, change.RecordId, change.Group, change.Entity, change.Property, millisecondsSinceEpoch, change.Value);
                         dbChanges.Add(dbChange);
                     }
                 }

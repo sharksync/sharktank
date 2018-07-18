@@ -92,7 +92,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("app_id missing or invalid request", syncResponse.Errors.First());
+            Assert.AreEqual("AppId missing or invalid request", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -112,7 +112,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("app_id missing or invalid request", syncResponse.Errors.First());
+            Assert.AreEqual("AppId missing or invalid request", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -135,7 +135,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("No application found for app_id", syncResponse.Errors.First());
+            Assert.AreEqual("No application found for AppId", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -156,7 +156,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("app_api_access_key incorrect for app_id", syncResponse.Errors.First());
+            Assert.AreEqual("AppApiAccessKey incorrect for AppId", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -178,7 +178,7 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.NotNull(syncResponse);
             Assert.NotNull(syncResponse.Errors);
             Assert.AreEqual(1, syncResponse.Errors.Count());
-            Assert.AreEqual("app_api_access_key incorrect for app_id", syncResponse.Errors.First());
+            Assert.AreEqual("AppApiAccessKey incorrect for AppId", syncResponse.Errors.First());
             Assert.False(syncResponse.Success);
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, It.IsAny<IEnumerable<IChange>>()), Times.Never);
@@ -264,10 +264,12 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(recordId, returnChanges[0].RecordId);
             Assert.AreEqual(value, returnChanges[0].RecordValue);
 
+            var millisecondsSinceEpoch = new DateTimeOffset(requestStart.AddMilliseconds(-modifiedMillisecondsAgo)).ToUnixTimeMilliseconds();
+
             IEnumerable<IChange> changes = new List<IChange>() { change.Object };
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, changes), Times.Once);
-            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, millisecondsSinceEpoch, value), Times.Once);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
@@ -346,11 +348,13 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(recordId, returnChanges[1].RecordId);
             Assert.AreEqual(value2, returnChanges[1].RecordValue);
 
+            var millisecondsSinceEpoch = new DateTimeOffset(requestStart.AddMilliseconds(-modifiedMillisecondsAgo)).ToUnixTimeMilliseconds();
+
             IEnumerable<IChange> changes = new List<IChange>() { change.Object, change2.Object };
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, changes), Times.Once);
-            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value), Times.Once);
-            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName2, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value2), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, millisecondsSinceEpoch, value), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName2, millisecondsSinceEpoch, value2), Times.Once);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
@@ -424,10 +428,12 @@ namespace SharkSync.Web.Api.Tests.UnitTests
             Assert.AreEqual(recordId, returnChanges[0].RecordId);
             Assert.AreEqual(value, returnChanges[0].RecordValue);
 
+            var millisecondsSinceEpoch = new DateTimeOffset(requestStart.AddMilliseconds(-modifiedMillisecondsAgo)).ToUnixTimeMilliseconds();
+
             IEnumerable<IChange> changes = new List<IChange>() { change.Object };
 
             changeRepository.Verify(t => t.UpsertChangesAsync(app.Object.Id, changes), Times.Once);
-            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, requestStart.AddMilliseconds(-modifiedMillisecondsAgo).Ticks, value), Times.Once);
+            changeRepository.Verify(t => t.CreateChange(app.Object.AccountId, app.Object.Id, recordId, group, entity, propertyName, millisecondsSinceEpoch, value), Times.Once);
             changeRepository.Verify(t => t.ListChangesAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<long?>()), Times.Never);
         }
 
