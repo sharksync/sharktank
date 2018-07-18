@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using SharkSync.Interfaces;
 using SharkSync.PostgreSQL.Entities;
 using System;

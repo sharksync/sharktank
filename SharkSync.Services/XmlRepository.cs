@@ -14,7 +14,7 @@ using System.Xml.Linq;
 
 namespace SharkSync.Web.Api.Services
 {
-    public class XmlRepository : IXmlRepository
+    public class AmazonSecretXmlRepository : IXmlRepository
     {
         private static readonly XName RepositoryElementName = "repository";
         private readonly IAmazonSecretsManager _secretsManager;
@@ -26,7 +26,7 @@ namespace SharkSync.Web.Api.Services
         /// </summary>
         /// <param name="secretsManager">An instance of the AWS IAmazonSecretsManager</param>
         /// <param name="key">The <see cref="RedisKey"/> used to store key list.</param>
-        public XmlRepository(IAmazonSecretsManager secretsManager, IOptions<AppSettings> appSettingsOptions)
+        public AmazonSecretXmlRepository(IAmazonSecretsManager secretsManager, IOptions<AppSettings> appSettingsOptions)
         {
             _secretsManager = secretsManager;
             _key = appSettingsOptions?.Value?.DataProtectionSecretId;

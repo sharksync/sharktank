@@ -83,7 +83,7 @@ namespace SharkSync.Web.Api
             services.AddDataProtection();
             services.Configure<KeyManagementOptions>(o =>
             {
-                o.XmlRepository = new XmlRepository(serviceProvider.GetService<IAmazonSecretsManager>(), serviceProvider.GetService<IOptions<AppSettings>>());
+                o.XmlRepository = new AmazonSecretXmlRepository(serviceProvider.GetService<IAmazonSecretsManager>(), serviceProvider.GetService<IOptions<AppSettings>>());
             });
         }
 
