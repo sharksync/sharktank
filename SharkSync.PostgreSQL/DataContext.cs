@@ -75,9 +75,6 @@ namespace SharkSync.PostgreSQL
                 AccessKey = new Guid("0f458ce8-1a0e-450c-a2c4-2b50b3c4f41d"),
                 AccountId = testAccount.Id
             });
-
-            // Auto migrate database
-            Database.Migrate();
         }
     }
 }
