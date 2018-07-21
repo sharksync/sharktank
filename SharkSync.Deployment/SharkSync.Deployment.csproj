@@ -19,6 +19,7 @@
     <PackageReference Include="AWSSDK.CloudFront" Version="3.3.8.1" />
     <PackageReference Include="AWSSDK.Lambda" Version="3.3.15" />
     <PackageReference Include="AWSSDK.S3" Version="3.3.19" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +29,11 @@
   <ItemGroup>
     <EmbeddedResource Include="LambdaEdgeFunctions\origin-response.js" />
     <EmbeddedResource Include="LambdaEdgeFunctions\origin-request.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SharkSync.PostgreSQL\SharkSync.PostgreSQL.csproj" />
+    <ProjectReference Include="..\SharkSync.Services\SharkSync.Services.csproj" />
   </ItemGroup>
 
 </Project>
