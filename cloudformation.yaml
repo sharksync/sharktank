@@ -473,6 +473,25 @@ Resources:
       MemorySize: 128
       Timeout: 60
 
+  MigrateDatabaseFunctionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: SharkSync.Deployment::SharkSync.Deployment.MigrateDatabaseFunction::FunctionHandlerAsync
+      Code:
+        S3Bucket: io.sharksync.builds
+        S3Key: 
+          Fn::Join:
+          - ''
+          - - 'v0.0.0'
+            - '/SharkSync.Deployment.zip'
+      Role:
+        Fn::GetAtt:
+          - DeploymentLambdaRole
+          - Arn
+      Runtime: dotnetcore2.1
+      MemorySize: 128
+      Timeout: 60
+
   UnpackZipIntoS3BucketFunction:
     Type: Custom::UnpackZipIntoS3BucketFunction
     DependsOn: UnpackZipIntoS3BucketFunctionLambda
@@ -539,3 +558,16 @@ Resources:
       Paths: 
         - "/"
         - "/Console/*"
+
+  MigrateDatabaseFunction:
+    Type: Custom::MigrateDatabaseFunction
+    DependsOn: 
+      - MigrateDatabaseFunctionLambda
+      - Database
+    Properties:
+      ServiceToken: !GetAtt MigrateDatabaseFunctionLambda.Arn
+      DatabaseServer: !GetAtt Database.Endpoint.Address
+      DatabaseName: SharkSync
+      DatabaseUsername: !Ref DatabaseUser
+      DatabasePassword: !Ref DatabasePassword
+      Version: 'v0.0.0'
