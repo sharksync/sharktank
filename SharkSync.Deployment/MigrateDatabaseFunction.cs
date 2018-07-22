@@ -69,7 +69,7 @@ namespace SharkSync.Deployment
                         throw new ArgumentException($"Missing or empty ResourceProperties.DatabasePassword");
 
 
-                    DataContext db = new DataContext(null, new FixedSettingsService(request.ResourceProperties));
+                    DataContext db = new DataContext(new DbContextOptions<DataContext>(), new FixedSettingsService(request.ResourceProperties));
                     db.Database.Migrate();
                 }
 
