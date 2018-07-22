@@ -10,30 +10,30 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
 {
     public partial class Tests
     {
-        [Test]
-        public void LoginTests_Github()
-        {
-            driver.Navigate().GoToUrl(TestingUrl);
+        //[Test]
+        //public void LoginTests_Github()
+        //{
+        //    driver.Navigate().GoToUrl(TestingUrl);
 
-            driver.FindElement(By.CssSelector(".navbar-nav")).Click();
-            wait.Until(ExpectedConditions.UrlToBe(LoginUrl));
+        //    driver.FindElement(By.CssSelector(".navbar-nav")).Click();
+        //    wait.Until(ExpectedConditions.UrlToBe(LoginUrl));
 
-            driver.FindElement(By.CssSelector(".github-login")).Click();
-            wait.Until(ExpectedConditions.UrlContains("https://github.com/login"));
+        //    driver.FindElement(By.CssSelector(".github-login")).Click();
+        //    wait.Until(ExpectedConditions.UrlContains("https://github.com/login"));
 
-            driver.FindElement(By.Id("login_field")).SendKeys(Secrets.GithubUsername);
-            driver.FindElement(By.Id("password")).SendKeys(Secrets.GithubPassword);
-            driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+        //    driver.FindElement(By.Id("login_field")).SendKeys(Secrets.GithubUsername);
+        //    driver.FindElement(By.Id("password")).SendKeys(Secrets.GithubPassword);
+        //    driver.FindElement(By.CssSelector("input[type=submit]")).Click();
 
-            try
-            {
-                wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Ended on URL: " + driver.Url, ex);
-            }
-        }
+        //    try
+        //    {
+        //        wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception("Ended on URL: " + driver.Url, ex);
+        //    }
+        //}
 
         //[Test]
         //public void LoginTests_Google()
