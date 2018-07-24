@@ -268,7 +268,7 @@ Resources:
       Name: SharkSync.WebApi
       MinimumCompressionSize: 0
       BinaryMediaTypes:  
-        - "image~1*"
+        - "image/*"
 
   WebApiDomainName:
     Type: AWS::ApiGateway::DomainName
