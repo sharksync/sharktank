@@ -49,7 +49,7 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
                 driver = new FirefoxDriver(unitTestPath, new FirefoxOptions { BrowserExecutableLocation = firefoxInstallPath });
             else
                 throw new Exception("Unsupported browser driver");
-            
+
             wait = new WebDriverWait(driver, new TimeSpan(hours: 0, minutes: 0, seconds: 20));
         }
 
@@ -59,7 +59,7 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             if (driver != null)
                 driver.Quit();
         }
-        
+
         private SecretsViewModel _secrets;
         protected SecretsViewModel Secrets
         {
@@ -86,6 +86,7 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
     {
         public string GithubUsername { get; set; }
         public string GithubPassword { get; set; }
+        public string GithubTwoFactorCode { get; set; }
         public string GoogleUsername { get; set; }
         public string GooglePassword { get; set; }
         public string MicrosoftUsername { get; set; }
