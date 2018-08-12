@@ -43,33 +43,43 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             }
         }
 
-        //[Test]
-        //public void LoginTests_Google()
-        //{
-        //    driver.Navigate().GoToUrl(TestingUrl);
+        [Test]
+        public void LoginTests_Google()
+        {
+            driver.Navigate().GoToUrl(TestingUrl);
 
-        //    driver.FindElement(By.CssSelector(".navbar-nav")).Click();
-        //    wait.Until(ExpectedConditions.UrlToBe(LoginUrl));
+            var reactAppContainer = driver.FindElement(By.Id("react-app"));
+            wait.Until(e => reactAppContainer.Text != "Loading...");
 
-        //    driver.FindElement(By.CssSelector(".google-login")).Click();
-        //    wait.Until(ExpectedConditions.UrlContains("https://accounts.google.com/signin"));
+            driver.FindElement(By.CssSelector(".navbar-nav")).Click();
+            wait.Until(ExpectedConditions.UrlToBe(LoginUrl));
 
-        //    driver.FindElement(By.CssSelector("input[type=email]")).SendKeys(Secrets.GoogleUsername);
-        //    driver.FindElement(By.Id("identifierNext")).Click();
+            driver.FindElement(By.CssSelector(".google-login")).Click();
+            wait.Until(ExpectedConditions.UrlContains("https://accounts.google.com/signin"));
 
-        //    wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
-        //    driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.GooglePassword);
-        //    driver.FindElement(By.Id("passwordNext")).Click();
+            driver.FindElement(By.CssSelector("input[type=email]")).SendKeys(Secrets.GoogleUsername);
+            driver.FindElement(By.Id("identifierNext")).Click();
 
-        //    try
-        //    {
-        //        wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception("Ended on URL: " + driver.Url, ex);
-        //    }
-        //}
+            wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("input[type=password]")));
+            driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(Secrets.GooglePassword);
+            driver.FindElement(By.Id("passwordNext")).Click();
+
+            byte[] secretKey = Base32Encoding.ToBytes(Secrets.GoogleTwoFactorCode);
+            Totp totp = new Totp(secretKey);
+            string code = totp.ComputeTotp();
+
+            driver.FindElement(By.Id("totpPin")).SendKeys(code);
+            driver.FindElement(By.Id("totpNext")).Click();
+
+            try
+            {
+                wait.Until(ExpectedConditions.UrlToBe(AppsUrl));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ended on URL: " + driver.Url, ex);
+            }
+        }
 
         //[Test]
         //public void LoginTests_Microsoft()

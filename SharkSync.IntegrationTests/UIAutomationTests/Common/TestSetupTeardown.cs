@@ -89,6 +89,7 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         public string GithubTwoFactorCode { get; set; }
         public string GoogleUsername { get; set; }
         public string GooglePassword { get; set; }
+        public string GoogleTwoFactorCode { get; set; }
         public string MicrosoftUsername { get; set; }
         public string MicrosoftPassword { get; set; }
     }
