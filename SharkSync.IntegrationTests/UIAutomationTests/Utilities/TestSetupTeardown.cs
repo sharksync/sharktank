@@ -20,10 +20,13 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
     //[TestFixture("Firefox")]
     public partial class Tests
     {
-        private const string TestingUrl = "https://www.testingallthethings.net";
-        private const string LoginUrl = TestingUrl + "/Console/Login";
-        private const string LoginCompleteUrl = TestingUrl + "/Console/LoginComplete";
-        private const string AppsUrl = TestingUrl + "/Console/Apps";
+        public const string TestingUrl = "https://www.testingallthethings.net";
+        public const string LoginUrl = TestingUrl + "/Console/Login";
+        public const string LoginCompleteUrl = TestingUrl + "/Console/LoginComplete";
+        public const string AppsUrl = TestingUrl + "/Console/Apps";
+
+        // Cache this to save round trips every test
+        protected static SecretsViewModel secrets;
 
         protected string browser;
         protected IWebDriver driver;
@@ -51,6 +54,18 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
                 throw new Exception("Unsupported browser driver");
 
             wait = new WebDriverWait(driver, new TimeSpan(hours: 0, minutes: 0, seconds: 20));
+
+            if (secrets == null)
+            {
+                var secretsManager = new AmazonSecretsManagerClient(RegionEndpoint.EUWest1);
+                var secretTask = secretsManager.GetSecretValueAsync(new GetSecretValueRequest() { SecretId = "arn:aws:secretsmanager:eu-west-1:429810410321:secret:SharkSync-Testing-z8gBv1" });
+                secretTask.Wait();
+
+                if (secretTask.Result == null || string.IsNullOrWhiteSpace(secretTask.Result.SecretString))
+                    throw new Exception("Missing AWS SecretsManager value for \"SharkSync-Testing\" secret");
+
+                secrets = JsonConvert.DeserializeObject<SecretsViewModel>(secretTask.Result.SecretString);
+            }
         }
 
         [TearDown]
@@ -58,27 +73,6 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         {
             if (driver != null)
                 driver.Quit();
-        }
-
-        private SecretsViewModel _secrets;
-        protected SecretsViewModel Secrets
-        {
-            get
-            {
-                if (_secrets == null)
-                {
-                    var secretsManager = new AmazonSecretsManagerClient(RegionEndpoint.EUWest1);
-                    var secretTask = secretsManager.GetSecretValueAsync(new GetSecretValueRequest() { SecretId = "arn:aws:secretsmanager:eu-west-1:429810410321:secret:SharkSync-Testing-z8gBv1" });
-                    secretTask.Wait();
-
-                    if (secretTask.Result == null || string.IsNullOrWhiteSpace(secretTask.Result.SecretString))
-                        throw new Exception("Missing AWS SecretsManager value for \"SharkSync-Testing\" secret");
-
-                    _secrets = JsonConvert.DeserializeObject<SecretsViewModel>(secretTask.Result.SecretString);
-                }
-
-                return _secrets;
-            }
         }
     }
 
