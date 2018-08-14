@@ -1,11 +1,4 @@
 ﻿using NUnit.Framework;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using SeleniumExtras.WaitHelpers;
-using OtpNet;
 
 namespace SharkSync.IntegrationTests.UIAutomationTests
 {

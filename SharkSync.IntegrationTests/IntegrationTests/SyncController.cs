@@ -1,18 +1,12 @@
-using Amazon.SecretsManager;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using SharkSync.Interfaces;
 using SharkSync.PostgreSQL;
 using SharkSync.PostgreSQL.Entities;
-using SharkSync.Services;
-using SharkSync.Web.Api;
 using SharkSync.Web.Api.ViewModels;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -29,27 +23,12 @@ namespace SharkSync.IntegrationTests
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
-        private readonly IServiceProvider serviceProvider;
+        private readonly ServiceProvider serviceProvider;
         private DataContext db;
 
         public SyncController()
         {
-            var services = new ServiceCollection();
-
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", false)
-                .Build();
-            services.Configure<AppSettings>(options => configuration.GetSection("AppSettings").Bind(options));
-
-            services.AddDefaultAWSOptions(configuration.GetAWSOptions());
-
-            services.AddAWSService<IAmazonSecretsManager>();
-            services.AddSingleton<ISettingsService, SettingsService>();
-
-            services.AddDbContext<DataContext>();
-
-            serviceProvider = services.BuildServiceProvider();
+            serviceProvider = DIHelpers.GetServiceProvider();
         }
 
         [SetUp]

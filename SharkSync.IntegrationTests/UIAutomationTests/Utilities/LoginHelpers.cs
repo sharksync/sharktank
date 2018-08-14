@@ -2,9 +2,6 @@
 using OpenQA.Selenium.Support.UI;
 using OtpNet;
 using SeleniumExtras.WaitHelpers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace SharkSync.IntegrationTests.UIAutomationTests
@@ -22,6 +19,8 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             driver.FindElement(By.Id("login_field")).SendKeys(secrets.GithubUsername);
             driver.FindElement(By.Id("password")).SendKeys(secrets.GithubPassword);
             driver.FindElement(By.CssSelector("input[type=submit]")).Click();
+
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("otp")));
 
             byte[] secretKey = Base32Encoding.ToBytes(secrets.GithubTwoFactorCode);
             Totp totp = new Totp(secretKey);
@@ -50,11 +49,12 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             driver.FindElement(By.CssSelector("input[type=password]")).SendKeys(secrets.GooglePassword);
             driver.FindElement(By.Id("passwordNext")).Click();
 
+            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("totpPin")));
+
             byte[] secretKey = Base32Encoding.ToBytes(secrets.GoogleTwoFactorCode);
             Totp totp = new Totp(secretKey);
             string code = totp.ComputeTotp();
 
-            wait.Until(ExpectedConditions.ElementIsVisible(By.Id("totpPin")));
             driver.FindElement(By.Id("totpPin")).SendKeys(code);
 
             // The button takes a second or so to enable

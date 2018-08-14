@@ -1,18 +1,17 @@
-﻿using NUnit.Framework;
-using System;
-using System.IO;
+﻿using Amazon;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
-using OpenQA.Selenium.Remote;
 using OpenQA.Selenium.Support.UI;
+using SharkSync.PostgreSQL;
+using System;
+using System.IO;
 using System.Reflection;
-using System.Drawing;
-using System.Collections.Generic;
-using Amazon.SecretsManager;
-using Amazon.SecretsManager.Model;
-using Newtonsoft.Json;
-using Amazon;
 
 namespace SharkSync.IntegrationTests.UIAutomationTests
 {
@@ -32,8 +31,12 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         protected IWebDriver driver;
         protected WebDriverWait wait;
 
+        protected readonly ServiceProvider serviceProvider;
+        protected DataContext db;
+
         public Tests(string browser)
         {
+            serviceProvider = DIHelpers.GetServiceProvider();
             this.browser = browser;
         }
 
@@ -47,11 +50,17 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
             firefoxInstallPath = @"C:\Program Files\Mozilla Firefox\firefox.exe";
 #endif
             if (browser == "Chrome")
+            {
                 driver = new ChromeDriver(unitTestPath);
+            }
             else if (browser == "Firefox")
+            {
                 driver = new FirefoxDriver(unitTestPath, new FirefoxOptions { BrowserExecutableLocation = firefoxInstallPath });
+            }
             else
+            {
                 throw new Exception("Unsupported browser driver");
+            }
 
             wait = new WebDriverWait(driver, new TimeSpan(hours: 0, minutes: 0, seconds: 20));
 
@@ -62,7 +71,9 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
                 secretTask.Wait();
 
                 if (secretTask.Result == null || string.IsNullOrWhiteSpace(secretTask.Result.SecretString))
+                {
                     throw new Exception("Missing AWS SecretsManager value for \"SharkSync-Testing\" secret");
+                }
 
                 secrets = JsonConvert.DeserializeObject<SecretsViewModel>(secretTask.Result.SecretString);
             }
@@ -72,7 +83,9 @@ namespace SharkSync.IntegrationTests.UIAutomationTests
         public void CleanUp()
         {
             if (driver != null)
+            {
                 driver.Quit();
+            }
         }
     }
 
